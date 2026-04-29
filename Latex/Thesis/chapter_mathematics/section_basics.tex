@@ -2,6 +2,99 @@
 \label{sec:mathsdef}
 
 \begin{defi}
-    Let $M$ be a $\fC^k$-manifold with boundary and let $U$ be a neighbourhood of the boundary $\boundary M$. 
-    $U$ is called a \emph{collar neighbourhood} if there is a $\fC^k$-diffeomorphism $f \colon \boundary M \times [0, 1) \to U$ s.t.\ for all $x \in \boundary M$, $f(x, 0) = x$. 
+    A \emph{topological manifold} is a second-countable Hausdorff space that is locally Euclidean.
 \end{defi}
+
+\begin{rem}
+    Apparently, there are some subtleties with collars of non-metrizable manifolds but I assume we don't care. (At least with the above definition our manifolds are always metrizable.)
+\end{rem}
+
+\begin{defi}
+    Let $M$ and $N$ be two $C^k$-manifolds. 
+    Let $f \colon M \to N$. 
+    \begin{enumerate}
+        \item $f$ is a $C^k$-diffeomorphism if it is bijective and both $f$ and its inverse functions are $k$-times continuously differentiable. 
+        \item $f$ is a $C^k$-embedding if it is a $C^k$-diffeomorphism onto its image.
+    \end{enumerate}
+\end{defi}
+
+\begin{defi}[Due to \cite{Connelly1971}]\label{defi:collared}
+    Let $M$ be a $\fC^k$-manifold (with boundary) and let $B \subseteq M$ be closed. 
+    \begin{enumerate}
+        \item $B$ is \emph{locally collared} if it is covered by sets $U \subseteq B$ which are open in $B$ such that there are $\fC^k$-embeddings $\varphi_U \colon \closure{U} \times [0, 1] \to M$ with 
+        \begin{enumerate}
+            \item $\preim{\varphi_U}{B} = \closure{U} \times \{ 0\}$.
+            \item For all $x \in \closure{U}$, $\varphi_U (x, 0) = x$.
+            \item $\varphi_U (\closure{U} \times [0, 1])$ is closed. 
+            \item $\varphi_U (U \times [0, 1)$ is open.  
+        \end{enumerate}
+        \item $B$ is \emph{collared} if $B$ already fulfils the conditions given above. In this case we call the image of $B \times [0, 1)$ under the corresponding map $\varphi_B \colon B \times [0, 1] \to M$ a \emph{collar neighbourhood} of $B$.
+    \end{enumerate}
+\end{defi}
+
+\begin{rem}
+    This definition is a lot more restrictive than other definition which don't consider the closure or the closed interval. I hope this still works.  
+\end{rem}
+
+\begin{rem}
+    For $k=0$ we can even extend this definition to topological spaces instead of just defining it for topological manifolds. 
+\end{rem}
+
+\begin{thm}[Due to \cite{Connelly1971}]
+    Let $X$ be a Hausdorff space and $B \subseteq X$ be a closed subset. 
+    If $B$ is locally collared in $X$, then it is collared.
+\end{thm}
+
+\begin{proof}
+    Let $U_1, \dots , U_n$ be a cover of $B$ that witnesses that $B$ is locally collared. 
+    Let $\varphi_i \colon \closure{U_i} \times [0, 1] \to X$ be the corresponding embeddings. 
+    $B$ is normal because it is compact and Hausdorff. 
+    By the shrinking lemma (already in mathlib) there is a new open cover $V_1, \dots, V_n$ of $B$ such that $\closure{V_i} \subseteq U_i$ for all $1 \leq i \leq n$. 
+    Define $X^+ \coloneq /X \amalg B \times [-1, 0]) ...$ i#
+\end{proof}
+
+We would like the following theorem: 
+
+\begin{thm}
+    Let $M$ be a $\fC^k$-manifold (with boundary) and $B \subseteq X$ a closed subset. 
+    If $B$ is locally collared in $M$, then it is collared.
+\end{thm}
+
+Then we will need the following lemma: 
+
+\begin{lem}
+    Let $M$ be an $n$-dimensional $\fC^k$-manifold with boundary. 
+    Then $\boundary M$ is locally collared.
+\end{lem}
+
+\begin{proof}
+    Let $p \in \boundary M$. Then $p$ is contained in a regular half-coordinate ball $U$, i.e.\ there is a coordinate half-ball $U' \supseteq \closure{U}$ and a coordinate map $\psi \colon U' \to \bH^n$ such that for some $r' > r > 0$ we have $\psi(U) = B_r(0) \cap \bH^n$, $\psi (\closure{U}) = \closure{B_r(0)} \cap \bH^n$ and $\psi (U') = B_{r'}(0) \cap \bH^n$. 
+
+    Now pick an open neighbourhood $V$ of $0 \in \boundary \bH^n$ and $l > 0$ s.t. $V \times [0, l] \subseteq B_r(0)$.
+
+    Considering $\closure{V}$ and $V$ as submanifolds of $\bH^n$ and $\preim{\psi}{\closure{V}} = \closure{\preim{\psi}{V}}$ and $\preim{\psi}{V}$ as submanifolds. 
+    Then 
+    \begin{equation*}
+        \restrict{\psi}{\closure{\preim{\psi}{V}}} \colon \closure{\preim{\psi}{V}} \to \closure{V}
+    \end{equation*}
+    and 
+    \begin{equation*}
+        \restrict{\psi}{\preim{\psi}{V}} \colon \preim{\psi}{V} \to V
+    \end{equation*}
+    are $\fC^k$-diffeomorphisms. 
+    So it suffices to show that $\restrict{\inv{\psi}}{\closure{V} \times [0, l]} \colon \closure{V} \times [0, l] \to M$ fulfils the conditions given in Definition \ref{defi:collared}. 
+
+    I think this should work... 
+    I think it would be nicer to do this directly in Lean and then later write up the maths proof. 
+\end{proof}
+
+which will then allow us to derive
+
+\begin{thm}[Collar neighbourhood theorem]
+    Let $M$ be a $C^k$-manifold with boundary, then $\boundary M$ is collared. 
+\end{thm}
+
+%\begin{defi}
+%    Let $M$ be a $\fC^k$-manifold with boundary and let $U$ be a neighbourhood of the boundary $\boundary M$. 
+%    $U$ is called a \emph{collar neighbourhood} if there is a $\fC^k$-diffeomorphism $f \colon \boundary M \times [0, 1) \to U$ s.t.\ for all $x \in \boundary M$, $f(x, 0) = x$. 
+%\end{defi}
