@@ -20,7 +20,7 @@
 
 \begin{defi}[Due to \cite{Connelly1971}]\label{defi:collared}
     Let $M$ be a $\fC^k$-manifold (with boundary) and let $B \subseteq M$ be closed. 
-    \begin{enumerate}
+    \begin{enumerate}\label{defi:collared:local}
         \item $B$ is \emph{locally collared} if it is covered by sets $U \subseteq B$ which are open in $B$ such that there are $\fC^k$-embeddings $\varphi_U \colon \closure{U} \times [0, 1] \to M$ with 
         \begin{enumerate}
             \item $\preim{\varphi_U}{B} = \closure{U} \times \{ 0\}$.
@@ -33,7 +33,7 @@
 \end{defi}
 
 \begin{rem}
-    This definition is a lot more restrictive than other definition which don't consider the closure or the closed interval. I hope this still works.  
+    This definition is a lot more restrictive than other definition which don't consider the closure or the closed interval. I think if this one doesn't work, I can just take the other one. 
 \end{rem}
 
 \begin{rem}
@@ -50,8 +50,120 @@
     Let $\varphi_i \colon \closure{U_i} \times [0, 1] \to X$ be the corresponding embeddings. 
     $B$ is normal because it is compact and Hausdorff. 
     By the shrinking lemma (already in mathlib) there is a new open cover $V_1, \dots, V_n$ of $B$ such that $\closure{V_i} \subseteq U_i$ for all $1 \leq i \leq n$. 
-    Define $X^+ \coloneq /X \amalg B \times [-1, 0]) ...$ i#
+    Define 
+    \begin{equation*}
+        X^+ \coloneq (X \amalg B \times [-1, 0]) / x \sim (x, 0).
+    \end{equation*}
+    Clearly, $X^+$ is collared. So it suffices to show that there is a homeomorphism $G \colon X \to X^+$ s.t.\ $G(x) = (x, -1)$ for all $x \in B$. 
+    Let $\Phi_i \colon \closure{U_i} \times [-1, 1] \to X^+$ be defined by 
+    \begin{equation*}
+        \Phi_i (x) = \begin{cases*}
+            \phi_i(x) & \text{if } $x \in \closure{U_i} \times [0, 1]$ \\
+            x & \text{if } $x \in \closure{U_i} \times [-1, 0]$. \\
+        \end{cases*}
+    \end{equation*}
+    We now inductively define maps $f_i \colon B \to [0, 1]$ and embeddings $g_i \colon X \to X^+$ for all $0 \leq i \leq n$ such that 
+    \begin{enumerate}
+        \item $f_i(x) = -1$ if $x \in \bigcup_{j \leq i} \closure{V_j}$
+        \item $g_i(x) = (x, f_i(x))$ if $x \in B$
+        \item $g_i(X) = X \cup \{ (x, t) \mid t \geq f_i(x)\}$
+    \end{enumerate}
+    Then $g_n$ will be the desired homeomorphism $G$ from above.
+    Set $f_0$ to be constant $0$. Then we can choose $g_0$ to be the inclusion and trivially $g_0(X) = X = X \cup X \times \{0\} = X \cup \{ (x, t) \mid t \geq 0\}$. 
+    
+    Assume that $g_{i-1}$ has been defined. Using Urysohn's Lemma, choose a continuous function $\lambda_i \colon \closure{U_i} \to [0, 1]$ such that it is $0$ on $\closure{U_i} \setminus U_i$ and $1$ on $\closure{V_i}$. 
+    Given $x \in B$ set $a(x) \coloneq f_{i-1}(x)$ and $b(x) \coloneq (1 - \lambda_i(x))f_{i-1}(x) + \lambda_{i}(x) (-1)$.
+    Now let 
+    \begin{equation*}
+        s(x, \_) \colon [a(x), 1] \to [b(x), 1],\quad t \mapsto \frac{b(x)-1}{a(x)-1}(t-1) + 1.
+    \end{equation*}
+    Now set
+    \begin{equation*}
+        \psi_i \colon \preim{\Phi_i}{g_{i-1}(X)} \to \closure{U_i} \times [-1,1], \quad (x, t) \mapsto (x, s(x, t)).
+    \end{equation*}
+    This allows us to define 
+    \begin{equation*}
+        \Psi_i \colon g_{i-1}(X) \to X^+, \quad x \mapsto \begin{cases*}
+            \Phi_i (\psi_i (\inv{\Phi_i}(x))) & if  $x \in g_i(X) \cap \Phi_i(\closure{U_i} \times [-1, 1])$ \\ 
+            x & \text{otherwise} \\
+        \end{cases*}
+    \end{equation*}
+    \begin{claim}
+        $\Psi_i$ is continuous. 
+    \end{claim}
+    \begin{proof}
+        It suffices to show that $\psi_i$ is continuous. 
+        We need to show that $s \colon B \times [a(x), 1] \to [b(x), 1]$ is continuous. 
+
+        Ahhh this is ugly. I somehow would prefer to just get going with this in Lean.
+    \end{proof}
 \end{proof}
+
+I want to try to separate out some parts here: 
+
+\begin{defi}
+    Let $X$ be a $\fC^k$-manifold and $B \subseteq X$ a closed subset. 
+    We define the topological space
+    \begin{equation*}
+        X^+_B \coloneq (X \amalg B \times [-1, 0]) / x \sim (x, 0).
+    \end{equation*}
+\end{defi}
+
+\begin{lem}
+    Let $X$ be an $n$-dimensional $\fC^k$-manifold and $B \subseteq X$ a closed subset. 
+    Then $X^+_B$ is an $n$-dimensional $\fC^k$-manifold. 
+\end{lem}
+\begin{proof}
+    We first need to show that $X^+_B$ is a Hausdorff space. I am not sure if this is best done manually or if there is some cool lemma like: a pushout along closed embeddings preserves Hausdorff spaces. (Is this true?)
+
+    Then we need to show that $X^+_B$ is second countable. Again, there should be some general lemma about closed embeddings and pushouts. 
+
+    Now we need to pick an atlas for $X^+_B$.
+    Let $\fA_X$ be a $\fC^k$-atlas for $X$, $\fA_B$ be a $\fC^k$-atlas for $B$ and $\fA_{[-1, 0]}$ be a $\fC^k$-atlas for $[-1, 0]$. 
+    We define 
+    \begin{align*}
+        \fA \coloneq &\{(U, \varphi) \in \fA_X \mid U \cap B = \varnothing\} \\
+        &\cup \{(U \times I, \varphi \times \psi) \mid (U, \varphi) \in \fA_B, (I, \psi) \in \fA_{[-1, 0]}, 0 \notin I\} \\
+        &\cup \{(U \cup ((U \cap B) \times I), \varphi^+_I) \mid (U, \varphi) \in \fA, (I, \psi) \in \fA_{[-1, 0]}, 0 \in I\}
+    \end{align*}
+    where we define $\varphi^+_I$ as follows. 
+    Let $(U, \varphi)$ and $(I, \psi)$ as above. 
+    Set 
+    \begin{equation*}
+        \varphi^+_I \colon U \cup ((U \cap B) \times I) \to \bR^n, x \mapsto \begin{cases*}
+            \varphi (x) & $x \in U$ \\ 
+            (\varphi(y), z) & $x = (y, z) \in (U \cap B) \times I$ \\
+        \end{cases*}
+    \end{equation*}
+    For $x \in B$ we have $\varphi(x)^+_I = \varphi(x) = (\varphi(x), 0) = \varphi^+_I(x, 0)$, so $\varphi^+_I$ is continuous. 
+
+    \textbf{It seems to me that this might not be $\fC^k$ at all. I don't know of you can even glue this without basically already having the vector field available and then one might as well do the other proof. Maybe a local vector field is enough? Not sure :(}
+
+    Now you would need to verify that this is a $\fC^k$ atlas. 
+    Possibly using a version of the manifold chart lemma from Lee. 
+    I will only try to show that the transition maps are $\fC^k$. 
+    The rest should be easier. 
+    The only interesting intersections are those of two charts of the form $(U \cup ((U \cap B) \times I), \varphi^+_I)$ and $(V, \cup ((V \cap B) \times J), \psi^+_J)$. 
+    We need to check that the transition map is $\fC^k$ on $U \cap V \cap B$. 
+    This is clear for all combinations of partial derivatives that do not include the $n$-th one. 
+\end{proof}
+
+\begin{lem}
+    Let $X$ be an $n$-dimensional $\fC^k$-manifold and $B \subseteq X$ a closed subset. 
+    Then $X^+_B$ is the pushout in the category of $\fC^k$-manifolds. 
+\end{lem}
+
+\begin{rem}
+    It seems that this is not at all trivial and in fact much of the issue with gluing manually along boundaries.
+    I am not sure if we can even guarantee the above lemma.
+    The above lemma would hopefully mean that one never has to look at the explicit construction again.
+\end{rem}
+
+
+\begin{defi}
+    Let $X$ be a Hausdorff space and $B \subseteq X$ a closed subset.
+    Let $U \subseteq B$ be an open subset together with a 
+\end{defi}
 
 We would like the following theorem: 
 
