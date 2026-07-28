@@ -16,6 +16,7 @@ public import Mathlib.Geometry.Manifold.Instances.Icc
 public import Mathlib.Geometry.Manifold.Immersion
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
+public import Mathlib.Geometry.Convex.Cone.Basic
 
 /-! Header-/
 
@@ -51,14 +52,11 @@ def IsInwardPointingTry5Local {p : M} (v : TangentSpace I p) : Prop :=
 lemma modelWithCornersEuclideanHalfSpace_apply {p : EuclideanHalfSpace n} : (𝓡∂ n) p = p.val :=
   rfl
 
-lemma modelWithCornersEuclideanHalfSpace_symm_apply {p : EuclideanSpace ℝ (Fin n)} : (𝓡∂ n).symm p =
-    ⟨WithLp.toLp 2 (update p 0 (max (p 0) 0)), by simp⟩ :=
-  rfl
-
 lemma modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff {p : EuclideanHalfSpace n} :
     (𝓡∂ n).IsBoundaryPoint p ↔ ((𝓡∂ n) p).ofLp 0 = 0 := by
-  simp [ModelWithCorners.isBoundaryPoint_iff, range_modelWithCornersEuclideanHalfSpace n,
-    modelWithCornersEuclideanHalfSpace_apply, eq_comm]
+  simp [ModelWithCorners.isBoundaryPoint_iff, eq_comm,
+    range_modelWithCornersEuclideanHalfSpace, chartAt_self_eq,
+    -modelWithCornersEuclideanHalfSpace_toFun]
 
 lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace
     {p : EuclideanHalfSpace n}
@@ -67,7 +65,7 @@ lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfS
 
 lemma modelWithCornersEuclideanHalfSpace_symm_apply_of_IsBoundaryPoint {p : EuclideanHalfSpace n}
     : (𝓡∂ n).symm ((𝓡∂ n) p) = p := by
-  simp
+  simp [-modelWithCornersEuclideanHalfSpace_toFun]
 
 lemma modelWithCornersEuclideanHalfSpace_boundary_eq :
     (𝓡∂ n).boundary (EuclideanHalfSpace n) = {p | ((𝓡∂ n) p).ofLp 0 = 0} := by
@@ -76,8 +74,8 @@ lemma modelWithCornersEuclideanHalfSpace_boundary_eq :
 
 lemma modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff {p : EuclideanHalfSpace n} :
     (𝓡∂ n).IsInteriorPoint p ↔ ((𝓡∂ n) p).ofLp 0 > 0 := by
-  simp [ModelWithCorners.isInteriorPoint_iff, range_modelWithCornersEuclideanHalfSpace n,
-    modelWithCornersEuclideanHalfSpace_apply]
+  simp [ModelWithCorners.isInteriorPoint_iff, range_modelWithCornersEuclideanHalfSpace,
+    chartAt_self_eq, -modelWithCornersEuclideanHalfSpace_toFun]
 
 lemma modelWithCornersEuclideanHalfSpace_interior_eq :
     (𝓡∂ n).interior (EuclideanHalfSpace n) = {p | 0 < ((𝓡∂ n) p).ofLp 0} := by
@@ -93,19 +91,19 @@ lemma modelWithCornersEuclideanHalfSpace_symm_hasMFDerivWithinAt {p : EuclideanH
       -- sensible way to write this
       -- why is this okay for `ModelWithCorners.hasMFDerivAt`?
       (ContinuousLinearMap.id ℝ (TangentSpace (𝓡 n) ((𝓡∂ n) p))) := by
-  refine ⟨(𝓡∂ n).continuousOn_symm.continuousWithinAt
-    (by simp [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace]), ?_⟩
+  refine ⟨(𝓡∂ n).continuousOn_symm.continuousWithinAt (by simp), ?_⟩
   apply HasFDerivWithinAt.congr (f := id)
   · apply HasFDerivAt.hasFDerivWithinAt
     exact hasFDerivAt_id p.val
   · intro x hx
     simp_all [modelWithCornersEuclideanHalfSpace_symm_apply,
-      modelWithCornersEuclideanHalfSpace_apply]
+      modelWithCornersEuclideanHalfSpace_apply, -modelWithCornersEuclideanHalfSpace_toFun,
+      chartAt_self_eq]
   · rw [modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff] at hp
     have : (update ((𝓡∂ n) p).ofLp 0 0) = ((𝓡∂ n) p).ofLp := by
       rw [update_eq_self_iff, hp]
     simp [modelWithCornersEuclideanHalfSpace_symm_apply,
-      hp, this]
+      hp, this, -modelWithCornersEuclideanHalfSpace_toFun]
     rfl
 
 lemma modelWithCornersEuclideanHalfSpace_symm_mDifferentialbleWithinAt {p : EuclideanHalfSpace n}
@@ -150,7 +148,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
       apply Continuous.isOpen_preimage ?_ U hU
       exact (ModelWithCorners.continuous_symm (𝓡∂ n)).comp (by fun_prop)
     have hV0 : 0 ∈ V := by
-      simp [V, hUp]
+      simp [V, hUp, -modelWithCornersEuclideanHalfSpace_toFun]
     -- one could possibly make this nicer usin `LineDeriv` but there is few API about it
     have yay1 : d[Ici (0 : ℝ) ∩ V] (f ∘ (𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 1 < 0 := by
       unfold mvfderivWithin
@@ -166,7 +164,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
       have h2''' : Ici 0 ∩ V ⊆ (fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) ⁻¹' {x | 0 ≤ x.ofLp 0} := by
         intro x ⟨hx1, hx2⟩
         simp [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, y,
-          mul_nonpos_of_nonneg_of_nonpos hx1 hv]
+          mul_nonpos_of_nonneg_of_nonpos hx1 hv, -modelWithCornersEuclideanHalfSpace_toFun]
       have h2 : MDiffAt[Ici 0 ∩ V] ((𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 :=
         hh.comp 0 h2'' h2'''
       have h3 : UniqueMDiffAt[Ici (0 : ℝ) ∩ V] 0 := by
@@ -175,7 +173,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
           exact uniqueDiffWithinAt_Ici 0
         · exact hV.mem_nhds_iff.mpr hV0
       have h4 : (↑(𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 = p := by
-        simp
+        simp [-modelWithCornersEuclideanHalfSpace_toFun]
       -- this rewrite below produces defeq issues because we're changing the precise presentation
       -- of the point in the tangent space. Even when removing this def-eq issue, we still
       -- get a def-eq issue where the lemma applies both functions  individually but we need them
@@ -219,31 +217,34 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
       · apply IsMinOn.localize
         intro x ⟨hx1, hx2⟩
         simp only [comp_apply, zero_smul, sub_zero, ModelWithCorners.left_inv, hf3 p ⟨hp, hUp⟩,
-          mem_setOf_eq]
+          mem_ofPred_eq]
         by_cases! hx' : x = 0 ∨ ((d% (𝓡∂ n) p) v).ofLp 0 = 0
         · rcases hx' with h1 | h2
           · simp only [h1, zero_smul, sub_zero, ModelWithCorners.left_inv]
             apply ge_of_eq
             apply hf3
             simp [modelWithCornersEuclideanHalfSpace_boundary_eq,
-              hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, hUp]
+              hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, hUp,
+              -modelWithCornersEuclideanHalfSpace_toFun]
           · apply ge_of_eq
             apply hf3
-            simp only [modelWithCornersEuclideanHalfSpace_boundary_eq, mem_inter_iff, mem_setOf_eq,
+            simp only [modelWithCornersEuclideanHalfSpace_boundary_eq, mem_inter_iff, mem_ofPred_eq,
               y]
             rw [ModelWithCorners.right_inv]
-            · simpa [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2, V] using hx2
+            · simpa [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2, V,
+                -modelWithCornersEuclideanHalfSpace_toFun] using hx2
             · simp [range_modelWithCornersEuclideanHalfSpace n,
-                hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2]
+                hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2,
+                -modelWithCornersEuclideanHalfSpace_toFun]
         · apply le_of_lt
           apply hf2
-          simp only [modelWithCornersEuclideanHalfSpace_interior_eq, mem_inter_iff, mem_setOf_eq]
+          simp only [modelWithCornersEuclideanHalfSpace_interior_eq, mem_inter_iff, mem_ofPred_eq]
           rw [ModelWithCorners.right_inv]
           · simp only [PiLp.sub_apply, hp.eq_zero_of_modelWithCornersEuclideanHalfSpace,
               PiLp.smul_apply, smul_eq_mul, zero_sub, Left.neg_pos_iff, y]
-            refine ⟨?_, by simpa [V] using hx2⟩
+            refine ⟨?_, by simpa [V, -modelWithCornersEuclideanHalfSpace_toFun] using hx2⟩
             exact mul_neg_of_pos_of_neg (lt_of_le_of_ne hx1 hx'.1.symm) (lt_of_le_of_ne hv hx'.2)
-          · simp only [range_modelWithCornersEuclideanHalfSpace n, mem_setOf_eq, PiLp.sub_apply,
+          · simp only [range_modelWithCornersEuclideanHalfSpace n, mem_ofPred_eq, PiLp.sub_apply,
               hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, PiLp.smul_apply, smul_eq_mul,
               zero_sub, Left.nonneg_neg_iff, y]
             apply le_of_lt
@@ -305,14 +306,14 @@ lemma prop541euclideanTry5 {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBounda
       have h2''' : Ici 0 ⊆ (fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) ⁻¹' {x | 0 ≤ x.ofLp 0} := by
         intro x hx
         simp [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, y,
-          mul_nonpos_of_nonneg_of_nonpos hx hv]
+          mul_nonpos_of_nonneg_of_nonpos hx hv, -modelWithCornersEuclideanHalfSpace_toFun]
       have h2 : MDiffAt[Ici 0] ((𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 :=
         hh.comp 0 h2'' h2'''
       have h3 : UniqueMDiffAt[Ici (0 : ℝ)] 0 := by
         rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
         exact uniqueDiffWithinAt_Ici 0
       have h4 : (↑(𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 = p := by
-        simp
+        simp [-modelWithCornersEuclideanHalfSpace_toFun]
       -- this rewrite below produces defeq issues because we're changing the precise presentation
       -- of the point in the tangent space. Even when removing this def-eq issue, we still
       -- get a def-eq issue where the lemma applies both functions individually but we need them
@@ -354,29 +355,32 @@ lemma prop541euclideanTry5 {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBounda
       · apply IsMinOn.localize
         intro x hx
         simp only [comp_apply, zero_smul, sub_zero, ModelWithCorners.left_inv, hf3 p hp,
-          mem_setOf_eq]
+          mem_ofPred_eq]
         by_cases! hx' : x = 0 ∨ ((d% (𝓡∂ n) p) v).ofLp 0 = 0
         · rcases hx' with h1 | h2
           · simp only [h1, zero_smul, sub_zero, ModelWithCorners.left_inv]
             apply ge_of_eq
             apply hf3
             simp [modelWithCornersEuclideanHalfSpace_boundary_eq,
-              hp.eq_zero_of_modelWithCornersEuclideanHalfSpace]
+              hp.eq_zero_of_modelWithCornersEuclideanHalfSpace,
+              -modelWithCornersEuclideanHalfSpace_toFun]
           · apply ge_of_eq
             apply hf3
-            simp only [modelWithCornersEuclideanHalfSpace_boundary_eq, mem_setOf_eq, y]
+            simp only [modelWithCornersEuclideanHalfSpace_boundary_eq, mem_ofPred_eq, y]
             rw [ModelWithCorners.right_inv]
-            · simp [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2]
+            · simp [hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2,
+                -modelWithCornersEuclideanHalfSpace_toFun]
             · simp [range_modelWithCornersEuclideanHalfSpace n,
-                hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2]
+                hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, h2,
+                -modelWithCornersEuclideanHalfSpace_toFun]
         · apply le_of_lt
           apply hf2
-          simp only [modelWithCornersEuclideanHalfSpace_interior_eq, mem_setOf_eq]
+          simp only [modelWithCornersEuclideanHalfSpace_interior_eq, mem_ofPred_eq]
           rw [ModelWithCorners.right_inv]
           · simp only [PiLp.sub_apply, hp.eq_zero_of_modelWithCornersEuclideanHalfSpace,
               PiLp.smul_apply, smul_eq_mul, zero_sub, Left.neg_pos_iff, y]
             exact mul_neg_of_pos_of_neg (lt_of_le_of_ne hx hx'.1.symm) (lt_of_le_of_ne hv hx'.2)
-          · simp only [range_modelWithCornersEuclideanHalfSpace n, mem_setOf_eq, PiLp.sub_apply,
+          · simp only [range_modelWithCornersEuclideanHalfSpace n, mem_ofPred_eq, PiLp.sub_apply,
               hp.eq_zero_of_modelWithCornersEuclideanHalfSpace, PiLp.smul_apply, smul_eq_mul,
               zero_sub, Left.nonneg_neg_iff, y]
             apply le_of_lt
@@ -421,14 +425,14 @@ lemma Manifold.localDiffeomorphOn_of_mem_maximalAtlas {f : OpenPartialHomeomorph
     (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f f.source:= by
   intro x
   apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).isLocalDiffeomorphAt
-  simp
+  exact x.2
 
 omit [IsManifold I ∞ M] in
 lemma Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
     (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f.symm f.target := by
   intro x
   apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).symm.isLocalDiffeomorphAt
-  simp
+  exact x.2
 
 omit [IsManifold I ∞ M] in
 lemma Manifold.isBoundaryPoint_iff_of_me_maximalAtlas {f : OpenPartialHomeomorph M H}
@@ -586,3 +590,27 @@ lemma isInwardPointing_iff_chartAt {M : Type*}
   · intro h
     exact prop541general_part2 (E := E) hp v (chartAt _ p) (mem_chart_source _ p)
       (IsManifold.chart_mem_maximalAtlas p) h
+
+example (p : M) (v : TangentSpace I p) (f : M → ℝ) (U : Set M) (hU : IsOpen U) (hpU : p ∈ U)
+    (hf1 : CMDiff[U] ∞ f)
+    (hf2 : ∀ x ∈ I.interior M ∩ U, 0 ≤ f x)
+    (hf3 : ∀ x ∈ I.boundary M ∩ U, f x = 0) :  0 ≤ d% f p v := sorry
+
+def ConvexConeIsInwardPointing (p : M) : ConvexCone ℝ (TangentSpace I p) where
+  carrier v := IsInwardPointingTry5Local v
+  smul_mem' c hc v := by
+    intro ⟨f, U, hU, hpU, hf1, hf2, hf3, hf4⟩
+    use f, U, hU, hpU, hf1, hf2, hf3
+    simp [hf4, hc]
+  add_mem' := by
+    intro v ⟨f, U, hU, hpU, hf1, hf2, hf3, hf4⟩ w ⟨g, V, hV, hpV, hg1, hg2, hg3, hg4⟩
+    use f + g, U ∩ V, hU.inter hV, ⟨hpU, hpV⟩
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · exact (hf1.mono inter_subset_left).add (hg1.mono inter_subset_right)
+    · intro x ⟨hx1, hx2, hx3⟩
+      exact add_pos (hf2 x ⟨hx1, hx2⟩) (hg2 x ⟨hx1, hx3⟩)
+    · intro x ⟨hx1, hx2, hx3⟩
+      simp [hf3 x ⟨hx1, hx2⟩, hg3 x ⟨hx1, hx3⟩]
+    · simp
+      --rw [mvfderiv_fun_add]
+      sorry
