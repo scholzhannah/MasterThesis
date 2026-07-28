@@ -26,7 +26,6 @@ open scoped Topology Manifold ContDiff
 
 section
 
-
 -- this is how to say that `M` is a topological manifold
 variable {M H : Type*} [TopologicalSpace H]
   [TopologicalSpace M] [ChartedSpace H M]
@@ -84,8 +83,6 @@ lemma modelWithCornersEuclideanHalfSpace_interior_eq :
     (𝓡∂ n).interior (EuclideanHalfSpace n) = {p | 0 < ((𝓡∂ n) p).ofLp 0} := by
   simp_rw [← modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff]
   rfl
-
-#check ModelWithCorners.hasMFDerivAt
 
 lemma modelWithCornersEuclideanHalfSpace_symm_hasMFDerivWithinAt {p : EuclideanHalfSpace n}
     (hp : (𝓡∂ n).IsBoundaryPoint p) :
@@ -154,6 +151,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
       exact (ModelWithCorners.continuous_symm (𝓡∂ n)).comp (by fun_prop)
     have hV0 : 0 ∈ V := by
       simp [V, hUp]
+    -- one could possibly make this nicer usin `LineDeriv` but there is few API about it
     have yay1 : d[Ici (0 : ℝ) ∩ V] (f ∘ (𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 1 < 0 := by
       unfold mvfderivWithin
       have h1 :  MDiffAt[U] f (((𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0) := by
@@ -317,7 +315,7 @@ lemma prop541euclideanTry5 {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBounda
         simp
       -- this rewrite below produces defeq issues because we're changing the precise presentation
       -- of the point in the tangent space. Even when removing this def-eq issue, we still
-      -- get a def-eq issue where the lemma applies both functions  individually but we need them
+      -- get a def-eq issue where the lemma applies both functions individually but we need them
       -- applied as a composition
       rw [mfderiv_comp_mfderivWithin_of_eq h1 h2 h3 h4]
       simp only [comp_apply]
@@ -425,23 +423,122 @@ lemma Manifold.localDiffeomorphOn_of_mem_maximalAtlas {f : OpenPartialHomeomorph
   apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).isLocalDiffeomorphAt
   simp
 
+omit [IsManifold I ∞ M] in
+lemma Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f.symm f.target := by
+  intro x
+  apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).symm.isLocalDiffeomorphAt
+  simp
+
+omit [IsManifold I ∞ M] in
+lemma Manifold.isBoundaryPoint_iff_of_me_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
+    I.IsBoundaryPoint p ↔ I.IsBoundaryPoint (f p) := by
+  exact ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isBoundaryPoint_iff
+      (ne_of_beq_false rfl)
+
+omit [IsManifold I ∞ M] in
+lemma Manifold.isInteriorPoint_iff_of_me_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
+    I.IsInteriorPoint p ↔ I.IsInteriorPoint (f p) := by
+  exact ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isInteriorPoint_iff
+      (ne_of_beq_false rfl)
+
+set_option backward.isDefEq.respectTransparency false in
 lemma prop541general_part1 {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
     [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
-    (v : TangentSpace (𝓡∂ n) p) (hv : IsInwardPointingTry5 v)
+    (v : TangentSpace (𝓡∂ n) p) (hv : IsInwardPointingTry5Local v)
     (f : OpenPartialHomeomorph M (EuclideanHalfSpace n))
     (hpf : p ∈ f.source) (hf : f ∈ IsManifold.maximalAtlas (𝓡∂ n) ∞ M) :
     0 < (d% (𝓡∂ n) (f p) (mfderiv (𝓡∂ n) _ f p v)).ofLp 0 := by
+  rw [← prop541euclideanTry5Local ((Manifold.isBoundaryPoint_iff_of_me_maximalAtlas hf hpf).mp hp)]
+  obtain ⟨g, U, hU, hUp, hg1, hg2, hg3, hg4⟩ := hv
+  use g ∘ f.symm, (f '' (f.source ∩ U)), f.isOpen_image_source_inter hU,
+    mem_image_of_mem f ⟨hpf, hUp⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · have h : ContMDiffOn (𝓡∂ n) (𝓡∂ n) ∞ (f.symm) (f '' (f.source ∩ U)) := by
+      apply (contMDiffOn_symm_of_mem_maximalAtlas hf).mono
+      exact subset_trans (image_mono inter_subset_left) f.image_source_subset
+    apply hg1.comp h
+    rw [f.image_source_inter_eq' U]
+    exact inter_subset_right
+  · intro x ⟨hx1, hx2⟩
+    --maybe the set should already be stated like what the rewrite does?
+    rw [f.image_source_inter_eq' U] at hx2
+    apply hg2
+    refine ⟨?_, hx2.2⟩
+    change (𝓡∂ n).IsInteriorPoint (f.symm x)
+    rw [← ((Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas hf)
+      ⟨x, hx2.1⟩).isInteriorPoint_iff (ne_of_beq_false rfl)]
+    exact hx1
+  · intro x ⟨hx1, hx2⟩
+    rw [f.image_source_inter_eq' U] at hx2
+    apply hg3
+    refine ⟨?_, hx2.2⟩
+    change (𝓡∂ n).IsBoundaryPoint (f.symm x)
+    rw [← ((Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas hf)
+      ⟨x, hx2.1⟩).isBoundaryPoint_iff (ne_of_beq_false rfl)]
+    exact hx1
+  · unfold mvfderiv
+    have hg : MDifferentiableAt (𝓡∂ n) 𝓘(ℝ, ℝ) g (f.symm (f p)) := by
+      rw [f.left_inv hpf]
+      exact (hg1.mdifferentiableOn (ne_of_beq_false rfl) p hUp).mdifferentiableAt
+        (hU.mem_nhds_iff.mpr hUp)
+    have hf1 : MDifferentiableAt (𝓡∂ n) (𝓡∂ n) f.symm (f p) := by
+      apply ((contMDiffOn_symm_of_mem_maximalAtlas hf).mdifferentiableOn (ne_of_beq_false rfl)
+        (f p) (f.map_source hpf)).mdifferentiableAt
+      exact f.open_target.mem_nhds_iff.mpr (f.map_source hpf)
+    have hf2 : MDifferentiableAt (𝓡∂ n) (𝓡∂ n) f p := by
+      apply ((contMDiffOn_of_mem_maximalAtlas hf).mdifferentiableOn (ne_of_beq_false rfl)
+        p hpf).mdifferentiableAt
+      exact f.open_source.mem_nhds_iff.mpr hpf
+    -- this literally always gives defeq issues...
+    -- how do I fix this?
+    rw [mfderiv_comp (f p) hg hf1, ← ContinuousLinearMap.comp_assoc,
+      ContinuousLinearMap.comp_apply, ← mfderiv_comp_apply p hf1 hf2 v,
+      ← mfderivWithin_of_isOpen f.open_source hpf, mfderivWithin_congr (f := id)
+      (f₁ := f.symm ∘ f) f.leftInvOn (f.left_inv hpf), mfderivWithin_of_isOpen f.open_source hpf,
+      mfderiv_id]
+    -- I need the `simp` and then the first rewrite to fix some defeq issue again with application
+    -- of composition
+    simp only [comp_apply]
+    rw [f.left_inv hpf, ContinuousLinearMap.id_apply (R₁ := ℝ) v]
+    exact hg4
 
-
-  rw [← prop541euclideanTry5]
-  · obtain ⟨g, hg1, hg2, hg3, hg4⟩ := hv
-    unfold IsInwardPointingTry5
-    use g ∘ f.symm
-    refine ⟨?_, ?_⟩
-    ·
-      sorry
-    · sorry
+lemma prop541general_part2 {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p)
+    (f : OpenPartialHomeomorph M (EuclideanHalfSpace n))
+    (hpf : p ∈ f.source) (hf : f ∈ IsManifold.maximalAtlas (𝓡∂ n) ∞ M)
+    (hv : 0 < (d% (𝓡∂ n) (f p) (mfderiv (𝓡∂ n) _ f p v)).ofLp 0) :
+    IsInwardPointingTry5Local v := by
+  rw [← prop541euclideanTry5Local] at hv
+  · obtain ⟨g, U, hU, hUp, hg1, hg2, hg3, hg4⟩ := hv
+    unfold IsInwardPointingTry5Local
+    use g ∘ f, f.source ∩ f ⁻¹' U, f.isOpen_inter_preimage hU, ⟨hpf, hUp⟩,
+      hg1.comp ((contMDiffOn_of_mem_maximalAtlas hf).mono inter_subset_left) inter_subset_right
+    refine ⟨?_, ?_, ?_⟩
+    · intro x ⟨hx1, hx2⟩
+      apply hg2
+      exact ⟨(Manifold.isInteriorPoint_iff_of_me_maximalAtlas hf hx2.1).1 hx1, hx2.2⟩
+    · intro x ⟨hx1, hx2⟩
+      apply hg3
+      exact ⟨(Manifold.isBoundaryPoint_iff_of_me_maximalAtlas hf hx2.1).1 hx1, hx2.2⟩
+    · unfold mvfderiv
+      have hg : MDiffAt g (f p) :=
+        (hg1.mdifferentiableOn (ne_of_beq_false rfl) (f p) hUp).mdifferentiableAt
+          (hU.mem_nhds_iff.mpr hUp)
+      -- separate something out
+      have hf1 : MDifferentiableAt (𝓡∂ n) (𝓡∂ n) f p := by
+        --apply mdifferentiableAt_of_mem_maximalAtlas
+        apply ((contMDiffOn_of_mem_maximalAtlas hf).mdifferentiableOn (ne_of_beq_false rfl)
+          p hpf).mdifferentiableAt
+        exact f.open_source.mem_nhds_iff.mpr hpf
+      rw [mfderiv_comp (g := g) (f := f) p hg hf1]
+      exact hg4
+  -- should probably separate this out, I also needed it above
   · rw [← ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isBoundaryPoint_iff
       (ne_of_beq_false rfl)]
     exact hp
@@ -450,6 +547,42 @@ lemma prop541general {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
     [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) :
-    IsInwardPointingTry5 v ↔ ∀ (f) (hf : f ∈ IsManifold.maximalAtlas (𝓡∂ n) ∞ M),
+    IsInwardPointingTry5Local v ↔ ∀ (f) (_hf : f ∈ IsManifold.maximalAtlas (𝓡∂ n) ∞ M)
+      (_hpf : p ∈ f.source) ,
       0 < (d% (𝓡∂ n) (f p) (mfderiv (𝓡∂ n) _ f p v)).ofLp 0 := by
-  sorry
+  constructor
+  · intro hv f hf hpf
+    exact prop541general_part1 (E := E) hp v hv f hpf hf
+  · intro h
+    apply prop541general_part2 (E := E) hp (f := chartAt _ p) v (mem_chart_source _ p)
+      (IsManifold.chart_mem_maximalAtlas p)
+    exact h (chartAt _ p) (IsManifold.chart_mem_maximalAtlas p) (mem_chart_source _ p)
+
+lemma isInwardPointing_iff_exists {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) :
+    IsInwardPointingTry5Local v ↔ ∃ (f : OpenPartialHomeomorph M (EuclideanHalfSpace n))
+      (_hf : f ∈ IsManifold.maximalAtlas (𝓡∂ n) ∞ M) (_hpf : p ∈ f.source),
+      0 < (d% (𝓡∂ n) (f p) (mfderiv (𝓡∂ n) _ f p v)).ofLp 0 := by
+  constructor
+  · intro h
+    use chartAt _ p, IsManifold.chart_mem_maximalAtlas p, mem_chart_source _ p
+    exact prop541general_part1 (E := E) hp v h (chartAt _ p ) (mem_chart_source _ p)
+      (IsManifold.chart_mem_maximalAtlas p)
+  · intro ⟨f, hf1, hpf, hf2⟩
+    exact prop541general_part2 (E := E) hp v f hpf hf1 hf2
+
+lemma isInwardPointing_iff_chartAt {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) :
+    IsInwardPointingTry5Local v ↔
+      0 < (d% (𝓡∂ n) (chartAt _ p p) (mfderiv (𝓡∂ n) _ (chartAt _ p) p v)).ofLp 0 := by
+  constructor
+  · intro hv
+    exact prop541general_part1 (E := E) hp v hv (chartAt _ p ) (mem_chart_source _ p)
+      (IsManifold.chart_mem_maximalAtlas p)
+  · intro h
+    exact prop541general_part2 (E := E) hp v (chartAt _ p) (mem_chart_source _ p)
+      (IsManifold.chart_mem_maximalAtlas p) h
