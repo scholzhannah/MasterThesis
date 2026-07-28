@@ -117,10 +117,15 @@ def IsInwardPointingAlt {p : M} (v : TangentSpace I p) : Prop :=
 -- this is how to get the maximal atlas
 #check IsManifold.maximalAtlas I ∞ M
 
-lemma prop541general {n : ℕ} [Fact (finrank ℝ E = n)] {p : M} (hp : I.IsBoundaryPoint p)
-    (v : TangentSpace I p) :
-    IsInwardPointing v ↔ ∀ (f) (hf : f ∈ IsManifold.maximalAtlas I ∞ M), mfderiv% f p v = sorry :=
+lemma prop541general {M : Type*}
+  [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+  [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) :
+    IsInwardPointing v ↔ ∀ (f) (hf : f ∈ IsManifold.maximalAtlas (𝓡∂ n) ∞ M),
+      (d% (𝓡∂ n) (f p) (mfderiv (𝓡∂ n) _ f p v)).ofLp 0 > 0 := by
   sorry
+
+#check mvfderiv
 
 end
 
