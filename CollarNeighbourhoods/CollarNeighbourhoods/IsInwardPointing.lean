@@ -52,6 +52,11 @@ def IsInwardPointingTry5Local {p : M} (v : TangentSpace I p) : Prop :=
 lemma modelWithCornersEuclideanHalfSpace_apply {p : EuclideanHalfSpace n} : (𝓡∂ n) p = p.val :=
   rfl
 
+@[simp]
+lemma modelWithCornersEuclideanHalfSpace_symm_val_apply {p : EuclideanHalfSpace n} :
+    (𝓡∂ n).symm p.val = p := by
+  rw [← modelWithCornersEuclideanHalfSpace_apply, ModelWithCorners.left_inv (𝓡∂ n) p]
+
 lemma modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff {p : EuclideanHalfSpace n} :
     (𝓡∂ n).IsBoundaryPoint p ↔ ((𝓡∂ n) p).ofLp 0 = 0 := by
   simp [ModelWithCorners.isBoundaryPoint_iff, eq_comm,
@@ -152,7 +157,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
     -- one could possibly make this nicer usin `LineDeriv` but there is few API about it
     have yay1 : d[Ici (0 : ℝ) ∩ V] (f ∘ (𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0 1 < 0 := by
       unfold mvfderivWithin
-      have h1 :  MDiffAt[U] f (((𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0) := by
+      have h1 : MDiffAt[U] f (((𝓡∂ n).symm ∘ fun (i : ℝ) ↦ (𝓡∂ n) p - i • y) 0) := by
         simp only [comp_apply, zero_smul, sub_zero, ModelWithCorners.left_inv]
         exact (hf1 p hUp).mdifferentiableWithinAt (ne_of_beq_false rfl)
       have hh : MDiffAt[{x | 0 ≤ x.ofLp 0}] (𝓡∂ n).symm ((𝓡∂ n) p - (0 : ℝ) • y) := by
@@ -591,10 +596,108 @@ lemma isInwardPointing_iff_chartAt {M : Type*}
     exact prop541general_part2 (E := E) hp v (chartAt _ p) (mem_chart_source _ p)
       (IsManifold.chart_mem_maximalAtlas p) h
 
+#check mem_tangentConeAt_of_frequently
+
+theorem IsLocalMinOn.mvfderivWithin_nonneg' {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) (f : M → ℝ)
+    (s : Set M) (h : IsMinOn f s p) (hs : s ∈ nhds p) (hv : IsInwardPointingTry5Local v) :
+    (0 : ℝ) ≤ (mvfderivWithin (𝓡∂ n) f s p) v := by
+  by_cases hf : MDifferentiableWithinAt (𝓡∂ n) 𝓘(ℝ, ℝ) f s p
+  · let y := (mvfderiv (𝓡∂ n) ((𝓡∂ n) ∘ chartAt (EuclideanHalfSpace n) p) p) v
+    let V := ((chartAt (EuclideanHalfSpace n) p).symm ∘ (𝓡∂ n).symm ∘
+      fun (i : ℝ) ↦ (𝓡∂ n) (chartAt (EuclideanHalfSpace n) p p) + i • y) ⁻¹' s
+    suffices 0 ≤ d[Ici (0 : ℝ) ∩ V] (f ∘ (chartAt (EuclideanHalfSpace n) p).symm ∘ (𝓡∂ n).symm ∘
+        fun (i : ℝ) ↦ (𝓡∂ n) (chartAt (EuclideanHalfSpace n) p p) + i • y) 0 1 by
+      unfold mvfderivWithin at this
+      --rw [mfderivWithin_comp] at this
+      sorry
+    sorry
+  · sorry
+
+-- should be able to generlize this to IsLocalMinOn
+-- and it should probably also hold for more general models with corners but no idea
+theorem IsLocalMinOn.mvfderivWithin_nonneg {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) (f : M → ℝ)
+    (s : Set M) (h : IsMinOn f s p) (hs : s ∈ nhds p) (hv : IsInwardPointingTry5Local v) :
+    (0 : ℝ) ≤ (mvfderivWithin (𝓡∂ n) f s p) v := by
+  by_cases hf : MDifferentiableWithinAt (𝓡∂ n) 𝓘(ℝ, ℝ) f s p
+  · simp only [mvfderivWithin, mfderivWithin, hf, ↓reduceIte, writtenInExtChartAt, extChartAt,
+      OpenPartialHomeomorph.extend, modelWithCornersSelf_partialEquiv, PartialEquiv.trans_refl,
+      PartialHomeomorph.toFun_eq_coe, OpenPartialHomeomorph.coe_toPartialHomeomorph,
+      PartialEquiv.coe_trans_symm, PartialHomeomorph.coe_toPartialEquiv_symm,
+      OpenPartialHomeomorph.coe_toPartialHomeomorph_symm, ModelWithCorners.toPartialEquiv_coe_symm,
+      PartialEquiv.coe_trans, ModelWithCorners.toPartialEquiv_coe, comp_apply]
+    change 0 ≤ fderivWithin ℝ ((chartAt ℝ (f p)) ∘ f ∘
+        (chartAt (EuclideanHalfSpace n) p).symm ∘ (𝓡∂ n).symm)
+        (↑(chartAt (EuclideanHalfSpace n) p).symm ∘ ↑(𝓡∂ n).symm ⁻¹' s ∩ range ↑(𝓡∂ n))
+        ((𝓡∂ n) ((chartAt (EuclideanHalfSpace n) p) p)) v
+    apply IsLocalMinOn.fderivWithin_nonneg
+    · apply IsMinOn.localize
+      intro x hx
+      change ∀ x, _ at h
+      simp only [chartAt_self_eq, OpenPartialHomeomorph.refl_apply, comp_apply,
+        ModelWithCorners.left_inv, mem_chart_source, OpenPartialHomeomorph.left_inv, id_eq,
+        mem_ofPred_eq]
+      apply h
+      exact hx.1
+    · rw [isInwardPointing_iff_chartAt (E := E) hp] at hv
+      unfold posTangentConeAt
+      rw [modelWithCornersEuclideanHalfSpace_apply]
+      rw [range_modelWithCornersEuclideanHalfSpace n]
+      rw [preimage_comp]
+      have : ((𝓡∂ n).symm ⁻¹' ((chartAt (EuclideanHalfSpace n) p).target ∩
+            (chartAt (EuclideanHalfSpace n) p).symm ⁻¹' (interior s)) ∩ {y | 0 ≤ y.ofLp 0}) ⊆
+          ((𝓡∂ n).symm ⁻¹' (chartAt (EuclideanHalfSpace n) p).symm ⁻¹' s ∩ {y | 0 ≤ y.ofLp 0}) := by
+        apply inter_subset_inter_left
+        apply preimage_mono
+        apply subset_trans inter_subset_right
+        apply preimage_mono
+        exact interior_subset
+      apply tangentConeAt_mono this
+      rw [inter_comm, tangentConeAt_inter_nhds]
+      · apply mem_posTangentConeAt_of_frequently_mem
+        apply Eventually.frequently
+        rw [eventually_nhdsWithin_iff]
+        apply Eventually.of_forall
+        intro x hx
+        have : (𝓡∂ n).IsBoundaryPoint ((chartAt (EuclideanHalfSpace n) p) p) :=
+          ModelWithCorners.isBoundaryPoint_iff.mpr hp
+        simp [modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff] at this
+        simp only [mem_ofPred_eq, PiLp.add_apply, this, zero_add, ge_iff_le]
+        change 0 ≤ x • v.ofLp 0
+        have : (d% (𝓡∂ n) ((chartAt (EuclideanHalfSpace n) p) p))
+            ((mfderiv (𝓡∂ n) (𝓡∂ n) (chartAt (EuclideanHalfSpace n) p) p) v) = v := by
+          simp only [mvfderiv, ContinuousLinearMap.comp_apply, ContinuousLinearEquiv.coe_coe]
+
+          rw [← mfderiv_comp_apply_of_eq p ?_ ?_ ?_ v]
+          ·
+            sorry
+          · sorry
+          · sorry
+          · sorry
+        sorry
+      · have : IsOpen ((𝓡∂ n).symm ⁻¹' ((chartAt (EuclideanHalfSpace n) p).target ∩
+            (chartAt (EuclideanHalfSpace n) p).symm ⁻¹' (interior s))) := by
+          apply (𝓡∂ n).continuous_symm.isOpen_preimage
+          apply (chartAt (EuclideanHalfSpace n) p).continuousOn_symm.isOpen_inter_preimage
+          · exact (chartAt (EuclideanHalfSpace n) p).open_target
+          · exact isOpen_interior
+        apply this.mem_nhds_iff.mpr
+        simp [mem_interior_iff_mem_nhds, hs]
+  · simp [mvfderivWithin, mfderivWithin, hf]
+
+-- needs more conditions
 example (p : M) (v : TangentSpace I p) (f : M → ℝ) (U : Set M) (hU : IsOpen U) (hpU : p ∈ U)
-    (hf1 : CMDiff[U] ∞ f)
-    (hf2 : ∀ x ∈ I.interior M ∩ U, 0 ≤ f x)
-    (hf3 : ∀ x ∈ I.boundary M ∩ U, f x = 0) :  0 ≤ d% f p v := sorry
+    (hf1 : CMDiff[U] ∞ f) (hf2 : ∀ x ∈ I.interior M ∩ U, 0 ≤ f x)
+    (hf3 : ∀ x ∈ I.boundary M ∩ U, f x = 0) : 0 ≤ d% f p v := by
+  by_cases hfp : MDiffAt f p
+  · simp [mvfderiv, mfderiv, hfp]
+    sorry
+  · sorry
 
 def ConvexConeIsInwardPointing (p : M) : ConvexCone ℝ (TangentSpace I p) where
   carrier v := IsInwardPointingTry5Local v
