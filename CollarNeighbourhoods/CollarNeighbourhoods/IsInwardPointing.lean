@@ -40,10 +40,14 @@ section
 
 variable {n : ℕ} [NeZero n]
 
+-- this is bad because you cannot pull these through charts very well
+-- this is probably still correct
 def IsInwardPointingTry5 {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (f : M → ℝ) (_ : CMDiff ∞ f) (_ : ∀ x ∈ I.interior M, 0 < f x)
     (_ : ∀ x ∈ I.boundary M, f x = 0), 0 < d% f p v
 
+-- maybe use nbhs instead
+-- try making it a structure
 def IsInwardPointingTry5Local {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (f : M → ℝ) (U : Set M) (_ : IsOpen U) (_ : p ∈ U) (_ : CMDiff[U] ∞ f)
     (_ : ∀ x ∈ I.interior M ∩ U, 0 < f x)
@@ -216,7 +220,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
     simp only [NormedSpace.fromTangentSpace, ContinuousLinearEquiv.coe_mk, LinearEquiv.coe_mk,
       LinearMap.coe_mk, AddHom.coe_mk] at yay1
     -- this uses the assumptions hv and hf3
-    have yay2 : 0 ≤ (fderivWithin ℝ (f ∘ ↑(𝓡∂ n).symm ∘ fun i ↦ (𝓡∂ n) p - i • y)
+    have yay2 : 0 ≤ (fderivWithin ℝ (f ∘ (𝓡∂ n).symm ∘ fun i ↦ (𝓡∂ n) p - i • y)
         (Ici 0 ∩ V) 0) 1 := by
       apply IsLocalMinOn.fderivWithin_nonneg
       · apply IsMinOn.localize
@@ -273,11 +277,7 @@ lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsB
     simp only [inter_univ]
     refine ⟨h1, h2, ?_⟩
     unfold mvfderiv
-    -- **Def-eq issues reproducer**:
-    -- if you turn the line below into a `simp only`, this causes def-eq issues not caught by
-    -- `linter.tacticCheckInstances`, this is especially bad, because this lemma is a
-    -- `simp` lemma
-    rw [Function.comp_apply]
+    simp only [Function.comp_apply]
     have h3 : MDiffAt (proj 0 : StrongDual ℝ (EuclideanSpace ℝ (Fin n))) ((𝓡∂ n) p) := by
       apply DifferentiableAt.mdifferentiableAt
       fun_prop
@@ -404,11 +404,7 @@ lemma prop541euclideanTry5 {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBounda
         modelWithCornersEuclideanHalfSpace_boundary_eq] using hx
     use proj 0 ∘ 𝓡∂ n, ContDiff.comp_contMDiff (by fun_prop) (𝓡∂ n).contMDiff, h1, h2
     unfold mvfderiv
-    -- **Def-eq issues reproducer**:
-    -- if you turn the line below into a `simp only`, this causes def-eq issues not caught by
-    -- `linter.tacticCheckInstances`, this is especially bad, because this lemma is a
-    -- `simp` lemma
-    rw [Function.comp_apply]
+    simp only [Function.comp_apply]
     have h3 : MDiffAt (proj 0 : StrongDual ℝ (EuclideanSpace ℝ (Fin n))) ((𝓡∂ n) p) := by
       apply DifferentiableAt.mdifferentiableAt
       fun_prop
@@ -449,10 +445,88 @@ lemma Manifold.isBoundaryPoint_iff_of_me_maximalAtlas {f : OpenPartialHomeomorph
 omit [IsManifold I ∞ M] in
 lemma Manifold.isInteriorPoint_iff_of_me_maximalAtlas {f : OpenPartialHomeomorph M H}
     (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
-    I.IsInteriorPoint p ↔ I.IsInteriorPoint (f p) := by
-  exact ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isInteriorPoint_iff
-      (ne_of_beq_false rfl)
+    I.IsInteriorPoint p ↔ I.IsInteriorPoint (f p) :=
+  ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isInteriorPoint_iff
+    (ne_of_beq_false rfl)
 
+lemma PartialDiffeomorph.isOpen_image_source_inter {M' : Type*} [TopologicalSpace M']
+    [ChartedSpace H M'] {n : ℕ∞ω} (e : PartialDiffeomorph I I M M' n) {s : Set M} (hs : IsOpen s) :
+    IsOpen (↑e '' (e.source ∩ s)) :=
+  e.toOpenPartialHomeomorph.isOpen_image_source_inter hs
+
+lemma PartialDiffeomorph.isInwardPointingTry5Local_apply {M' : Type*} [TopologicalSpace M']
+    [ChartedSpace H M'] (p : M) (v : TangentSpace I p)
+    (f : PartialDiffeomorph I I M M' ∞) (hpf : p ∈ f.source) (hv : IsInwardPointingTry5Local v) :
+    IsInwardPointingTry5Local (mfderiv% f p v) := by
+  obtain ⟨g, U, hU, hUp, hg1, hg2, hg3, hg4⟩ := hv
+  use g ∘ f.symm, (f '' (f.source ∩ U)), f.isOpen_image_source_inter hU,
+    mem_image_of_mem f ⟨hpf, hUp⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · have h : ContMDiffOn I I ∞ f.symm (f '' (f.source ∩ U)) := by
+      apply f.contMDiffOn_invFun.mono
+      exact subset_trans (image_mono inter_subset_left) f.image_source_subset
+    apply hg1.comp h
+    rw [f.image_source_inter_eq' U]
+    exact inter_subset_right
+  · intro x ⟨hx1, hx2⟩
+    --maybe the set should already be stated like what the rewrite does?
+    rw [f.image_source_inter_eq' U] at hx2
+    apply hg2
+    refine ⟨?_, hx2.2⟩
+    change I.IsInteriorPoint (f.symm x)
+    rw [← (f.symm.isLocalDiffeomorphAt I I ∞ hx2.1).isInteriorPoint_iff (ne_of_beq_false rfl)]
+    exact hx1
+  · intro x ⟨hx1, hx2⟩
+    rw [f.image_source_inter_eq' U] at hx2
+    apply hg3
+    refine ⟨?_, hx2.2⟩
+    change I.IsBoundaryPoint (f.symm x)
+    rw [← (f.symm.isLocalDiffeomorphAt I I ∞ hx2.1).isBoundaryPoint_iff (ne_of_beq_false rfl)]
+    exact hx1
+  · unfold mvfderiv
+    have hg : MDifferentiableAt I 𝓘(ℝ, ℝ) g (f.symm (f p)) := by
+      rw [f.symm_toPartialEquiv, f.left_inv hpf]
+      exact (hg1.mdifferentiableOn (ne_of_beq_false rfl) p hUp).mdifferentiableAt
+        (hU.mem_nhds_iff.mpr hUp)
+    have hf1 : MDifferentiableAt I I f.symm (f p) := by
+      apply f.symm.mdifferentiableAt (ne_of_beq_false rfl)
+      simp [f.map_source' hpf]
+    have hf2 : MDifferentiableAt I I f p := f.mdifferentiableAt (ne_of_beq_false rfl) hpf
+    -- this literally always gives defeq issues...
+    -- how do I fix this?
+    rw [mfderiv_comp (f p) hg hf1, ← ContinuousLinearMap.comp_assoc,
+      ContinuousLinearMap.comp_apply, ← mfderiv_comp_apply p hf1 hf2 v,
+      ← mfderivWithin_of_isOpen f.open_source hpf, mfderivWithin_congr (f := id)
+      (f₁ := f.symm ∘ f) f.leftInvOn (f.left_inv hpf), mfderivWithin_of_isOpen f.open_source hpf,
+      mfderiv_id, comp_apply, PartialDiffeomorph.symm_toPartialEquiv f, f.left_inv hpf]
+    exact hg4
+
+lemma PartialDiffeomorph.isInwardPointing_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    [IsManifold I ∞ M'] (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) :
+    IsInwardPointingTry5Local v ↔ IsInwardPointingTry5Local (mfderiv% f p v) := by
+  constructor
+  · intro hv
+    exact f.isInwardPointingTry5Local_apply p v hp hv
+  · have : v = (mfderiv% f.symm (f p)) ((mfderiv% f p) v) := by
+      rw [← mfderiv_comp_apply p ?_ ?_ v]
+      · rw [← mfderivWithin_of_isOpen f.open_source hp]
+        rw [mfderivWithin_congr_of_mem (f := id) ?_ hp]
+        · rw [mfderivWithin_of_isOpen f.open_source hp, comp_apply, mfderiv_id]
+          rfl
+        exact f.leftInvOn
+      · apply f.symm.mdifferentiableAt (ne_of_beq_false rfl)
+        simp [f.map_source' hp]
+      · exact f.mdifferentiableAt (ne_of_beq_false rfl) hp
+    intro hv
+    rw [this]
+    nth_rw 1 [← f.left_inv hp]
+    apply f.symm.isInwardPointingTry5Local_apply _ ((mfderiv% f p) v) ?_ hv
+    simp [f.map_source' hp]
+
+-- now a version for IsLocalDiffeomorph
+
+-- write a general lemma for pulling inward pointing vectors through charts, local diffeomorphisms?
 set_option backward.isDefEq.respectTransparency false in
 lemma prop541general_part1 {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
@@ -586,6 +660,7 @@ lemma isInwardPointing_iff_chartAt {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
     [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) :
+    -- write this as the derivative of extchartat
     IsInwardPointingTry5Local v ↔
       0 < (d% (𝓡∂ n) (chartAt _ p p) (mfderiv (𝓡∂ n) _ (chartAt _ p) p v)).ofLp 0 := by
   constructor
@@ -604,12 +679,14 @@ theorem IsLocalMinOn.mvfderivWithin_nonneg' {M : Type*}
     (v : TangentSpace (𝓡∂ n) p) (f : M → ℝ)
     (s : Set M) (h : IsMinOn f s p) (hs : s ∈ nhds p) (hv : IsInwardPointingTry5Local v) :
     (0 : ℝ) ≤ (mvfderivWithin (𝓡∂ n) f s p) v := by
-  by_cases hf : MDifferentiableWithinAt (𝓡∂ n) 𝓘(ℝ, ℝ) f s p
-  · let y := (mvfderiv (𝓡∂ n) ((𝓡∂ n) ∘ chartAt (EuclideanHalfSpace n) p) p) v
+  by_cases hf : MDifferentiableWithinAt (𝓡∂ n) 𝓘(ℝ, ℝ) f s p --suffices
+  · let y := (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v
     let V := ((chartAt (EuclideanHalfSpace n) p).symm ∘ (𝓡∂ n).symm ∘
       fun (i : ℝ) ↦ (𝓡∂ n) (chartAt (EuclideanHalfSpace n) p p) + i • y) ⁻¹' s
-    suffices 0 ≤ d[Ici (0 : ℝ) ∩ V] (f ∘ (chartAt (EuclideanHalfSpace n) p).symm ∘ (𝓡∂ n).symm ∘
-        fun (i : ℝ) ↦ (𝓡∂ n) (chartAt (EuclideanHalfSpace n) p p) + i • y) 0 1 by
+    -- make the equality into a lemma that can then hopefully also be used above
+    -- can we integrate this into `LineDeriv` somehow?
+    suffices 0 ≤ d[Ici (0 : ℝ) ∩ V] (f ∘ (extChartAt (𝓡∂ n) p).symm ∘
+        fun (i : ℝ) ↦ (extChartAt (𝓡∂ n) p p) + i • y) 0 1 by
       unfold mvfderivWithin at this
       --rw [mfderivWithin_comp] at this
       sorry
@@ -669,6 +746,7 @@ theorem IsLocalMinOn.mvfderivWithin_nonneg {M : Type*}
         simp [modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff] at this
         simp only [mem_ofPred_eq, PiLp.add_apply, this, zero_add, ge_iff_le]
         change 0 ≤ x • v.ofLp 0
+        simp only [modelWithCornersEuclideanHalfSpace_toFun] at hv
         have : (d% (𝓡∂ n) ((chartAt (EuclideanHalfSpace n) p) p))
             ((mfderiv (𝓡∂ n) (𝓡∂ n) (chartAt (EuclideanHalfSpace n) p) p) v) = v := by
           simp only [mvfderiv, ContinuousLinearMap.comp_apply, ContinuousLinearEquiv.coe_coe]
