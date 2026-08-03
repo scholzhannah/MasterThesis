@@ -17,6 +17,7 @@ public import Mathlib.Geometry.Manifold.Immersion
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
+public import CollarNeighbourhoods.LineDeriv
 
 /-! Header-/
 
@@ -52,44 +53,6 @@ def IsInwardPointingTry5Local {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (f : M → ℝ) (U : Set M) (_ : IsOpen U) (_ : p ∈ U) (_ : CMDiff[U] ∞ f)
     (_ : ∀ x ∈ I.interior M ∩ U, 0 < f x)
     (_ : ∀ x ∈ I.boundary M ∩ U, f x = 0), 0 < d% f p v
-
-lemma modelWithCornersEuclideanHalfSpace_apply {p : EuclideanHalfSpace n} : (𝓡∂ n) p = p.val :=
-  rfl
-
-@[simp]
-lemma modelWithCornersEuclideanHalfSpace_symm_val_apply {p : EuclideanHalfSpace n} :
-    (𝓡∂ n).symm p.val = p := by
-  rw [← modelWithCornersEuclideanHalfSpace_apply, ModelWithCorners.left_inv (𝓡∂ n) p]
-
-lemma modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff {p : EuclideanHalfSpace n} :
-    (𝓡∂ n).IsBoundaryPoint p ↔ ((𝓡∂ n) p).ofLp 0 = 0 := by
-  simp [ModelWithCorners.isBoundaryPoint_iff, eq_comm,
-    range_modelWithCornersEuclideanHalfSpace, chartAt_self_eq,
-    -modelWithCornersEuclideanHalfSpace_toFun]
-
-lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace
-    {p : EuclideanHalfSpace n}
-    (hp : (𝓡∂ n).IsBoundaryPoint p) : ((𝓡∂ n) p).ofLp 0 = 0 :=
-  modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff.mp hp
-
-lemma modelWithCornersEuclideanHalfSpace_symm_apply_of_IsBoundaryPoint {p : EuclideanHalfSpace n}
-    : (𝓡∂ n).symm ((𝓡∂ n) p) = p := by
-  simp [-modelWithCornersEuclideanHalfSpace_toFun]
-
-lemma modelWithCornersEuclideanHalfSpace_boundary_eq :
-    (𝓡∂ n).boundary (EuclideanHalfSpace n) = {p | ((𝓡∂ n) p).ofLp 0 = 0} := by
-  simp_rw [← modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff]
-  rfl
-
-lemma modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff {p : EuclideanHalfSpace n} :
-    (𝓡∂ n).IsInteriorPoint p ↔ ((𝓡∂ n) p).ofLp 0 > 0 := by
-  simp [ModelWithCorners.isInteriorPoint_iff, range_modelWithCornersEuclideanHalfSpace,
-    chartAt_self_eq, -modelWithCornersEuclideanHalfSpace_toFun]
-
-lemma modelWithCornersEuclideanHalfSpace_interior_eq :
-    (𝓡∂ n).interior (EuclideanHalfSpace n) = {p | 0 < ((𝓡∂ n) p).ofLp 0} := by
-  simp_rw [← modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff]
-  rfl
 
 lemma modelWithCornersEuclideanHalfSpace_symm_hasMFDerivWithinAt {p : EuclideanHalfSpace n}
     (hp : (𝓡∂ n).IsBoundaryPoint p) :
