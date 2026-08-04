@@ -106,6 +106,56 @@ lemma mvfderivWithin_of_isOpen (hs : IsOpen s) (hx : x ∈ s) : d[s] f x = d% f 
 
 end
 
+lemma prop541euclideanTry5Local' {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) :
+    IsInwardPointingTry5Local v ↔ 0 < ((d% (𝓡∂ n) p) v).ofLp 0 := by
+  constructor
+  · intro ⟨f, U, hU, hUp, hf1, hf2, hf3, hf4⟩
+    by_contra! hv
+    have h1 : MDerivAlongWithin f (-v) (AlongFunPreimIn (-v) U) 0 1 < 0 := by
+      rw [MDerivAlongWithin_alongFunPreimIn hp _ (by simpa) _ _ (hU.mem_nhds_iff.mpr hUp)]
+      · rw [MDerivAlong_eq hp _ (by simpa) _]
+        · simpa
+        · -- reused below -> have
+          apply (hf1.mdifferentiableOn (ne_of_beq_false rfl)).mdifferentiableAt
+          exact hU.mem_nhds_iff.mpr hUp
+      · apply (hf1.mdifferentiableOn (ne_of_beq_false rfl)).mdifferentiableAt
+        exact hU.mem_nhds_iff.mpr hUp
+    have h2 : 0 ≤ MDerivAlongWithin f (-v) (AlongFunPreimIn (-v) U) 0 1 := by
+      apply IsLocalMinOn.mvfderivWithin_nonneg hp
+      · simpa
+      · apply IsMinOn.localize
+        intro x hx
+        by_cases h : (𝓡∂ n).IsBoundaryPoint x
+        · simp [hf3 p ⟨hp, hUp⟩, hf3 x ⟨h, hx⟩]
+        · rw [← ModelWithCorners.isInteriorPoint_iff_not_isBoundaryPoint x] at h
+          simp [hf3 p ⟨hp, hUp⟩, (hf2 x ⟨h, hx⟩).le]
+      · exact hU.mem_nhds_iff.mpr hUp
+    exact not_lt_of_ge h2 h1
+  · intro h
+    have h1 : ∀ x ∈ (𝓡∂ n).interior (EuclideanHalfSpace n), 0 < (proj 0 ∘ 𝓡∂ n) x := by
+      intro x hx
+      simpa [modelWithCornersEuclideanHalfSpace_apply,
+        modelWithCornersEuclideanHalfSpace_interior_eq] using hx
+    have h2 : ∀ x ∈ (𝓡∂ n).boundary (EuclideanHalfSpace n), (proj 0 ∘ 𝓡∂ n) x = 0 := by
+      intro x hx
+      simpa [modelWithCornersEuclideanHalfSpace_apply,
+        modelWithCornersEuclideanHalfSpace_boundary_eq] using hx
+    use proj 0 ∘ 𝓡∂ n, univ, isOpen_univ, mem_univ p,
+      (ContDiff.comp_contMDiff (by fun_prop) (𝓡∂ n).contMDiff).contMDiffOn
+    simp only [inter_univ]
+    refine ⟨h1, h2, ?_⟩
+    unfold mvfderiv
+    simp only [Function.comp_apply]
+    have h3 : MDiffAt (proj 0 : StrongDual ℝ (EuclideanSpace ℝ (Fin n))) ((𝓡∂ n) p) := by
+      apply DifferentiableAt.mdifferentiableAt
+      fun_prop
+    rw [mfderiv_comp p h3 (𝓡∂ n).mdifferentiableAt,
+      ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply]
+    rw [ContinuousLinearMap.mfderiv_eq (proj 0 : StrongDual ℝ (EuclideanSpace ℝ (Fin n)))]
+    exact h
+
+
 set_option backward.isDefEq.respectTransparency false in
 lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) :
@@ -635,7 +685,7 @@ theorem IsLocalMinOn.mvfderivWithin_nonneg' {M : Type*}
 
 -- should be able to generlize this to IsLocalMinOn
 -- and it should probably also hold for more general models with corners but no idea
-theorem IsLocalMinOn.mvfderivWithin_nonneg {M : Type*}
+theorem IsLocalMinOn.mvfderivWithin_nonneg'' {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
     [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) (f : M → ℝ)

@@ -76,6 +76,10 @@ noncomputable def AlongFun {p : M} (v : TangentSpace I p) :=
   letI y := (mvfderiv I (extChartAt I p) p) v
   (extChartAt I p).symm ∘ fun (i : ℝ) ↦ (extChartAt I p p) + i • y
 
+def AlongFunPreimIn {p : M} (v : TangentSpace I p) (s : Set M) :=
+  letI y := (mvfderiv I (extChartAt I p) p) v
+  AlongFun v ⁻¹' s ∩ (fun (i : ℝ) ↦ (extChartAt I p p) + i • y) ⁻¹' (extChartAt I p).target
+
 noncomputable def MDerivAlong (f : M → ℝ) {p : M} (v : TangentSpace I p) :=
   fderiv ℝ (f ∘ AlongFun v)
 
@@ -105,6 +109,26 @@ theorem mdifferentiableWithinAt_alongFun {p : M} (v : TangentSpace I p) (s : Set
   rw [mdifferentiableOn_iff_differentiableOn]
   fun_prop
 
+theorem mdifferentiableWithinAt_alongFun' {p : M} (v : TangentSpace I p) (s : Set ℝ)
+    (hs : s ⊆ (fun i ↦ (extChartAt I p) p +
+      i • (d% (extChartAt I p) p) v) ⁻¹' (extChartAt I p).target) :
+    MDiff[s] (AlongFun v) := by
+  unfold AlongFun
+  apply mdifferentiableOn_extChartAt_symm.comp ?_ (sorry)
+  rw [mdifferentiableOn_iff_differentiableOn]
+  fun_prop
+
+theorem MDerivAlongWithin_inter_source {p : M} (v : TangentSpace I p) (f : M → ℝ) {s t : Set M}
+    (st : s ⊆ t) (ht : UniqueDiffWithinAt ℝ (AlongFun v ⁻¹' s) 0) (h : MDiffAt[t] f p)
+    (hs : s ∈ nhds p) :
+    MDerivAlongWithin f v (AlongFun v ⁻¹' s) 0 =
+      MDerivAlongWithin f v (AlongFun v ⁻¹' (s ∩ (chartAt H p).source)) 0 := by
+  unfold MDerivAlongWithin
+  symm
+  apply fderivWithin_of_mem_nhdsWithin
+  · sorry
+  · sorry
+  · sorry
 
 theorem MDerivAlongWithin_subset' {p : M} (v : TangentSpace I p) (f : M → ℝ) {s t : Set M}
     (st : s ⊆ t) (ht : UniqueDiffWithinAt ℝ (AlongFun v ⁻¹' s) 0) (h : MDiffAt[t] f p) :
@@ -113,10 +137,8 @@ theorem MDerivAlongWithin_subset' {p : M} (v : TangentSpace I p) (f : M → ℝ)
   rw [← mdifferentiableWithinAt_iff_differentiableWithinAt]
   rw [← alongFun_zero v] at h
   apply h.comp 0 ?_ (subset_of_eq rfl)
-  apply mdifferentiableWithinAt_alongFun
-  ·
-    rw [image_subset_iff]
-    unfold AlongFun
+  apply mdifferentiableWithinAt_alongFun'
+  · unfold AlongFun
     rw [preimage_comp]
     apply preimage_mono
 
@@ -164,7 +186,7 @@ lemma helper1 {p : M} (v : TangentSpace I p) :
 
 lemma jsdoa {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
-    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M}
+    [IsManifold (𝓡∂ n) ∞ M] {p : M}
     (v : TangentSpace (𝓡∂ n) p) :
     MDiffAt[Ici 0] (fun (i : ℝ) ↦
       (extChartAt (𝓡∂ n) p) p + i • (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v) 0 := by
@@ -173,9 +195,12 @@ lemma jsdoa {M : Type*}
   · apply mdifferentiableWithinAt_id.smul
     exact mdifferentiableWithinAt_const
 
+
+-- find a generalisation of this lemma and the next
+-- derive this one from generalisation
 lemma thinkofnamelater {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
-    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) (hv : 0 ≤ (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p v).ofLp 0) :
     MDifferentiableWithinAt 𝓘(ℝ, ℝ) (𝓡∂ n) (AlongFun v) (Ici (0 : ℝ)) (0 : ℝ) := by
   have h1 : MDifferentiableWithinAt 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ n)
@@ -220,6 +245,26 @@ lemma thinkofnamelater {M : Type*}
         · rw [range_modelWithCornersEuclideanHalfSpace n]
           exact self_mem_nhdsWithin
 
+lemma thinkofnamelater' {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [IsManifold (𝓡∂ n) ∞ M] {p : M}
+    (v : TangentSpace (𝓡∂ n) p) (U : Set M) :
+    MDifferentiableWithinAt 𝓘(ℝ, ℝ) (𝓡∂ n) (AlongFun v) (AlongFunPreimIn v U) (0 : ℝ) := by
+  unfold AlongFunPreimIn
+  have h1 : MDifferentiableWithinAt 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ n)
+      (extChartAt (𝓡∂ n) p).symm (extChartAt (𝓡∂ n) p).target
+      ((extChartAt (𝓡∂ n) p) p + (0 : ℝ) • (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v) := by
+    apply MDifferentiableWithinAt.mono (extChartAt_target_subset_range p)
+    apply mdifferentiableWithinAt_extChartAt_symm
+    simp [mem_extChartAt_target p, -extChartAt]
+  have h2 : MDiffAt[AlongFun v ⁻¹' U] (fun (i : ℝ) ↦
+      (extChartAt (𝓡∂ n) p) p + i • (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v) 0 :=
+    mdifferentiableWithinAt_const.add (mdifferentiableWithinAt_id.smul
+      mdifferentiableWithinAt_const)
+  rw [inter_comm]
+  apply h1.comp 0 (h2.mono inter_subset_right)
+  exact inter_subset_left
+
 /-- The manifold derivative of `extChartAt` at the basepoint is the identity. -/
 lemma mvfderiv_extChartAt_self {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
   [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type u_3} [TopologicalSpace H]
@@ -240,10 +285,11 @@ theorem mvfderivWithin_eq_fderivWithin {𝕜 : Type u_1} [NontriviallyNormedFiel
     mfderiv[s] f x = fderivWithin 𝕜 f s x :=
   mfderivWithin_eq_fderivWithin
 
+
 set_option backward.isDefEq.respectTransparency false in
 lemma MDerivAlong_eq {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
-    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) (hv : 0 ≤ (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p v).ofLp 0)
     (f : M → ℝ)
     (hf : MDifferentiableAt (𝓡∂ n) 𝓘(ℝ, ℝ) f p) :
@@ -276,7 +322,7 @@ lemma MDerivAlong_eq {M : Type*}
       simp
     have h2 : MDiffAt[Ici (0 : ℝ)] (fun (i : ℝ) ↦
         (extChartAt (𝓡∂ n) p) p + i • (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v) 0 := by
-      exact jsdoa (E := E) v
+      exact jsdoa v
     rw [mfderivWithin_comp 0 (mdifferentiableWithinAt_extChartAt_symm (by simp)) h2]
     · -- the first rewrites fix defeq issues
       rw [comp_apply, zero_smul, add_zero, extChartAt_to_inv p, ContinuousLinearMap.comp_apply]
@@ -295,7 +341,7 @@ lemma MDerivAlong_eq {M : Type*}
         -extChartAt, -modelWithCornersEuclideanHalfSpace_toFun, -mem_range]
     · rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
       exact uniqueDiffWithinAt_Ici 0
-  · exact thinkofnamelater (E := E) hp v hv
+  · exact thinkofnamelater hp v hv
   · rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
     exact uniqueDiffWithinAt_Ici 0
 
@@ -313,7 +359,7 @@ lemma continuousOn_alongFun_euclideanHalfSpace [TopologicalSpace M] {n : ℕ} [N
 
 lemma mem_nds {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
-    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) (hv : 0 ≤ (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p v).ofLp 0)
     (s : Set M) (hs : s ∈ nhds p) :
     AlongFun v ⁻¹' s ∈ 𝓝[≥] 0 := by
@@ -324,7 +370,7 @@ lemma mem_nds {M : Type*}
       exact mem_extChartAt_target p
     · fun_prop
     · rw [zero_smul, add_zero]
-      apply nhdsWithin_mono (t := {x | 0 ≤x.ofLp 0 })
+      apply nhdsWithin_mono (t := {x | 0 ≤ x.ofLp 0 })
       · rw [image_subset_iff]
         rw [ModelWithCorners.isBoundaryPoint_iff,
           frontier_range_modelWithCornersEuclideanHalfSpace n, mem_ofPred] at hp
@@ -342,27 +388,82 @@ lemma mem_nds {M : Type*}
   rw [alongFun_zero v]
   exact hs
 
+lemma mem_nhds {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) (hv : 0 ≤ (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p v).ofLp 0)
+    (s : Set M) (hs : s ∈ nhds p) :
+    AlongFunPreimIn v s ∈ 𝓝[≥] 0 := by
+  unfold AlongFunPreimIn
+  apply inter_mem
+  · exact mem_nds  hp v hv s hs
+  · apply ContinuousWithinAt.preimage_mem_nhdsWithin' (by fun_prop)
+    rw [zero_smul, add_zero]
+    -- I also use this whole rest of the proof above
+    -- write a lemma
+    apply nhdsWithin_mono (t := {x | 0 ≤ x.ofLp 0})
+    · rw [image_subset_iff]
+      intro x hx
+      rw [mem_preimage]
+      simp only [mem_ofPred_eq, PiLp.add_apply, PiLp.smul_apply, smul_eq_mul]
+      apply add_nonneg
+      · apply le_of_eq
+        simpa [ModelWithCorners.isBoundaryPoint_iff, range_modelWithCornersEuclideanHalfSpace,
+          frontier_halfSpace, modelWithCornersEuclideanHalfSpace_apply,
+          -modelWithCornersEuclideanHalfSpace_toFun] using hp
+      · change 0 ≤ x • ((mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v).ofLp 0
+        exact smul_nonneg hx hv
+    · rw [extChartAt_coe p]
+      rw [extChartAt_target (𝓡∂ n) p]
+      simp only [comp_apply, inter_mem_iff]
+      refine ⟨?_, ?_⟩
+      · apply (𝓡∂ n).continuousWithinAt_symm.preimage_mem_nhdsWithin
+        rw [ModelWithCorners.left_inv]
+        exact chart_target_mem_nhds (EuclideanHalfSpace n) p
+      · rw [range_modelWithCornersEuclideanHalfSpace n]
+        exact self_mem_nhdsWithin
+
+theorem MDerivAlongWithin_alongFunPreimIn {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    (v : TangentSpace (𝓡∂ n) p) (hv : 0 ≤ (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p v).ofLp 0)
+    (f : M → ℝ) (U : Set M) (hU : U ∈ 𝓝 p)
+    (hf : MDifferentiableAt (𝓡∂ n) 𝓘(ℝ, ℝ) f p) :
+    MDerivAlongWithin f v (AlongFunPreimIn v U) 0 =
+      MDerivAlongWithin f v (Ici (0 : ℝ)) 0 := by
+  unfold MDerivAlongWithin
+  symm
+  refine fderivWithin_of_mem_nhdsWithin ?_ ?_ ?_
+  · exact mem_nhds hp v hv U hU
+  · exact uniqueDiffWithinAt_Ici 0
+  · -- make this a lemma
+    rw [← mdifferentiableWithinAt_iff_differentiableWithinAt]
+    apply MDifferentiableWithinAt.comp 0 (g := f) (f := AlongFun v) (H' := EuclideanHalfSpace n)
+      (u := univ)
+      (E' := EuclideanSpace ℝ (Fin n))
+    · rw [alongFun_zero v]
+      exact hf.mdifferentiableWithinAt
+    · exact thinkofnamelater' v U
+    · exact subset_preimage_univ
+
 theorem IsLocalMinOn.mvfderivWithin_nonneg {M : Type*}
     [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
-    [Fact (finrank ℝ E = n)] [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
+    [IsManifold (𝓡∂ n) ∞ M] {p : M} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) (hv : 0 ≤ (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p v).ofLp 0)
     (f : M → ℝ)
     (s : Set M) (h : IsLocalMinOn f s p) (hs : s ∈ nhds p) :
-    letI t := AlongFun v ⁻¹' s
+    letI t := AlongFunPreimIn v s
     (0 : ℝ) ≤ MDerivAlongWithin f v t 0 1 := by
-  letI y := (mvfderiv (𝓡∂ n) (extChartAt (𝓡∂ n) p) p) v
-  let t' := AlongFun v ⁻¹'
-    (s ∩ (extChartAt (𝓡∂ n) p).source)
   apply IsLocalMinOn.fderivWithin_nonneg
   · apply IsLocalMinOn.comp_continuousOn
     · simpa [AlongFun] using h
-    · exact subset_of_eq rfl
+    · exact inter_subset_left
     · apply (continuousOn_extChartAt_symm p).comp
       · fun_prop
-      · intro x
-
-        sorry
-    · simp [mem_of_mem_nhds hs, alongFun_zero]
-  · rw [one_mem_posTangentConeAt_iff_mem_closure]
-
-    sorry
+      · intro
+        simp [AlongFunPreimIn]
+    · simp [AlongFunPreimIn, mem_of_mem_nhds hs, alongFun_zero]
+  · simp [one_mem_posTangentConeAt_iff_mem_closure, mem_closure_iff_nhdsWithin_neBot,
+      nhdsWithin_inter_of_mem' (nhdsWithin_mono 0
+      Ioi_subset_Ici_self (mem_nhds hp v hv s hs))]
+    simp [← mem_closure_iff_nhdsWithin_neBot]
