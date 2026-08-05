@@ -77,3 +77,42 @@ lemma modelWithCornersEuclideanHalfSpace_interior_eq :
     (𝓡∂ n).interior (EuclideanHalfSpace n) = {p | 0 < ((𝓡∂ n) p).ofLp 0} := by
   simp_rw [← modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff]
   rfl
+
+theorem mvfderivWithin_comp
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
+    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type u_6} [TopologicalSpace H']
+    {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+    {f : M → M'} (x : M) {s : Set M} {g : M' → F} {u : Set M'}
+    (hg : MDiffAt[u] g (f x)) (hf : MDiffAt[s] f x) (h : s ⊆ f ⁻¹' u) (hxs : UniqueMDiffAt[s] x) :
+    d[s] (g ∘ f) x = (d[u] g (f x)).comp (mfderiv[s] f x) := by
+  unfold mvfderivWithin
+  rw [mfderivWithin_comp x hg hf h hxs, ContinuousLinearMap.comp_assoc]
+  rfl
+
+theorem mvfderiv_comp_mfderivWithin
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
+    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type u_6} [TopologicalSpace H']
+    {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+    {f : M → M'} (x : M) {s : Set M} {g : M' → F}
+    (hg : MDiffAt g (f x)) (hf : MDiffAt[s] f x)
+    (hxs : UniqueMDiffAt[s] x) :
+    d[s] (g ∘ f) x = (d% g (f x)).comp (mfderiv[s] f x) := by
+  unfold mvfderivWithin
+  rw [mfderiv_comp_mfderivWithin x hg hf hxs, ← ContinuousLinearMap.comp_assoc]
+  rfl
+
+lemma mvfderiv_eq_fderiv {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {E' : Type u_3} [NormedAddCommGroup E']
+    [NormedSpace 𝕜 E'] {f : E → E'} {x : E} :
+    d% f x = fderiv 𝕜 f x :=
+  mfderiv_eq_fderiv
+
+theorem mvfderivWithin_eq_fderivWithin {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {E' : Type u_3} [NormedAddCommGroup E']
+    [NormedSpace 𝕜 E'] {f : E → E'} {s : Set E} {x : E} :
+    mfderiv[s] f x = fderivWithin 𝕜 f s x :=
+  mfderivWithin_eq_fderivWithin
