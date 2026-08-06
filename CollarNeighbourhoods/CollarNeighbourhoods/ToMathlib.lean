@@ -54,9 +54,21 @@ lemma modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff {p : EuclideanHalfS
     range_modelWithCornersEuclideanHalfSpace, chartAt_self_eq,
     -modelWithCornersEuclideanHalfSpace_toFun]
 
-lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace
+lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace'
     {p : EuclideanHalfSpace n}
     (hp : (𝓡∂ n).IsBoundaryPoint p) : ((𝓡∂ n) p).ofLp 0 = 0 :=
+  modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff.mp hp
+
+lemma modelWithCornersEuclideanHalfSpace_target (n : ℕ) [NeZero n] :
+    (𝓡∂ n).target = { y | 0 ≤ y 0 } := by
+  rw [(𝓡∂ n).target_eq, range_modelWithCornersEuclideanHalfSpace]
+
+
+lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace
+    {M : Type*}
+    [TopologicalSpace M] {n : ℕ} [NeZero n] [ChartedSpace (EuclideanHalfSpace n) M]
+    [IsManifold (𝓡∂ n) ∞ M] {p : M}
+    (hp : (𝓡∂ n).IsBoundaryPoint p) : ((extChartAt (𝓡∂ n) p) p).ofLp 0 = 0 :=
   modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff.mp hp
 
 lemma modelWithCornersEuclideanHalfSpace_symm_apply_of_IsBoundaryPoint {p : EuclideanHalfSpace n}
@@ -78,6 +90,7 @@ lemma modelWithCornersEuclideanHalfSpace_interior_eq :
   simp_rw [← modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff]
   rfl
 
+-- **PR**
 theorem mvfderivWithin_comp
     {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
@@ -91,11 +104,12 @@ theorem mvfderivWithin_comp
   rw [mfderivWithin_comp x hg hf h hxs, ContinuousLinearMap.comp_assoc]
   rfl
 
+-- **PR**
 theorem mvfderiv_comp_mfderivWithin
     {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
     {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
-    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type u_6} [TopologicalSpace H']
+    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type*} [TopologicalSpace H']
     {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
     {f : M → M'} (x : M) {s : Set M} {g : M' → F}
     (hg : MDiffAt g (f x)) (hf : MDiffAt[s] f x)
@@ -105,14 +119,91 @@ theorem mvfderiv_comp_mfderivWithin
   rw [mfderiv_comp_mfderivWithin x hg hf hxs, ← ContinuousLinearMap.comp_assoc]
   rfl
 
+-- **PR by Michael**
 lemma mvfderiv_eq_fderiv {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
     [NormedAddCommGroup E] [NormedSpace 𝕜 E] {E' : Type u_3} [NormedAddCommGroup E']
     [NormedSpace 𝕜 E'] {f : E → E'} {x : E} :
     d% f x = fderiv 𝕜 f x :=
   mfderiv_eq_fderiv
 
+-- **PR by Michael**
 theorem mvfderivWithin_eq_fderivWithin {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
     [NormedAddCommGroup E] [NormedSpace 𝕜 E] {E' : Type u_3} [NormedAddCommGroup E']
     [NormedSpace 𝕜 E'] {f : E → E'} {s : Set E} {x : E} :
-    mfderiv[s] f x = fderivWithin 𝕜 f s x :=
+    d[s] f x = fderivWithin 𝕜 f s x :=
   mfderivWithin_eq_fderivWithin
+
+/-- The manifold derivative of `extChartAt` at the basepoint is the identity. -/
+lemma mvfderiv_extChartAt_self {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
+  [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type u_3} [TopologicalSpace H]
+  {I : ModelWithCorners 𝕜 E H}
+  {M : Type u_4} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M] {x : M} :
+    d% (extChartAt I x) x = ContinuousLinearMap.id 𝕜 E :=
+  mfderiv_extChartAt_self
+
+-- **PR**
+theorem mvfderiv_comp
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
+    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type u_6} [TopologicalSpace H']
+    {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+    {f : M → M'} (x : M) {g : M' → F} (hg : MDiffAt g (f x)) (hf : MDiffAt f x) :
+    d% (g ∘ f) x = (d% g (f x)).comp (mfderiv% f x) := by
+  unfold mvfderiv
+  rw [mfderiv_comp x hg hf]
+  rfl
+
+-- **To-Do**: Zulip discussion about having `PartialHomeomorph` be public API
+
+def Manifold.PartialDiffeomorphOfMaximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : PartialDiffeomorph I I M H ∞ where
+  toPartialEquiv := f.toPartialEquiv
+  open_source := f.open_source
+  open_target := f.open_target
+  contMDiffOn_toFun := contMDiffOn_of_mem_maximalAtlas hf
+  contMDiffOn_invFun := contMDiffOn_symm_of_mem_maximalAtlas hf
+
+omit [IsManifold I ∞ M] in
+lemma Manifold.localDiffeomorphOn_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f f.source:= by
+  intro x
+  apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).isLocalDiffeomorphAt
+  exact x.2
+
+omit [IsManifold I ∞ M] in
+lemma Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f.symm f.target := by
+  intro x
+  apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).symm.isLocalDiffeomorphAt
+  exact x.2
+
+omit [IsManifold I ∞ M] in
+lemma Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
+    I.IsBoundaryPoint p ↔ I.IsBoundaryPoint (f p) :=
+  ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isBoundaryPoint_iff
+      (ne_of_beq_false rfl)
+
+omit [IsManifold I ∞ M] in
+lemma Manifold.isInteriorPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
+    I.IsInteriorPoint p ↔ I.IsInteriorPoint (f p) :=
+  ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isInteriorPoint_iff
+    (ne_of_beq_false rfl)
+
+omit [IsManifold I ∞ M] in
+lemma PartialDiffeomorph.isOpen_image_source_inter {M' : Type*} [TopologicalSpace M']
+    [ChartedSpace H M'] {n : ℕ∞ω} (e : PartialDiffeomorph I I M M' n) {s : Set M} (hs : IsOpen s) :
+    IsOpen (↑e '' (e.source ∩ s)) :=
+  e.toOpenPartialHomeomorph.isOpen_image_source_inter hs
+
+
+theorem nhdsWithin_of_mem_of_subset {α : Type u_1} [TopologicalSpace α] {a : α} {s t : Set α}
+    (h : s ∈ nhdsWithin a t) (h1 : s ⊆ t) :
+    nhdsWithin a s = nhdsWithin a t := by
+  rw [← inter_eq_self_of_subset_left h1]
+  exact nhdsWithin_inter_of_mem h
+
+omit [IsManifold I ∞ M] in
+theorem extChartAt_target_subset {p : M} : (extChartAt I p).target ⊆ I.target := by simp
