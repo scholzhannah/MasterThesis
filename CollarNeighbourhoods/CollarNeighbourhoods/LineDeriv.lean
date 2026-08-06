@@ -261,7 +261,7 @@ lemma mdifferentiableWithinAt_alongFun_euclideanHalfSpace {M : Type*}
 lemma MDerivAlong_eq' {p : M} (hp : I.IsBoundaryPoint p)
     (v : TangentSpace I p)
     (f : M → ℝ) (hf : MDifferentiableAt I 𝓘(ℝ, ℝ) f p)
-    (hI : ∀ x y (_ : x ∈ range I) (_ : y ∈ range I), x + y ∈ (range I)) :
+    (hI : ∀ x (_ : x ∈ range I) (r : ℝ) (_ : 0 ≤ r), r • x ∈ (range I)) :
     letI y := (mvfderiv I (extChartAt I p) p) v
     MDerivAlongWithin f v ((fun (i : ℝ) ↦ (extChartAt I p p) + i • y) ⁻¹' I.target) 0 1 =
       mvfderiv I f p v := by
@@ -276,33 +276,22 @@ lemma MDerivAlong_eq' {p : M} (hp : I.IsBoundaryPoint p)
   rw [mvfderiv_comp_mfderivWithin 0 ((alongFun_apply_zero v).symm ▸ hf)
     (mdifferentiableWithinAt_alongFun v)]
   · sorry
-  · rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
+  · have h : Convex ℝ ((fun (i : ℝ) ↦ (extChartAt I p) p + i • y) ⁻¹' I.target) := by
+      intro a ha b hb s t hs ht h
+      rw [mem_preimage, I.target_eq] at ha hb ⊢
+      rw [add_smul, ← add_assoc, smul_assoc, smul_assoc, ← one_smul (M := ℝ) ((extChartAt I p) p),
+        ← h, add_smul, add_right_comm _ _ (s • a • y), add_assoc, ← smul_add, ← smul_add]
+      exact convex_iff_add_mem.1 I.convex_range ha hb hs ht h
+    rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
     apply UniqueDiffOn.uniqueDiffWithinAt ?_ (by simp)
-    apply uniqueDiffOn_convex
-    · -- find some condition to impose to make this be convex
+    apply uniqueDiffOn_convex h
+    -- I could probably construct an explicit element here
+    rw [← h.nontrivial_iff_nonempty_interior]
 
-
-
-      intro x hx y hy s t hs ht h
-
-      rw [mem_preimage, I.target_eq] at hx hy ⊢
-
-      rw [add_smul, ← add_assoc]
-      rw [smul_assoc]
-      rw [smul_assoc]
-
-      apply I.convex_range.add_smul_mem ?_ ?_ ⟨ht, by linarith⟩
-      · apply I.convex_range.add_smul_mem (mem_range_self _) hx ⟨hs, by linarith⟩
-      · rw [add_right_comm]
-        apply I.convex_range.add_smul_mem
-        · exact hy
-        ·
-          sorry
-        · sorry
-    · apply Nonempty.mono (preimage_interior_subset_interior_preimage (by fun_prop))
-      rw [nonempty_preimage_iff]
-
+    rw [← image_nontrivial (f := fun (i : ℝ) ↦ (extChartAt I p) p + i • y)]
+    · rw [image_preimage_eq_inter_range]
       sorry
+    · sorry
 
 
 set_option backward.isDefEq.respectTransparency false in
