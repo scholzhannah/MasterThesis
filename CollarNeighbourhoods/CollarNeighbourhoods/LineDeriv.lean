@@ -124,6 +124,42 @@ theorem mdifferentiableOn_alongFun {p : M} (v : TangentSpace I p) :
     MDiff[AlongFunPreimIn v (extChartAt I p).source] (AlongFun v) :=
   (contMDiffOn_alongFun v).mdifferentiableOn (ne_of_beq_false rfl)
 
+-- is this even true??
+lemma uniqueDiffWithinAt_alongFunPreimIn {p : M} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
+    UniqueDiffWithinAt ℝ (AlongFunPreimIn v (extChartAt I p).source) 0 := by
+  rw [alongFunPreimIn_extChartAt_source_eq v]
+
+  sorry
+
+lemma mfderiv_along_eq {p : M} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
+    mfderiv[AlongFunPreimIn v (extChartAt I p).source] (fun (i : ℝ) ↦
+        (extChartAt I p) p + i • (d% (extChartAt I p) p) v) 0 1
+      = (mvfderiv I (extChartAt I p) p) v := by
+  rw [mfderivWithin_eq_fderivWithin]
+  simp only [fderivWithin_const_add]
+  rw [fderivWithin_smul_const ?_ differentiableWithinAt_fun_id]
+  · rw [fderivWithin_fun_id]
+    · rw [← ContinuousLinearMap.one_def, ContinuousLinearMap.smulRight_one_eq_toSpanSingleton]
+      change (ContinuousLinearMap.toSpanSingleton ℝ ((d% (extChartAt I p) p) v)) 1 =
+        (d% (extChartAt I p) p) v
+      rw [ContinuousLinearMap.toSpanSingleton_apply, one_smul]
+    · sorry
+  · sorry
+
+lemma mvfderivWithin_alongFun {p : M} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
+    mfderiv[AlongFunPreimIn v (extChartAt I p).source] (AlongFun v) 0 1 = v := by
+  let y := (mvfderiv I (extChartAt I p) p) v
+  unfold AlongFun
+  rw [mfderivWithin_comp 0 (mdifferentiableOn_extChartAt_symm ((extChartAt I p) p + 0 • y) sorry)]
+  · rw [ContinuousLinearMap.comp_apply]
+
+    sorry
+  · rw [mdifferentiableWithinAt_iff_differentiableWithinAt]
+    fun_prop
+  · exact inter_subset_right
+  · -- what is a sensible condition to make this true
+    sorry
+
 omit [IsManifold I ∞ M] in
 theorem alongFunPreimIn_extChartAt_target_mem_nhdsWithin {p : M} (v : TangentSpace I p) :
     letI y := (mvfderiv I (extChartAt I p) p) v
@@ -175,15 +211,6 @@ lemma mdifferentiableWithinAt_alongFun {p : M} (v : TangentSpace I p) :
     letI y := (mvfderiv I (extChartAt I p) p) v
     MDiffAt[(fun (i : ℝ) ↦ (extChartAt I p p) + i • y) ⁻¹' I.target] (AlongFun v) (0 : ℝ) := by
   let y := (mvfderiv I (extChartAt I p) p) v
-  have h1 : MDiffAt[(extChartAt I p).target] (extChartAt I p).symm
-      ((extChartAt I p) p + (0 : ℝ) • (mvfderiv I (extChartAt I p) p) v) := by
-    apply MDifferentiableWithinAt.mono (extChartAt_target_subset_range p)
-    apply mdifferentiableWithinAt_extChartAt_symm
-    simp [mem_extChartAt_target p, -extChartAt]
-  have h2 : MDiffAt[((fun (i : ℝ) ↦ (extChartAt I p p) + i • y) ⁻¹' I.target)] (fun (i : ℝ) ↦
-      (extChartAt I p) p + i • (mvfderiv I (extChartAt I p) p) v) 0 :=
-    mdifferentiableWithinAt_const.add (mdifferentiableWithinAt_id.smul
-      mdifferentiableWithinAt_const)
   apply ((mdifferentiableOn_alongFun v) 0 (zero_mem_AlongFunPreimIn v)).congr_nhds
   apply nhdsWithin_of_mem_of_subset
   · exact alongFunPreimIn_extChartAt_target_mem_nhdsWithin v
@@ -258,10 +285,30 @@ lemma mdifferentiableWithinAt_alongFun_euclideanHalfSpace {M : Type*}
     rw [← alongFunPreimIn_extChartAt_source_of_eq hp v hv.symm]
     exact mdifferentiableWithinAt_alongFun v
 
+lemma mvfderivWithin_alongFun' {p : M} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
+    mfderiv[(fun i ↦ (extChartAt I p) p + i • (d% (extChartAt I p) p) v) ⁻¹' I.target]
+      (AlongFun v) 0 1 = v := by
+  unfold AlongFun
+  let y := (mvfderiv I (extChartAt I p) p) v
+  -- we also use these above, lemmas?
+  have h1 : MDiffAt[(extChartAt I p).target] (extChartAt I p).symm
+      ((extChartAt I p) p + (0 : ℝ) • (mvfderiv I (extChartAt I p) p) v) := by
+    apply MDifferentiableWithinAt.mono (extChartAt_target_subset_range p)
+    apply mdifferentiableWithinAt_extChartAt_symm
+    simp [mem_extChartAt_target p, -extChartAt]
+  have h2 : MDiffAt[((fun (i : ℝ) ↦ (extChartAt I p p) + i • y) ⁻¹' I.target)] (fun (i : ℝ) ↦
+      (extChartAt I p) p + i • (mvfderiv I (extChartAt I p) p) v) 0 :=
+    mdifferentiableWithinAt_const.add (mdifferentiableWithinAt_id.smul
+      mdifferentiableWithinAt_const)
+  rw [mfderivWithin_comp 0 h1 h2]
+  · sorry
+  · sorry
+
+  sorry
+
 lemma MDerivAlong_eq' {p : M} (hp : I.IsBoundaryPoint p)
     (v : TangentSpace I p)
-    (f : M → ℝ) (hf : MDifferentiableAt I 𝓘(ℝ, ℝ) f p)
-    (hI : ∀ x (_ : x ∈ range I) (r : ℝ) (_ : 0 ≤ r), r • x ∈ (range I)) :
+    (f : M → ℝ) (hf : MDifferentiableAt I 𝓘(ℝ, ℝ) f p) :
     letI y := (mvfderiv I (extChartAt I p) p) v
     MDerivAlongWithin f v ((fun (i : ℝ) ↦ (extChartAt I p p) + i • y) ⁻¹' I.target) 0 1 =
       mvfderiv I f p v := by
@@ -275,8 +322,14 @@ lemma MDerivAlong_eq' {p : M} (hp : I.IsBoundaryPoint p)
   have := ((alongFun_apply_zero v).symm ▸ hf)
   rw [mvfderiv_comp_mfderivWithin 0 ((alongFun_apply_zero v).symm ▸ hf)
     (mdifferentiableWithinAt_alongFun v)]
-  · sorry
-  · have h : Convex ℝ ((fun (i : ℝ) ↦ (extChartAt I p) p + i • y) ⁻¹' I.target) := by
+  · rw [ContinuousLinearMap.comp_apply, alongFun_apply_zero v]
+    congr
+
+
+    sorry
+  · -- what is a reasonable condition to impose to make this actually true?
+    -- I think probably we need to require v to be InwardPointing
+    have h : Convex ℝ ((fun (i : ℝ) ↦ (extChartAt I p) p + i • y) ⁻¹' I.target) := by
       intro a ha b hb s t hs ht h
       rw [mem_preimage, I.target_eq] at ha hb ⊢
       rw [add_smul, ← add_assoc, smul_assoc, smul_assoc, ← one_smul (M := ℝ) ((extChartAt I p) p),
@@ -285,13 +338,16 @@ lemma MDerivAlong_eq' {p : M} (hp : I.IsBoundaryPoint p)
     rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
     apply UniqueDiffOn.uniqueDiffWithinAt ?_ (by simp)
     apply uniqueDiffOn_convex h
-    -- I could probably construct an explicit element here
-    rw [← h.nontrivial_iff_nonempty_interior]
 
-    rw [← image_nontrivial (f := fun (i : ℝ) ↦ (extChartAt I p) p + i • y)]
-    · rw [image_preimage_eq_inter_range]
-      sorry
-    · sorry
+    -- I could probably construct an explicit element here
+    apply Nonempty.mono (preimage_interior_subset_interior_preimage (by fun_prop))
+
+
+
+    rw [nonempty_preimage_iff]
+    rw [nonempty_def]
+    simp_rw [mem_inter_iff]
+    sorry
 
 
 set_option backward.isDefEq.respectTransparency false in
