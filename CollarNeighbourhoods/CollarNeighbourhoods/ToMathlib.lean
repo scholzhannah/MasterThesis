@@ -207,3 +207,12 @@ theorem nhdsWithin_of_mem_of_subset {α : Type u_1} [TopologicalSpace α] {a : �
 
 omit [IsManifold I ∞ M] in
 theorem extChartAt_target_subset {p : M} : (extChartAt I p).target ⊆ I.target := by simp
+
+theorem mfderivWithin_target_extChartAt_symm {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type u_3} [TopologicalSpace H]
+    {I : ModelWithCorners 𝕜 E H}
+    {M : Type u_4} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M] {x : M} :
+    mfderiv[(extChartAt I x).target] (extChartAt I x).symm ((extChartAt I x) x) =
+    ContinuousLinearMap.id 𝕜 (TangentSpace 𝓘(𝕜, E) ((extChartAt I x) x)) := by
+  rw [mfderivWithin_congr_set (t := range I) ?_, mfderivWithin_range_extChartAt_symm]
+  rw [← nhdsWithin_eq_iff_eventuallyEq, nhdsWithin_extChartAt_target_eq]

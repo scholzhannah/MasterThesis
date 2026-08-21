@@ -106,6 +106,29 @@ lemma mvfderivWithin_of_isOpen (hs : IsOpen s) (hx : x ∈ s) : d[s] f x = d% f 
 
 end
 
+-- I need to write a lemma that says that an inward pointing vector `v` in the model space is one
+-- where there is `ε > 0` s.t. `ε * v` is in the interior. Maybe we actually need to require this
+-- for an interval
+-- Maybe we can then simplify the proof of `prop541euclideanTry5Local` with that
+-- or it will get even more complicated
+
+lemma exists_of_inwardPointing {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
+    IsInwardPointingTry5Local v ↔ ∃ ε > 0, ∀ i ∈ Ico 0 ε,
+      I p + i • d% I p v ∈ interior I.target := by
+  constructor
+  · sorry
+  · intro h
+    unfold IsInwardPointingTry5Local
+    -- take some sort of bump function
+    -- this is very wrong...
+    use fun x ↦ ‖I p - I x‖, univ, isOpen_univ, mem_univ p
+    refine ⟨?_, ?_⟩
+    · rw [contMDiffOn_univ]
+      apply ContMDiff.comp (g := fun x ↦ ‖I p - x‖) (f := I) ?_ I.contMDiff
+      rw [contMDiff_iff_contDiff]
+      sorry
+    · sorry
+
 lemma prop541euclideanTry5Local {p : EuclideanHalfSpace n} (hp : (𝓡∂ n).IsBoundaryPoint p)
     (v : TangentSpace (𝓡∂ n) p) :
     IsInwardPointingTry5Local v ↔ 0 < ((d% (𝓡∂ n) p) v).ofLp 0 := by
@@ -338,6 +361,37 @@ lemma isInwardPointing_iff_chartAt {M : Type*}
   isInwardPointing_iff_of_mem_maximalAtlas hp _ _
     (mem_chart_source (EuclideanHalfSpace n) p) (IsManifold.chart_mem_maximalAtlas p)
 
+theorem preimage_modelWithCorners_target_nontrivial {p : M} (hp : I.IsBoundaryPoint p)
+    {v : TangentSpace I p} {f : M → ℝ}
+    {s : Set M} (h : IsLocalMinOn f s p) (hs : s ∈ nhds p) (hv : IsInwardPointingTry5Local v) :
+    ((fun (i : ℝ) ↦ (extChartAt I p) p +
+      i • (d% (extChartAt I p) p) v) ⁻¹' I.target).Nontrivial := by
+
+  sorry
+
+theorem alongFunPreimIn_mem_nhdsWithin {p : M} (hp : I.IsBoundaryPoint p)
+    {v : TangentSpace I p} {f : M → ℝ}
+    {s : Set M} (h : IsLocalMinOn f s p) (hs : s ∈ nhds p) (hv : IsInwardPointingTry5Local v) :
+    AlongFunPreimIn v (extChartAt I p).source ∈ 𝓝[>] 0 := by
+  rw [alongFunPreimIn_extChartAt_source_eq v]
+  rw [IsLocalDiffeomorphAt.isInwardPointing_iff _ _ (chartAt H p) sorry] at hv
+  apply ContinuousWithinAt.preimage_mem_nhdsWithin' (by fun_prop)
+  rw [zero_smul, add_zero]
+  sorry
+
+theorem IsLocalMinOn.mvfderivWithin_nonneg' {p : M} (hp : I.IsBoundaryPoint p)
+    {v : TangentSpace I p} {f : M → ℝ}
+    {s : Set M} (h : IsLocalMinOn f s p) (hs : s ∈ nhds p) (hv : IsInwardPointingTry5Local v) :
+    (0 : ℝ) ≤ (mvfderivWithin I f s p) v := by
+  by_cases hf : MDiffAt[s] f p
+  · rw [mvfderivWithin_of_mem_nhds I f p hs]
+    rw [← MDerivAlong_eq'' v f (hf.mdifferentiableAt hs) ?_]
+    · apply (h.isLocalMin hs).mderivAlongWithin_nonneg_alongFunPreimIn' v
+
+      sorry
+    · sorry
+  · simp [mvfderivWithin, mfderivWithin, hf]
+
 -- everything starting from here should really be true for all models with corners but
 -- this would require a lot of generalisation to show
 -- not sure that this one is the correct approach :(
@@ -350,10 +404,9 @@ theorem IsLocalMinOn.mvfderivWithin_nonneg {M : Type*}
   by_cases hf : MDifferentiableWithinAt (𝓡∂ n) 𝓘(ℝ, ℝ) f s p
   · have hv' := ((isInwardPointing_iff_chartAt hp v).mp hv).le
     rw [mvfderivWithin_of_mem_nhds (𝓡∂ n) f p hs]
-    rw [← MDerivAlong_eq hp v ?_ _ ?_]
-    · exact (h.isLocalMin hs).mderivAlongWithin_nonneg hp v hv' _ (hf.mdifferentiableAt hs)
-    · exact ((isInwardPointing_iff_chartAt hp v).mp hv).le
-    · exact hf.mdifferentiableAt hs
+    rw [← MDerivAlong_eq hp v ((isInwardPointing_iff_chartAt hp v).mp hv).le _
+      (hf.mdifferentiableAt hs)]
+    exact (h.isLocalMin hs).mderivAlongWithin_nonneg hp v hv' _ (hf.mdifferentiableAt hs)
   · simp [mvfderivWithin, mfderivWithin, hf]
 
 theorem IsLocalMin.mvfderiv_nonneg {M : Type*}
