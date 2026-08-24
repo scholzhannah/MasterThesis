@@ -93,6 +93,7 @@ def IsInwardPointingTry4 {p : M} (v : TangentSpace I p) : Prop :=
   ∀ (f : M → ℝ) (_ : CMDiff ∞ f) (_ : ∀ x ∈ I.interior M, 0 < f x)
     (_ : ∀ x ∈ I.boundary M, f x = 0), 0 < d% f p v
 
+
 -- **Option 4**
 def IsInwardPointingTry5 {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (f : M → ℝ) (_ : CMDiff ∞ f) (_ : ∀ x ∈ I.interior M, 0 < f x)

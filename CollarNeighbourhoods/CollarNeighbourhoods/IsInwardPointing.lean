@@ -116,7 +116,14 @@ lemma exists_of_inwardPointing {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSp
     IsInwardPointingTry5Local v ↔ ∃ ε > 0, ∀ i ∈ Ico 0 ε,
       I p + i • d% I p v ∈ interior I.target := by
   constructor
-  · sorry
+  · intro ⟨f, U, hU, hUp, hf1, hf2, hf3, hf4⟩
+    by_contra! hv
+    have h1 : MDerivAlongWithin f (-v) (AlongFunPreimIn (-v) U) 0 1 < 0 := by
+
+      sorry
+    have h2 : 0 ≤ MDerivAlongWithin f (-v) (AlongFunPreimIn (-v) U) 0 1 := by
+      sorry
+    exact not_lt_of_ge h2 h1
   · intro h
     unfold IsInwardPointingTry5Local
     -- take some sort of bump function
