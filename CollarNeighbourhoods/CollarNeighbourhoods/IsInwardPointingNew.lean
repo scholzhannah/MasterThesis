@@ -46,8 +46,7 @@ def IsRealizable {p : M} (v : TangentSpace I p) : Prop :=
 
 -- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
 def IsRealizableMinimal {p : M} (v : TangentSpace I p) : Prop :=
-  ∃ (γ : ℝ → M) (ε : ℝ) (_ : ε > 0) (_ : MDiffAt[Ico 0 ε] γ 0),
-    γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
+  ∃ (γ : ℝ → M) (_ : MDiffAt[Ici 0] γ 0), γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 
 -- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
 def IsRealizable' {p : M} (v : TangentSpace I p) : Prop :=
@@ -59,31 +58,139 @@ def IsRealizable' {p : M} (v : TangentSpace I p) : Prop :=
 def IsInwardPointing {p : M} (v : TangentSpace I p) : Prop :=
   v ∈ interior {v | IsRealizable v}
 
+def IsInwardPointingMinimal {p : M} (v : TangentSpace I p) : Prop :=
+  v ∈ interior {v | IsRealizableMinimal v}
+
 def IsTangent {p : M} (v : TangentSpace I p) : Prop :=
   v ∈ frontier {v | IsRealizable v}
 
 def IsOutwardPointing {p : M} (v : TangentSpace I p) : Prop :=
   ¬ IsRealizable v
 
-lemma PartialDiffeomorph.isInwardPointing_apply {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+omit [IsManifold I ∞ M] in
+lemma PartialDiffeomorph.isRealizable_apply {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
     (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
     (hp : p ∈ f.source) (hv : IsRealizableMinimal v) :
     IsRealizableMinimal (mfderiv% f p v) := by
-  obtain ⟨γ, ε, hε, hγ, hγp, hγv⟩ := hv
-  -- choose `ε` such that
-  have := f.open_source
-  --have : IsOpen (γ ⁻¹' f.source) := by
-  --  refine Continuous.isOpen_preimage ?_ f.source this
-  --rw??
-  use f ∘ γ, ε, hε
-  refine ⟨?_, ?_, ?_⟩
-  · apply MDifferentiableAt.comp_mdifferentiableWithinAt (H' := H) (0 : ℝ) ?_ hγ
-    apply MDifferentiableOn.mdifferentiableAt
-    exact?
-    apply MDifferentiableWithinAt.comp (H' := H) (0 : ℝ) ?_ hγ
-    · sorry
-    · sorry
-    · sorry
+  obtain ⟨γ, hγ, hγp, hγv⟩ := hv
+  have hf := f.mdifferentiableAt (ne_of_beq_false rfl) (hγp ▸ hp)
+  use f ∘ γ, hf.comp_mdifferentiableWithinAt 0 hγ, by simp [hγp]
+  rw [mfderiv_comp_mfderivWithin 0 hf hγ ?_, ContinuousLinearMap.comp_apply, hγv, hγp]
+  rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
+  exact uniqueDiffWithinAt_Ici 0
+
+@[simps!]
+noncomputable def TangentSpace.of_eq (I : ModelWithCorners ℝ E H) {p q : M} (h : p = q) : TangentSpace I p ≃ₜ TangentSpace I q :=
+    Homeomorph.refl (TangentSpace I p)
+
+@[simps]
+noncomputable def PartialDiffeomorph.mfderiv {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) : Homeomorph (TangentSpace I p) (TangentSpace I (f p)) where
+  toFun := mfderiv% f p
+  invFun := TangentSpace.of_eq I (f.symm.leftInvOn (f.map_source' hp)) ∘ mfderiv% f.symm (f p)
+  left_inv v := by
+    change (mfderiv% f.symm (f p)) ((mfderiv% f.toPartialEquiv p) v) = v
+    rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (ne_of_beq_false rfl) hp) v]
+    · rw [← mfderivWithin_of_isOpen f.open_source hp, mfderivWithin_congr_of_mem (f := id) ?_ hp]
+      · rw [mfderivWithin_of_isOpen f.open_source hp, comp_apply, mfderiv_id]
+        rfl
+      exact f.leftInvOn
+    · apply f.symm.mdifferentiableAt (ne_of_beq_false rfl)
+      exact f.map_source' hp
+  right_inv v := by
+    change (mfderiv% f p) ((mfderiv% f.symm (f p)) v) = v
+    have : f.symm (f p) = p := f.leftInvOn hp
+    have : (mfderiv% f p) ((mfderiv% f.symm (f p)) v) = mfderiv% (f ∘ f.symm) (f p) v := by
+      rw [mfderiv_comp_apply (f p) ?_
+        (f.symm.mdifferentiableAt (ne_of_beq_false rfl) (f.map_source' hp)), symm_toPartialEquiv,
+        f.leftInvOn hp]
+      rw [symm_toPartialEquiv, f.leftInvOn hp]
+      exact f.mdifferentiableAt (ne_of_beq_false rfl) hp
+    rw [this]
+    rw [← mfderivWithin_of_isOpen f.open_target (f.map_source' hp)]
+    rw [mfderivWithin_congr_of_mem (f := id) ?_ (f.map_source' hp)]
+    · rw [mfderivWithin_of_isOpen f.open_target (f.map_source' hp), comp_apply, mfderiv_id]
+      rfl
+    · exact f.symm.leftInvOn
+  continuous_toFun := (mfderiv% f p).continuous
+  continuous_invFun := (mfderiv% f.symm (f p)).continuous
+
+omit [IsManifold I ∞ M] in
+lemma PartialDiffeomorph.leftInverse_mfderiv_symm {M' : Type*} [TopologicalSpace M']
+    [ChartedSpace H M'] (p : M) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) : LeftInverse (mfderiv% f.symm (f p)) (mfderiv% f p) :=
+  (f.mfderiv p hp).left_inv
+
+omit [IsManifold I ∞ M] in
+lemma PartialDiffeomorph.rightInverse_mfderiv_symm {M' : Type*} [TopologicalSpace M']
+    [ChartedSpace H M'] (p : M) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) : RightInverse (mfderiv% f.symm (f p)) (mfderiv% f p) :=
+  (f.mfderiv p hp).right_inv
+
+omit [IsManifold I ∞ M] in
+lemma PartialDiffeomorph.isHomeomorph_mfderiv {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) : IsHomeomorph (mfderiv% f p) :=
+  (mfderiv p f hp).isHomeomorph
+
+-- not sure if this is even true
+-- might be some conditions missing
+lemma IsHomeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (q : M') (v : TangentSpace I p) (h : TangentSpace I p ≃ₜ TangentSpace I q) :
+    IsRealizableMinimal v ↔ IsRealizableMinimal (h v) := by
+
+  sorry
+
+omit [IsManifold I ∞ M] in
+lemma PartialDiffeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) :
+    IsRealizableMinimal v ↔ IsRealizableMinimal (mfderiv% f p v) := by
+  refine ⟨fun hv ↦ isRealizable_apply p v f hp hv, ?_⟩
+  have : v = (mfderiv% f.symm (f p)) ((mfderiv% f p) v) := by
+    -- use proof def above to proof this
+    rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (ne_of_beq_false rfl) hp) v]
+    · rw [← mfderivWithin_of_isOpen f.open_source hp, mfderivWithin_congr_of_mem (f := id) ?_ hp]
+      · rw [mfderivWithin_of_isOpen f.open_source hp, comp_apply, mfderiv_id]
+        rfl
+      exact f.leftInvOn
+    · apply f.symm.mdifferentiableAt (ne_of_beq_false rfl)
+      exact f.map_source' hp
+  intro hv
+  rw [this]
+  nth_rw 1 [← f.left_inv hp]
+  apply f.symm.isRealizable_apply _ _ ?_ hv
+  simp [f.map_source' hp]
+
+lemma PartialDiffeomorph.interior_isRealizable_eq {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) :
+    interior {v | IsRealizableMinimal v} =
+      (mfderiv% f p) '' interior {v | IsRealizableMinimal v} := by
+  rw [(isHomeomorph_mfderiv p f hp).image_interior]
+  congrm interior ?_
+  ext w
+  rw [mem_ofPred, f.symm.isRealizable_iff (f p) w (f.map_source' hp)]
+  rw [show mfderiv% f p = ⇑(mfderiv p f hp).toEquiv from rfl,
+    mem_image_equiv (f := (mfderiv p f hp).toEquiv)]
+  rw [mem_ofPred]
+  change IsRealizableMinimal ((mfderiv% f.symm (f p)) w) ↔
+    IsRealizableMinimal ((mfderiv p f hp).symm w)
+  rw [f.mfderiv_symm_apply p hp w]
+  sorry
+
+lemma PartialDiffeomorph.isInwardPointing_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) :
+    IsInwardPointingMinimal v ↔ IsInwardPointingMinimal (mfderiv% f p v) := by
+  unfold IsInwardPointingMinimal
+  have : {v | IsRealizableMinimal v} = {v | IsRealizableMinimal (mfderiv% f p v)} := by
+    ext v
+    simp [f.isRealizable_iff p v hp]
+  rw [this]
+
+  constructor
   · sorry
   · sorry
 
