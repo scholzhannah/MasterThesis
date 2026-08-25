@@ -45,15 +45,47 @@ def IsRealizable {p : M} (v : TangentSpace I p) : Prop :=
     γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 
 -- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
+def IsRealizableMinimal {p : M} (v : TangentSpace I p) : Prop :=
+  ∃ (γ : ℝ → M) (ε : ℝ) (_ : ε > 0) (_ : MDiffAt[Ico 0 ε] γ 0),
+    γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
+
+-- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
 def IsRealizable' {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (γ : ℝ → M) (ε : ℝ) (_ : ε > 0) (_ : CMDiff[Ico 0 ε] ∞ γ),
     γ 0 = p ∧ HasMFDerivAt[Ici 0] γ (0 : ℝ)
     ((ContinuousLinearMap.toSpanSingleton ℝ v).comp
       (NormedSpace.fromTangentSpace 1).toContinuousLinearMap)
 
-def IsInwardPointingTry2 {p : M} (v : TangentSpace I p) : Prop :=
+def IsInwardPointing {p : M} (v : TangentSpace I p) : Prop :=
   v ∈ interior {v | IsRealizable v}
 
+def IsTangent {p : M} (v : TangentSpace I p) : Prop :=
+  v ∈ frontier {v | IsRealizable v}
+
+def IsOutwardPointing {p : M} (v : TangentSpace I p) : Prop :=
+  ¬ IsRealizable v
+
+lemma PartialDiffeomorph.isInwardPointing_apply {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
+    (hp : p ∈ f.source) (hv : IsRealizableMinimal v) :
+    IsRealizableMinimal (mfderiv% f p v) := by
+  obtain ⟨γ, ε, hε, hγ, hγp, hγv⟩ := hv
+  -- choose `ε` such that
+  have := f.open_source
+  --have : IsOpen (γ ⁻¹' f.source) := by
+  --  refine Continuous.isOpen_preimage ?_ f.source this
+  --rw??
+  use f ∘ γ, ε, hε
+  refine ⟨?_, ?_, ?_⟩
+  · apply MDifferentiableAt.comp_mdifferentiableWithinAt (H' := H) (0 : ℝ) ?_ hγ
+    apply MDifferentiableOn.mdifferentiableAt
+    exact?
+    apply MDifferentiableWithinAt.comp (H' := H) (0 : ℝ) ?_ hγ
+    · sorry
+    · sorry
+    · sorry
+  · sorry
+  · sorry
 
 theorem Convex.add_smul_mem_icc {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜] [PosMulReflectLT 𝕜]
     [AddCommGroup E]
@@ -84,14 +116,30 @@ theorem ModelWithCorners.mvfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] 
     mvfderiv I I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
    I.hasMFDerivAt.mfderiv
 
-lemma isRealizable_of_mem_interior {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p)
-    {ε : ℝ} (hε : ε > 0) (h : I p + ε • d% I p v ∈ interior (range I)) :
+omit [NormedSpace ℝ E] in
+lemma Topology.IsInducing.mvfderiv [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
+    IsInducing (d% I p) := by
+  rw [I.mvfderiv]
+  apply IsHomeomorph.isInducing
+  exact IsHomeomorph.id
+
+noncomputable instance [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
+    PseudoMetricSpace (TangentSpace I p) :=
+  Topology.IsInducing.comapPseudoMetricSpace Topology.IsInducing.mvfderiv
+
+omit [NormedSpace ℝ E] in
+lemma TangentSpace.dist_eq [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H}
+    {v w : TangentSpace I p} : dist v w = dist (d% I p v) (d% I p w) :=
+  rfl
+
+lemma isRealizable_of_mem_range {p : H} {v : TangentSpace I p}
+    {ε : ℝ} (hε : ε > 0) (h : I p + ε • d% I p v ∈ (range I)) :
     IsRealizable v := by
   unfold IsRealizable
   let γ : ℝ → H := I.symm ∘ fun i ↦ I p + i • mvfderiv I I p v
   have hεI : Ico 0 ε ⊆ (fun i ↦ I p + i • mvfderiv I I p v) ⁻¹' range I := by
     intro i hi
-    exact I.convex_range.add_smul_mem_icc (mem_range_self p) hε (interior_subset h)
+    exact I.convex_range.add_smul_mem_icc (mem_range_self p) hε h
       (Ico_subset_Icc_self hi)
   have : ContMDiffOn 𝓘(ℝ, ℝ) I ∞ γ (Ico 0 ε) := by
     apply I.contMDiffOn_symm.comp ?_ hεI
@@ -112,11 +160,13 @@ lemma isRealizable_of_mem_interior {p : H} (hp : I.IsBoundaryPoint p) (v : Tange
       rw [fderivWithin_smul_const h0
         differentiableWithinAt_fun_id]
       rw [fderivWithin_fun_id h0]
-      rw [ModelWithCorners.mvfderiv I]
-
-
-
-      sorry
+      rw [I.mvfderiv]
+      rw [ContinuousLinearMap.smulRight_id]
+      -- fixing some defeq issue
+      change (ContinuousLinearMap.toSpanSingleton ℝ
+        ((ContinuousLinearMap.id ℝ (TangentSpace I p)) v)) 1 = v
+      rw [ContinuousLinearMap.toSpanSingleton_apply, one_smul]
+      rfl
     · rw [mdifferentiableWithinAt_iff_differentiableWithinAt]
       fun_prop
     · exact hεI
@@ -127,12 +177,79 @@ lemma isRealizable_of_mem_interior {p : H} (hp : I.IsBoundaryPoint p) (v : Tange
     exact uniqueDiffWithinAt_Ici 0
   · exact Ico_mem_nhdsGE hε
 
+lemma isInwardPointing_of_mem_interior_range {p : H} {v : TangentSpace I p}
+    {ε : ℝ} (hε : ε > 0) (h : I p + ε • d% I p v ∈ interior (range I)) :
+    IsInwardPointing v := by
+  unfold IsInwardPointing
+  rw [mem_interior]
+  rw [← IsOpen.mem_nhds_iff isOpen_interior, Metric.mem_nhds_iff] at h
+  obtain ⟨δ, hδ, hδI⟩ := h
+  use Metric.ball v (δ / ε)
+  refine ⟨?_, Metric.isOpen_ball, Metric.mem_ball_self (div_pos hδ hε)⟩
+  intro w hw
+  apply isRealizable_of_mem_range hε
+  apply interior_subset
+  apply hδI
+  simpa [dist_smul₀, abs_of_pos hε, ← lt_div_iff₀' hε, ← TangentSpace.dist_eq] using hw
+
 lemma isInwardPointing_iff {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
-    IsInwardPointingTry2 v ↔ ∃ ε > 0, I p + ε • d% I p v ∈ interior I.target := by
+    IsInwardPointing v ↔ ∃ (ε : ℝ) (_ : ε > 0), I p + ε • d% I p v ∈ interior (range I) := by
   constructor
   · intro h
+    by_contra! hv
+    unfold IsInwardPointing at h
 
     sorry
   · intro ⟨ε, hε, h⟩
+    unfold IsInwardPointing
+    rw [mem_interior]
+    rw [← IsOpen.mem_nhds_iff isOpen_interior, Metric.mem_nhds_iff] at h
+    obtain ⟨δ, hδ, hδI⟩ := h
+    --let f := (NormedSpace.fromTangentSpace (𝕜 := ℝ) (I p))
+    --let f := mvfderiv I I p
+    use Metric.ball v (δ / ε)
+    refine ⟨?_, Metric.isOpen_ball, Metric.mem_ball_self (div_pos hδ hε)⟩
+    intro w hw
+    apply isRealizable_of_mem_range hε
+    apply interior_subset
+    apply hδI
+    simpa [dist_smul₀, abs_of_pos hε, ← lt_div_iff₀' hε, ← TangentSpace.dist_eq] using hw
+
+
+-- see `https://arxiv.org/pdf/1810.05999` (only continuous curve :((()
+-- I think the backward direction might be really hard to show
+lemma isRealizable_iff_posTangentCone {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
+    IsRealizable v ↔ v ∈ posTangentConeAt (range I) (I p) := by
+  constructor
+  · intro ⟨γ, hγ, ε⟩
+    sorry
+
+  · intro h
 
     sorry
+
+lemma huahoaa {p : H} (hp : I.IsBoundaryPoint p) :
+    { v : TangentSpace I p | IsRealizable v } = (fun γ ↦ mfderiv[Ici 0] γ 0 1) ''
+    { γ : ℝ → H | γ 0 = p ∧ ∃ x, ContMDiffOn 𝓘(ℝ, ℝ) I ∞ γ (Ico 0 x) ∧ 0 < x} := by
+  ext x
+  simp [IsRealizable]
+  sorry
+
+-- this is probably false :((
+lemma jid {p : H} : IsClosed
+    { γ : ℝ → H | γ 0 = p ∧ ∃ x, ContMDiffOn 𝓘(ℝ, ℝ) I ∞ γ (Ico 0 x) ∧ 0 < x} := by
+
+  rw [isClosed_iff_clusterPt]
+
+  sorry
+
+set_option backward.isDefEq.respectTransparency false in
+lemma ijiodsaso {p : H} (hp : I.IsBoundaryPoint p) :
+    IsClosed { v : TangentSpace I p | IsRealizable v } := by
+  --rw [huahoaa hp]
+  --rw [isClosed_iff_clusterPt]
+  --intro v hv
+  rw [huahoaa hp]
+  rw [isClosed_iff_clusterPt]
+
+  sorry
