@@ -345,6 +345,82 @@ lemma isInwardPointing_iff {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace 
 open Metric Nat
 
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
+lemma isClosed_derivable' {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
+    IsClosed {v : E |
+      ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
+      derivWithin γ (Ici 0) (0 : ℝ) = v} := by
+  classical
+  rw [← isSeqClosed_iff_isClosed]
+  -- I need to pick the `v` such that they converge quickly enough
+  intro v w h hv
+  simp only [exists_and_left, exists_prop, mem_ofPred_eq] at h
+  let γ := fun n ↦ Classical.choose (h n)
+  have hγp : ∀ n, γ n 0 = p := fun n ↦ (Classical.choose_spec (h n)).1
+  have hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0 :=
+    fun n ↦ (Classical.choose_spec (h n)).2.1
+  have hγv : ∀ n, (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n :=
+    fun n ↦ (Classical.choose_spec (h n)).2.2
+  have hγnp : ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) := by
+    intro n
+    have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
+      rw [isOpen_ball.mem_nhds_iff]
+      exact mem_ball_self one_div_pos_of_nat
+    have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
+      rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
+      exact (hγ n).hasDerivWithinAt
+    specialize this hγn
+    simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
+    exact this
+  have hγn' : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
+      Icc 0 i ⊆ γ n ⁻¹' ball p (1 / (n + 1)) := by
+    intro n
+    have : ContinuousWithinAt (γ n) (Ici 0) 0 := (hγ n).continuousWithinAt
+    have hγn : Metric.ball p (1 / (n + 1)) ∈ 𝓝 (γ n 0) := by
+      rw [Metric.isOpen_ball.mem_nhds_iff, hγp]
+      exact mem_ball_self one_div_pos_of_nat
+    specialize this hγn
+    rw [mem_map, mem_nhdsGE_iff_exists_Icc_subset] at this
+    obtain ⟨i, hi0, hiγ⟩ := this
+    use min i (1 / (n + 1))
+    refine ⟨⟨?_, Std.min_le_right⟩, subset_trans (Icc_subset_Icc_right Std.min_le_left) hiγ ⟩
+    rw [lt_inf_iff]
+    exact ⟨hi0, one_div_pos_of_nat⟩
+  have hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
+      slope (γ n) 0 i ∈ ball (v n) (1 / (n + 1)) ∧ γ n i ∈  ball p (1 / (n + 1)) := by
+    intro n
+    obtain ⟨i, hi, hiv⟩ := hγnp n
+    obtain ⟨j, hj, hjp⟩ := hγn' n
+    use min i j
+    refine ⟨?_, ?_, ?_⟩
+    · exact ⟨lt_min hi hj.1, (min_le_right _ _).trans hj.2⟩
+    · exact hiv ⟨lt_min hi hj.1, min_le_left _ _⟩
+    · exact hjp ⟨(lt_min hi hj.1).le, min_le_right _ _⟩
+  let j := fun n ↦ Classical.choose (hγn n)
+  have hj0 : ∀ (n : ℕ), j n ∈ Ioc (0 : ℝ) (1 / (n + 1)) := fun n ↦ (Classical.choose_spec (hγn n)).1
+  have hjn : ∀ (n : ℕ), γ n (j n) ∈ ball p (1 / (n + 1)) :=
+    fun n ↦ (Classical.choose_spec (hγn n)).2.2
+  have hjv : ∀ n, slope (γ n) 0 (j n) ∈ ball (v n) (1 / (n + 1)) :=
+    fun n ↦ (Classical.choose_spec (hγn n)).2.1
+  let δ : ℝ → E := fun x ↦
+      if h : ∃ (n : ℕ), x ∈ Ioc (j (n + 1)) (j n) then
+        letI n := (Classical.choose h)
+        γ n x
+      else p
+  use δ
+  have hδ0 : δ 0 = p := by
+    apply dif_neg
+    push Not
+    exact fun n ↦ notMem_Ioc_of_le (hj0 (n + 1)).1.le
+  suffices HasDerivWithinAt δ w (Ici 0) 0 from
+    ⟨this.differentiableWithinAt, hδ0,  this.derivWithin (uniqueDiffWithinAt_Ici 0)⟩
+  rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left]
+  unfold slope
+  simp only [sub_zero, hδ0, vsub_eq_sub, tendsto_nhdsWithin_nhds, gt_iff_lt, mem_Ioi,
+    dist_zero_right, Real.norm_eq_abs]
+  intro ε hε
+  sorry
+
+-- proof adapted from `https://arxiv.org/pdf/1810.05999`
 lemma isClosed_derivable {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
     IsClosed {v : E |
       ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
@@ -360,7 +436,19 @@ lemma isClosed_derivable {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
     fun n ↦ (Classical.choose_spec (h n)).2.1
   have hγv : ∀ n, (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n :=
     fun n ↦ (Classical.choose_spec (h n)).2.2
-  have hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)), γ n i ∈ Metric.ball p (1 / (n + 1)) := by
+  have hγnp : ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) := by
+    intro n
+    have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
+      rw [isOpen_ball.mem_nhds_iff]
+      exact mem_ball_self one_div_pos_of_nat
+    have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
+      rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
+      exact (hγ n).hasDerivWithinAt
+    specialize this hγn
+    simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
+    exact this
+  have hγn' : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
+      Icc 0 i ⊆ γ n ⁻¹' ball p (1 / (n + 1)) := by
     intro n
     have : ContinuousWithinAt (γ n) (Ici 0) 0 := (hγ n).continuousWithinAt
     have hγn : Metric.ball p (1 / (n + 1)) ∈ 𝓝 (γ n 0) := by
@@ -370,17 +458,32 @@ lemma isClosed_derivable {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
     rw [mem_map, mem_nhdsGE_iff_exists_Icc_subset] at this
     obtain ⟨i, hi0, hiγ⟩ := this
     use min i (1 / (n + 1))
-    refine ⟨?_, ?_⟩
-    · refine ⟨?_, Std.min_le_right⟩
-      rw [lt_inf_iff]
-      exact ⟨hi0, one_div_pos_of_nat⟩
-    · apply hiγ
-      refine ⟨?_, Std.min_le_left⟩
-      rw [le_inf_iff]
-      exact ⟨hi0.le, one_div_pos_of_nat.le⟩
+    refine ⟨⟨?_, Std.min_le_right⟩, subset_trans (Icc_subset_Icc_right Std.min_le_left) hiγ ⟩
+    rw [lt_inf_iff]
+    exact ⟨hi0, one_div_pos_of_nat⟩
+  have hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
+      slope (γ n) 0 i ∈ ball (v n) (1 / (n + 1)) ∧ γ n i ∈  ball p (1 / (n + 1)) := by
+    intro n
+    obtain ⟨i, hi, hiv⟩ := hγnp n
+    obtain ⟨j, hj, hjp⟩ := hγn' n
+    use min i j
+    refine ⟨?_, ?_, ?_⟩
+    · exact ⟨lt_min hi hj.1, (min_le_right _ _).trans hj.2⟩
+    · exact hiv ⟨lt_min hi hj.1, min_le_left _ _⟩
+    · exact hjp ⟨(lt_min hi hj.1).le, min_le_right _ _⟩
   let j := fun n ↦ Classical.choose (hγn n)
   have hj0 : ∀ (n : ℕ), j n ∈ Ioc (0 : ℝ) (1 / (n + 1)) := fun n ↦ (Classical.choose_spec (hγn n)).1
-  have hjn : ∀ n, γ n (j n) ∈ ball p (1 / (↑n + 1)) := fun n ↦ (Classical.choose_spec (hγn n)).2
+  have hjn : ∀ (n : ℕ), γ n (j n) ∈ ball p (1 / (n + 1)) :=
+    fun n ↦ (Classical.choose_spec (hγn n)).2.2
+  have hjv : ∀ n, slope (γ n) 0 (j n) ∈ ball (v n) (1 / (n + 1)) :=
+    fun n ↦ (Classical.choose_spec (hγn n)).2.1
+  -- I think I need to choose a different `δ` such that `δ` agrees with the `γ` on certain
+  -- intervals
+  let δ' : ℝ → E := fun x ↦
+      if h : ∃ (n : ℕ), x ∈ Ioc (j (n + 1)) (j n) then
+        letI n := (Classical.choose h)
+        γ n x
+      else p
   let δ : ℝ → E := fun x ↦
     if h : ∃ (n : ℕ), x ∈ Ioc (1 / (n + 1) : ℝ) (1 / n) then
       letI n := (Classical.choose h)
@@ -417,10 +520,14 @@ lemma isClosed_derivable {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
     intro x hx
     apply hδ
     refine ⟨?_, ?_⟩
-    · sorry
-    rw [div_le_div_iff_of_pos_left zero_lt_one (lt_of_lt_of_le zero_lt_one hx)]
-    · sorry
-    · sorry
+    · rw [div_lt_div_iff_of_pos_left zero_lt_one (cast_add_one_pos ⌊x⌋₊)
+        (lt_of_lt_of_le zero_lt_one hx)]
+      exact lt_floor_add_one x
+    · rw [div_le_div_iff_of_pos_left zero_lt_one (lt_of_lt_of_le zero_lt_one hx)]
+      · exact floor_le (zero_le_one.trans hx)
+      · norm_cast
+        rw [Nat.floor_pos]
+        exact hx
   use δ
   have hδ0 : δ 0 = p := by
     apply dif_neg
@@ -432,9 +539,14 @@ lemma isClosed_derivable {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
   unfold slope
   simp only [sub_zero, hδ0, vsub_eq_sub]
   apply tendsto_nhdsGT_zero_of_comp_inv_tendsto_atTop
-
-
-  sorry
+  simp only [inv_inv]
+  rw [← Filter.tendsto_comp_val_Ioi_atTop (a := 1)]
+  rw [Filter.tendsto_congr (f₂ := fun x ↦ ((j ⌊x.1⌋₊) * x.1) • slope (γ ⌊x.1⌋₊) 0 (j ⌊x.1⌋₊))]
+  ·
+    sorry
+  · intro ⟨x, hx⟩
+    simp [slope]
+    sorry
 
 
 -- see `https://arxiv.org/pdf/1810.05999` (only continuous curve :((()
