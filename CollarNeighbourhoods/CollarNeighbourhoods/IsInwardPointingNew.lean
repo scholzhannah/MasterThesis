@@ -344,6 +344,8 @@ lemma isInwardPointing_iff {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace 
 
 open Metric Nat
 
+noncomputable section
+
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
 lemma isClosed_derivable' {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
     IsClosed {v : E |
@@ -395,7 +397,13 @@ lemma isClosed_derivable' {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
     · exact ⟨lt_min hi hj.1, (min_le_right _ _).trans hj.2⟩
     · exact hiv ⟨lt_min hi hj.1, min_le_left _ _⟩
     · exact hjp ⟨(lt_min hi hj.1).le, min_le_right _ _⟩
+  -- i might have to define this recursively to be decreasing
+  -- apparently I need to define this outside of a proof as a separate definition :(
+  let rec j' := fun n ↦ match n with
+    | 0 => Classical.choose (hγn 0)
+    | n + 1 => min (j' n) (Classical.choose (hγn (n + 1)))
   let j := fun n ↦ Classical.choose (hγn n)
+
   have hj0 : ∀ (n : ℕ), j n ∈ Ioc (0 : ℝ) (1 / (n + 1)) := fun n ↦ (Classical.choose_spec (hγn n)).1
   have hjn : ∀ (n : ℕ), γ n (j n) ∈ ball p (1 / (n + 1)) :=
     fun n ↦ (Classical.choose_spec (hγn n)).2.2
@@ -418,6 +426,15 @@ lemma isClosed_derivable' {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
   simp only [sub_zero, hδ0, vsub_eq_sub, tendsto_nhdsWithin_nhds, gt_iff_lt, mem_Ioi,
     dist_zero_right, Real.norm_eq_abs]
   intro ε hε
+  let N := ⌈1 / ε⌉₊
+  use j N, (hj0 N).1
+  intro x hx0 hxj
+  unfold δ
+  -- we also need to show that this `n` is unique
+  have h : ∃ n, x ∈ Ioc (j (n + 1)) (j n) := by sorry
+  -- use a version of `StrictMono.exists_between_of_tendsto_atTop`
+  rw [dif_pos h]
+
   sorry
 
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
