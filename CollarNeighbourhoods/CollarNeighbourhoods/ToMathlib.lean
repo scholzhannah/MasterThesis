@@ -216,3 +216,12 @@ theorem mfderivWithin_target_extChartAt_symm {𝕜 : Type*} [NontriviallyNormedF
     ContinuousLinearMap.id 𝕜 (TangentSpace 𝓘(𝕜, E) ((extChartAt I x) x)) := by
   rw [mfderivWithin_congr_set (t := range I) ?_, mfderivWithin_range_extChartAt_symm]
   rw [← nhdsWithin_eq_iff_eventuallyEq, nhdsWithin_extChartAt_target_eq]
+
+theorem Convex.add_smul_mem_icc {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜] [PosMulReflectLT 𝕜]
+    [AddCommGroup E]
+    [Module 𝕜 E] {s : Set E} [AddRightMono 𝕜] (hs : Convex 𝕜 s) {x y : E} (hx : x ∈ s) {r : 𝕜}
+    (hr : 0 < r)
+    (hy : x + r • y ∈ s) {t : 𝕜} (ht : t ∈ Set.Icc 0 r) : x + t • y ∈ s := by
+  rw [← div_mul_cancel₀ t hr.ne.symm, mul_smul]
+  apply hs.add_smul_mem hx hy
+  refine ⟨div_nonneg ht.1 hr.le, (div_le_one hr).mpr ht.2⟩

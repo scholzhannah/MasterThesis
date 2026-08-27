@@ -17,7 +17,9 @@ public import Mathlib.Geometry.Manifold.Immersion
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
-public import CollarNeighbourhoods.LineDeriv
+public import Mathlib.Analysis.Calculus.TangentCone.Seq
+public import CollarNeighbourhoods.ToMathlib
+
 
 /-! Header-/
 
@@ -278,6 +280,8 @@ lemma derivWithin_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
     derivWithin (limitFun hγv hγ p) (Ici 0) 0 = w :=
   (hasDerivWithinAt_limitFun hγv hγ hγp hv).derivWithin (uniqueDiffWithinAt_Ici 0)
 
+-- *TODO* the range requirement should really be an eventually requirement
+
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
 lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
     IsClosed {v : E |
@@ -305,3 +309,65 @@ lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
   specialize this hγn
   simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
   exact this
+
+lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
+    posTangentConeAt s p = closure {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} := by
+  apply subset_antisymm
+  · intro v hv
+    obtain ⟨c, d, hd, hdp, hcd⟩ := mem_tangentConeAt_iff_exists_seq.1 hv
+    rw [← seqClosure_eq_closure]
+    rw [eventually_atTop] at hdp
+    obtain ⟨N, hN⟩ := hdp
+    use fun n ↦ (c (n + N)) • (d (n + N))
+    refine ⟨?_, ?_⟩
+    · intro n
+      by_cases! hcn : ((c (n + N)) : ℝ) = 0
+      · use 1
+        simp [hcn, NNReal.smul_def, hp]
+      use 1 / c (n + N)
+      refine ⟨?_, by simp [NNReal.smul_def, smul_smul, inv_mul_cancel₀ hcn, hN]⟩
+      rw [gt_iff_lt, one_div_pos]
+      exact lt_of_le_of_ne (c (n + N)).coe_nonneg hcn.symm
+    · rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ c n • d n)]
+      exact hcd
+  · rw [← seqClosure_eq_closure]
+    intro v ⟨e, he, hev⟩
+    simp only [gt_iff_lt, exists_prop, mem_ofPred_eq] at he
+    have he' : ∀ n, ∃ (r : ℝ), 0 < r ∧ p + r • e n ∈ s ∧ ‖r • e n‖ ≤ 1 / (n + 1) := by
+      intro n
+      obtain ⟨r , hr, hrp⟩ := he n
+      by_cases! hen : ‖e n‖ = 0
+      · use r
+        simp [norm_smul_of_nonneg hr.le, hen, hr, hrp, (cast_add_one_pos n).le]
+      use min r ((n + 1) * ‖e n‖)⁻¹
+      have h0 : 0 < min r ((↑n + 1) * ‖e n‖)⁻¹ := by
+        apply lt_min hr
+        rw [inv_pos]
+        exact mul_pos (cast_add_one_pos n) (lt_of_le_of_ne (norm_nonneg (e n)) hen.symm)
+      refine ⟨h0, ?_, ?_⟩
+      · apply hs.add_smul_mem_icc hp hr hrp
+        refine ⟨h0.le, min_le_left _ _⟩
+      · rw [norm_smul_of_nonneg h0.le (e n), inf_mul₀ (norm_nonneg (e n))]
+        apply (min_le_right _ _).trans
+        rw [mul_inv_rev, one_div, mul_comm, mul_inv_cancel_left₀ hen]
+    let f n := Classical.choose (he' n)
+    have hf0 n : 0 < f n := (Classical.choose_spec (he' n)).1
+    have hfs n : p + f n • e n ∈ s := (Classical.choose_spec (he' n)).2.1
+    have hfe n : ‖f n • e n‖ ≤ 1 / (n + 1) := (Classical.choose_spec (he' n)).2.2
+    have hf0' n : 0 < (f n)⁻¹ := by simp [hf0 n]
+    let g n : NNReal := ⟨(f n)⁻¹, (hf0' n).le⟩
+    rw [mem_tangentConeAt_iff_exists_seq]
+    use g, f • e
+    refine ⟨?_, Eventually.of_forall hfs, ?_⟩
+    · rw [NormedAddCommGroup.tendsto_atTop]
+      intro ε hε
+      obtain ⟨N , hN⟩ := exists_nat_one_div_lt hε
+      use N
+      intro n hnN
+      rw [sub_zero, Pi.smul_apply']
+      apply lt_of_le_of_lt (hfe n) (lt_of_le_of_lt ?_ hN)
+      rw [one_div_le_one_div (cast_add_one_pos n) (cast_add_one_pos N), add_le_add_iff_right 1]
+      norm_cast
+    · refine (tendsto_congr (f₂ := e) ?_).2 hev
+      intro n
+      simp [NNReal.smul_def, smul_smul, show g n = (f n)⁻¹ by rfl, inv_mul_cancel₀ (hf0 n).ne.symm]
