@@ -90,6 +90,11 @@ lemma indexSeq_mem_ioc {Q : ℕ → ℝ → Prop}
     · apply inf_le_of_right_le
       exact (Classical.choose_spec (hγn (n + 1))).1.2
 
+lemma indexSeq_pos {Q : ℕ → ℝ → Prop}
+    (hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)), ∀ j ∈ Ioc 0 i, Q n j) (n : ℕ) :
+    0 < decIndexSeq hγn n :=
+  (indexSeq_mem_ioc hγn n).1
+
 lemma indexSeq_prop {Q : ℕ → ℝ → Prop}
     (hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)), ∀ j ∈ Ioc 0 i, Q n j) (n : ℕ) :
     ∀ j ∈ Ioc 0 (decIndexSeq hγn n), Q n j := match n with
@@ -117,98 +122,186 @@ lemma tendsto_decIndexSeq {Q : ℕ → ℝ → Prop}
   apply lt_of_le_of_lt (antitone_decIndexSeq hγn hm)
   exact lt_of_le_of_lt (indexSeq_mem_ioc hγn n).2 hn
 
--- proof adapted from `https://arxiv.org/pdf/1810.05999`
-lemma isClosed_derivable' {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
-    IsClosed {v : E |
-      ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
-      derivWithin γ (Ici 0) (0 : ℝ) = v} := by
-  classical
-  rw [← isSeqClosed_iff_isClosed]
-  -- I need to pick the `v` such that they converge quickly enough
-  intro v w h hv
-  simp only [exists_and_left, exists_prop, mem_ofPred_eq] at h
-  let γ := fun n ↦ Classical.choose (h n)
-  have hγp : ∀ n, γ n 0 = p := fun n ↦ (Classical.choose_spec (h n)).1
-  have hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0 :=
-    fun n ↦ (Classical.choose_spec (h n)).2.1
-  have hγv : ∀ n, (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n :=
-    fun n ↦ (Classical.choose_spec (h n)).2.2
-  have hγnp : ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) := by
-    intro n
-    have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
-      rw [isOpen_ball.mem_nhds_iff]
-      exact mem_ball_self one_div_pos_of_nat
-    have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
-      rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
-      exact (hγ n).hasDerivWithinAt
-    specialize this hγn
-    simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
-    exact this
-  have hγn' : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
-      Icc 0 i ⊆ γ n ⁻¹' ball p (1 / (n + 1)) := by
-    intro n
-    have : ContinuousWithinAt (γ n) (Ici 0) 0 := (hγ n).continuousWithinAt
-    have hγn : Metric.ball p (1 / (n + 1)) ∈ 𝓝 (γ n 0) := by
-      rw [Metric.isOpen_ball.mem_nhds_iff, hγp]
-      exact mem_ball_self one_div_pos_of_nat
-    specialize this hγn
-    rw [mem_map, mem_nhdsGE_iff_exists_Icc_subset] at this
-    obtain ⟨i, hi0, hiγ⟩ := this
-    use min i (1 / (n + 1))
-    refine ⟨⟨?_, Std.min_le_right⟩, subset_trans (Icc_subset_Icc_right Std.min_le_left) hiγ ⟩
-    rw [lt_inf_iff]
-    exact ⟨hi0, one_div_pos_of_nat⟩
-  have hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)), ∀ j ∈ Ioc 0 i,
-      j ∈ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) ∩ γ n ⁻¹' ball p (1 / (n + 1)) := by
-    intro n
-    obtain ⟨i, hi, hiv⟩ := hγnp n
-    obtain ⟨j, hj, hjp⟩ := hγn' n
-    use min i j
-    refine ⟨?_, subset_inter_iff.mpr ⟨?_, ?_⟩⟩
-    · exact ⟨lt_min hi hj.1, (min_le_right _ _).trans hj.2⟩
-    · exact subset_trans (Ioc_subset_Ioc_right Std.min_le_left) hiv
-    · exact subset_trans (Ioc_subset_Icc_self.trans (Icc_subset_Icc_right Std.min_le_right)) hjp
-  have hj1 := fun n j (hj : j ∈ Ioc 0 (decIndexSeq hγn n)) ↦ (indexSeq_prop hγn n j hj).1
-  have hj2 := fun n j (hj : j ∈ Ioc 0 (decIndexSeq hγn n)) ↦ (indexSeq_prop hγn n j hj).2
-  let δ : ℝ → E := fun x ↦
-      if h : ∃ (n : ℕ), x ∈ Ioc (decIndexSeq hγn (n + 1)) (decIndexSeq hγn n) then
+lemma slope_mem_ball {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) (n : ℕ) :
+    ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)), ∀ j ∈ Ioc 0 i,
+      slope (γ n) 0 j ∈ ball (v n) (1 / (n + 1)) := by
+  have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
+    rw [isOpen_ball.mem_nhds_iff]
+    exact mem_ball_self one_div_pos_of_nat
+  have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
+    rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
+    exact (hγ n).hasDerivWithinAt
+  specialize this hγn
+  simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
+  obtain ⟨i, hi, hiγ⟩ := this
+  use min i (1 / (n + 1))
+  refine ⟨⟨lt_min hi (one_div_pos_of_nat), (min_le_right _ _)⟩, ?_⟩
+  intro j hj
+  apply hiγ ⟨hj.1, hj.2.trans Std.min_le_left⟩
+
+open Classical in
+def limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) (p : E) (x : ℝ) : E :=
+  letI hγn := slope_mem_ball hγv hγ
+  if h : ∃ (n : ℕ), x ∈ Ioc (decIndexSeq hγn (n + 1)) (decIndexSeq hγn n) then
         letI n := (Classical.choose h)
         γ n x
       else p
-  use δ
-  have hδ0 : δ 0 = p := by
-    apply dif_neg
-    push Not
-    exact fun n ↦ notMem_Ioc_of_le (indexSeq_mem_ioc hγn (n + 1)).1.le
-  suffices HasDerivWithinAt δ w (Ici 0) 0 from
-    ⟨this.differentiableWithinAt, hδ0,  this.derivWithin (uniqueDiffWithinAt_Ici 0)⟩
+
+lemma limitFun_of_not_mem_Ioc {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) (p : E) {x : ℝ}
+    (hx : x ∉ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0)) :
+    limitFun hγv hγ p x = p := by
+  have hγn := slope_mem_ball hγv hγ
+  apply dif_neg
+  push Not
+  intro n hn
+  apply hx
+  refine ⟨ ?_, ?_⟩
+  · exact lt_trans (indexSeq_pos (slope_mem_ball hγv hγ) (n + 1)) hn.1
+  · exact le_trans hn.2 (antitone_decIndexSeq _ n.zero_le)
+
+lemma limitFun_zero {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) (p : E) :
+    limitFun hγv hγ p 0 = p := by
+  apply limitFun_of_not_mem_Ioc
+  exact left_notMem_Ioc
+
+def limitFunPoint {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {x : ℝ}
+    (hx : x ∈ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0)) : ℕ :=
+  letI hγn := slope_mem_ball hγv hγ
+  letI h := existsUnique_between_of_tendsto_atTop_nhds (antitone_decIndexSeq hγn) 0
+      (tendsto_decIndexSeq hγn) hx
+  Classical.choose h
+
+lemma mem_Ioc_limitFunPoint {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {x : ℝ}
+    (hx : x ∈ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0)) :
+    letI hγn := slope_mem_ball hγv hγ
+    letI n := limitFunPoint hγv hγ hx
+    x ∈ Ioc (decIndexSeq hγn (n + 1)) (decIndexSeq hγn n) :=
+  let hγn := slope_mem_ball hγv hγ
+  let h := existsUnique_between_of_tendsto_atTop_nhds (antitone_decIndexSeq hγn) 0
+      (tendsto_decIndexSeq hγn) hx
+  (Classical.choose_spec h).1
+
+lemma eq_limitFunPoint_of_mem_Ioc {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {x : ℝ}
+    (hx : x ∈ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0)) {m : ℕ}
+    (hxm : x ∈ Ioc (decIndexSeq (slope_mem_ball hγv hγ) (m + 1))
+      (decIndexSeq (slope_mem_ball hγv hγ) m)) :
+    m = limitFunPoint hγv hγ hx :=
+  let hγn := slope_mem_ball hγv hγ
+  let h := existsUnique_between_of_tendsto_atTop_nhds (antitone_decIndexSeq hγn) 0
+      (tendsto_decIndexSeq hγn) hx
+  (Classical.choose_spec h).2 m hxm
+
+lemma limitFun_eq_limitFunPoint {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) (p : E) {x : ℝ}
+    (hx : x ∈ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0)) :
+    limitFun hγv hγ p x = γ (limitFunPoint hγv hγ hx) x := by
+  have hγn := slope_mem_ball hγv hγ
+  have h := existsUnique_between_of_tendsto_atTop_nhds (antitone_decIndexSeq hγn) 0
+      (tendsto_decIndexSeq hγn) hx
+  unfold limitFun
+  rw [dif_pos h.exists, eq_limitFunPoint_of_mem_Ioc hγv hγ hx (Classical.choose_spec h.exists)]
+
+lemma limitFun_range {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {p : E} {s : Set E} (hps : p ∈ s)
+    (hs : ∀ n, range (γ n) ⊆ s) :
+    range (limitFun hγv hγ p) ⊆ s := by
+  simp_rw [range_subset_iff] at hs ⊢
+  intro x
+  by_cases hx : x ∈ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0)
+  · rw [limitFun_eq_limitFunPoint hγv hγ p hx]
+    exact hs (limitFunPoint hγv hγ hx) x
+  · rw [limitFun_of_not_mem_Ioc hγv hγ p hx]
+    exact hps
+
+lemma hasDerivWithinAt_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {p : E}
+    (hγp : ∀ (n : ℕ), γ n 0 = p)
+    {w : E} (hv : Tendsto v atTop (𝓝 w)) :
+    HasDerivWithinAt (limitFun hγv hγ p ) w (Ici 0) 0 := by
+  have hγn := slope_mem_ball hγv hγ
+  have hj := fun n j (hj : j ∈ Ioc 0 (decIndexSeq hγn n)) ↦ (indexSeq_prop hγn n j hj)
   rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left]
-  unfold slope
-  simp only [sub_zero, hδ0, vsub_eq_sub, tendsto_nhdsWithin_nhds, gt_iff_lt, mem_Ioi,
-    dist_zero_right, Real.norm_eq_abs]
+  simp only [tendsto_nhdsWithin_nhds, gt_iff_lt, mem_Ioi, dist_zero_right, Real.norm_eq_abs, slope,
+    sub_zero, limitFun_zero, vsub_eq_sub]
   intro ε hε
   obtain ⟨N1 , hN1⟩ := exists_nat_one_div_lt (half_pos hε)
-  rw [Metric.tendsto_atTop] at hv
-  obtain ⟨N2 , hN2⟩ := hv _ (half_pos hε)
+  obtain ⟨N2, hN2⟩ := (Metric.tendsto_atTop.1 hv) _ (half_pos hε)
   use decIndexSeq hγn (max N1 N2), (indexSeq_mem_ioc hγn (max N1 N2)).1
   intro x hx0 hxj
   rw [abs_of_pos hx0] at hxj
-  unfold δ
-  -- we also need to show that this `n` is unique
-  have h : ∃! n, x ∈ Ioc (decIndexSeq hγn (n + 1)) (decIndexSeq hγn n) := by
-    apply existsUnique_between_of_tendsto_atTop_nhds (antitone_decIndexSeq hγn) 0
-      (tendsto_decIndexSeq hγn)
-    refine ⟨hx0, ?_⟩
-    apply hxj.le.trans
-    exact antitone_decIndexSeq hγn (Nat.zero_le _)
-  have h' := h.exists
-  obtain ⟨n, hn, hn'⟩ := h
-  have hN : max N1 N2 ≤ n := (antitone_decIndexSeq hγn).le_of hn hxj.le
-  rw [dif_pos h']
-  rw [hn' (Classical.choose h') (Classical.choose_spec h')]
-  simp [mem_preimage, mem_ball, slope, hγp] at hj1
-  apply lt_of_le_of_lt (dist_triangle _ (v n) _)
-  rw [← add_halves ε]
-  apply add_lt_add_of_le_of_lt
-  · sorry
-  · sorry
+  have hx : x ∈ Ioc 0 (decIndexSeq (slope_mem_ball hγv hγ) 0) :=
+    ⟨hx0, hxj.le.trans (antitone_decIndexSeq _ zero_le)⟩
+  have hN : max N1 N2 ≤ limitFunPoint hγv hγ hx := by
+    refine (antitone_decIndexSeq hγn).le_of ?_ hxj.le
+    exact mem_Ioc_limitFunPoint hγv hγ hx
+  apply lt_of_le_of_lt (dist_triangle _ (v (limitFunPoint hγv hγ hx)) _)
+  rw [limitFun_eq_limitFunPoint hγv hγ p hx, ← add_halves ε]
+  refine add_lt_add_of_le_of_lt (le_trans ?_ hN1.le) (hN2 _ ((le_max_right _ _).trans hN))
+  rw [one_div, ← hγp (limitFunPoint hγv hγ hx)]
+  specialize hj (limitFunPoint hγv hγ hx) x ⟨hx0, (mem_Ioc_limitFunPoint hγv hγ hx).2⟩
+  simp only [one_div, slope, sub_zero, vsub_eq_sub, mem_ball] at hj
+  apply hj.le.trans
+  rw [inv_le_inv₀ (cast_add_one_pos (limitFunPoint hγv hγ hx)) (cast_add_one_pos N1),
+    add_le_add_iff_right 1, cast_le]
+  exact (le_max_left _ _).trans hN
+
+lemma differentiableWithinAt_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {p : E}
+    (hγp : ∀ (n : ℕ), γ n 0 = p)
+    {w : E} (hv : Tendsto v atTop (𝓝 w)) :
+    DifferentiableWithinAt ℝ (limitFun hγv hγ p) (Ici 0) 0 :=
+  (hasDerivWithinAt_limitFun hγv hγ hγp hv).differentiableWithinAt
+
+lemma derivWithin_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
+    (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)
+    (hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0) {p : E}
+    (hγp : ∀ (n : ℕ), γ n 0 = p)
+    {w : E} (hv : Tendsto v atTop (𝓝 w)) :
+    derivWithin (limitFun hγv hγ p) (Ici 0) 0 = w :=
+  (hasDerivWithinAt_limitFun hγv hγ hγp hv).derivWithin (uniqueDiffWithinAt_Ici 0)
+
+-- proof adapted from `https://arxiv.org/pdf/1810.05999`
+lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
+    IsClosed {v : E |
+      ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
+      derivWithin γ (Ici 0) (0 : ℝ) = v ∧ range γ ⊆ s} := by
+  classical
+  rw [← isSeqClosed_iff_isClosed]
+  intro v w h hv
+  simp only [exists_and_left, exists_prop, mem_ofPred_eq] at h
+  let γ := fun n ↦ Classical.choose (h n)
+  have hγp n := (Classical.choose_spec (h n)).1
+  have hγ n := (Classical.choose_spec (h n)).2.2.1
+  have hγv n := (Classical.choose_spec (h n)).2.1
+  have hγs n := (Classical.choose_spec (h n)).2.2.2
+  suffices ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) from
+    ⟨limitFun hγv hγ p, differentiableWithinAt_limitFun hγv hγ hγp hv, limitFun_zero hγv hγ p,
+    derivWithin_limitFun hγv hγ hγp hv, limitFun_range hγv hγ hp hγs⟩
+  intro n
+  have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
+    rw [isOpen_ball.mem_nhds_iff]
+    exact mem_ball_self one_div_pos_of_nat
+  have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
+    rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
+    exact (hγ n).hasDerivWithinAt
+  specialize this hγn
+  simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
+  exact this
