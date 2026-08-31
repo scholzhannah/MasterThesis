@@ -37,7 +37,8 @@ open scoped Topology Manifold ContDiff
 noncomputable section
 
 variable {𝕜 E : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
-  [NormedSpace ℝ E]
+  [NormedSpace ℝ E] [NormedSpace 𝕜 E] [LinearOrder 𝕜] [PosMulReflectLT 𝕜] [IsStrictOrderedRing 𝕜]
+  [OrderTopology 𝕜]
 
 lemma exists_between_of_tendsto_atTop_nhds {β : Type*} [TopologicalSpace β] [LinearOrder β]
     [ClosedIciTopology β] {t : ℕ → β} (b : β) (ht : Tendsto t atTop (𝓝 b)) {x : β}
@@ -339,15 +340,19 @@ lemma derivWithin_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
     derivWithin (limitFun hγv hγ hs p) (Ici 0) 0 = w :=
   (hasDerivWithinAt_limitFun hγv hγ hs hγp hv).derivWithin (uniqueDiffWithinAt_Ici 0)
 
+variable (𝕜)
+
+def derivableWithinAt (s : Set E) (p : E) (v : E) : Prop :=
+   ∃ (γ : 𝕜 → E) (_ : DifferentiableWithinAt 𝕜 γ (Ici 0) 0), γ 0 = p ∧
+      derivWithin γ (Ici 0) (0 : 𝕜) = v ∧ ∀ᶠ (x : 𝕜) in 𝓝[≥] 0, γ x ∈ s
+
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
 lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
-    IsClosed {v : E |
-      ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
-      derivWithin γ (Ici 0) (0 : ℝ) = v ∧ ∀ᶠ (x : ℝ) in 𝓝[≥] 0, γ x ∈ s} := by
+    IsClosed {v : E | derivableWithinAt ℝ s p v} := by
   classical
   rw [← isSeqClosed_iff_isClosed]
   intro v w h hv
-  simp only [exists_and_left, exists_prop, mem_ofPred_eq] at h
+  simp only [derivableWithinAt, exists_and_left, exists_prop, mem_ofPred_eq] at h
   let γ := fun n ↦ Classical.choose (h n)
   have hγp n := (Classical.choose_spec (h n)).1
   have hγ n := (Classical.choose_spec (h n)).2.2.1
@@ -429,3 +434,56 @@ lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E}
     · refine (tendsto_congr (f₂ := e) ?_).2 hev
       intro n
       simp [NNReal.smul_def, smul_smul, show g n = (f n)⁻¹ by rfl, inv_mul_cancel₀ (hf0 n).ne.symm]
+
+lemma Convex.derivable_of_smul_mem {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    {v : E} {r : ℝ} (hr : r > 0) (hrv : p + r • v ∈ s) :
+    derivableWithinAt ℝ s p v := by
+  use fun i ↦ p + (i • v)
+  refine ⟨by fun_prop, by simp, ?_, ?_⟩
+  · rw [derivWithin_const_add_fun, derivWithin_smul_const (differentiableWithinAt_fun_id) v,
+      derivWithin_id' 0 (Ici 0) (uniqueDiffWithinAt_Ici 0), one_smul]
+  · rw [eventually_iff_exists_mem]
+    use Icc 0 r, Icc_mem_nhdsGE hr
+    intro y hy
+    exact hs.add_smul_mem_icc hp hr hrv hy
+
+lemma Convex.derivable_of_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    {v : E} (hv : v ∈ posTangentConeAt s p) :
+    derivableWithinAt ℝ s p v := by
+  rw [hs.posTangentConeAt_eq_closure hp] at hv
+  rw [← mem_ofPred_eq (x := v) (p := derivableWithinAt ℝ s p)]
+  suffices closure {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} ⊆ {y | derivableWithinAt ℝ s p y} from
+    this hv
+  apply closure_minimal ?_ (isClosed_derivable hp)
+  intro y hy
+  obtain ⟨r, hr, hrs⟩ := hy
+  exact hs.derivable_of_smul_mem hp hr hrs
+
+lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    {v : E} (hv : derivableWithinAt ℝ s p v) : v ∈ posTangentConeAt s p := by
+  rw [hs.posTangentConeAt_eq_closure hp, ← seqClosure_eq_closure]
+  obtain ⟨γ, hγ, hγp, hγv, hγs⟩ := hv
+  have : HasDerivWithinAt γ v (Ici 0) 0 := hγv ▸ hγ.hasDerivWithinAt
+  rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left] at this
+  simp_rw [eventually_iff_exists_mem, mem_nhdsGE_iff_exists_Icc_subset] at hγs
+  obtain ⟨u, ⟨ε, hε, hεu⟩, hus⟩ := hγs
+  obtain ⟨N , hN⟩ := exists_nat_one_div_lt hε
+  use fun n ↦ slope γ 0 (N + 1 + n)⁻¹
+  refine ⟨?_, ?_⟩
+  · intro n
+    use (N + 1 + n)⁻¹
+    have : 0 < (N : ℝ) + 1 + n := by linarith
+    simp only [slope, sub_zero, inv_inv, hγp, vsub_eq_sub, inv_smul_smul₀ this.ne.symm,
+      add_sub_cancel, gt_iff_lt, inv_pos, this, exists_const]
+    refine hus _ (hεu ⟨inv_nonneg.2 this.le, ?_⟩)
+    apply le_trans ?_ hN.le
+    rw [one_div, inv_le_inv₀ this (cast_add_one_pos N)]
+    apply le_add_of_nonneg_right (cast_nonneg' n)
+  · rw [tendsto_iff_seq_tendsto] at this
+    apply this
+    exact tendsto_inv_atTop_nhdsGT_zero.comp
+      (tendsto_atTop_add_const_left _ _ tendsto_natCast_atTop_atTop)
+
+lemma Convex.derivableWithinAt_iff_mem_posTangentConeAt {s : Set E} (hs : Convex ℝ s) {p : E}
+    (hp : p ∈ s) {v : E} : derivableWithinAt ℝ s p v ↔ v ∈ posTangentConeAt s p :=
+  ⟨mem_posTangentCone_of_derivable hs hp, derivable_of_mem_posTangentCone hs hp⟩

@@ -17,7 +17,7 @@ public import Mathlib.Geometry.Manifold.Immersion
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
-public import CollarNeighbourhoods.LineDeriv
+public import CollarNeighbourhoods.DerivableCone
 
 /-! Header-/
 
@@ -38,6 +38,8 @@ variable {𝕜 E : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
   {I : ModelWithCorners ℝ E H} [IsManifold I ∞ M]
 
 section
+
+-- **Idea**: We probably want to have a "within" version as well
 
 -- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
 def IsRealizable {p : M} (v : TangentSpace I p) : Prop :=
@@ -146,9 +148,20 @@ lemma TangentSpace.ofEq_isRealizable_iff {M' : Type*} [TopologicalSpace M'] [Cha
   subst p
   rfl
 
+lemma isLocalDiffeomorphAt_iff {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type u_3} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {H₁ : Type u_5}
+    [TopologicalSpace H₁] {H₂ : Type u_6} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
+    (J : ModelWithCorners 𝕜 F H₂) {M : Type u_8} [TopologicalSpace M] [ChartedSpace H₁ M]
+    {N : Type u_9}
+    [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
+    IsLocalDiffeomorphAt I J n f x ↔
+      ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
+ sorry
+
 omit [IsManifold I ∞ M] in
 lemma PartialDiffeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
+    {p : M} (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' ∞)
     (hp : p ∈ f.source) :
     IsRealizableMinimal v ↔ IsRealizableMinimal (mfderiv% f p v) := by
   refine ⟨fun hv ↦ isRealizable_apply p v f hp hv, ?_⟩
@@ -167,6 +180,114 @@ lemma PartialDiffeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [Ch
   apply f.symm.isRealizable_apply _ _ ?_ hv
   simp [f.map_source' hp]
 
+omit [IsManifold I ∞ M] in
+lemma IsLocalDiffeomorphAt.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+    {p : M} (v : TangentSpace I p) (f : M → M')
+    (hf : IsLocalDiffeomorphAt I I ∞ f p) :
+    IsRealizableMinimal v ↔ IsRealizableMinimal (mfderiv% f p v) := by
+  rw [isLocalDiffeomorphAt_iff] at hf
+  obtain ⟨φ, hpφ, hφf⟩ := hf
+  rw [← mfderivWithin_of_isOpen φ.open_source hpφ, mfderivWithin_congr_of_mem hφf hpφ,
+    mfderivWithin_of_isOpen φ.open_source hpφ, φ.isRealizable_iff v hpφ, (hφf hpφ)]
+
+omit [IsManifold I ∞ M] in
+lemma isRealizable_iff_of_mem_maximalAtlas {p : M} (v : TangentSpace I p)
+    (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) :
+    IsRealizableMinimal v ↔ IsRealizableMinimal (mfderiv% f p v) :=
+  (Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf ⟨p, hp⟩).isRealizable_iff _
+
+lemma isRealizable_iff_chartAt {p : M} (v : TangentSpace I p) :
+    IsRealizableMinimal v ↔ IsRealizableMinimal (mfderiv% (chartAt H p) p v) :=
+  isRealizable_iff_of_mem_maximalAtlas _ _ (mem_chart_source H p)
+    (IsManifold.chart_mem_maximalAtlas p)
+
+set_option backward.isDefEq.respectTransparency false in
+lemma IsRealizable.derivableWithinAt {p : H} {v : TangentSpace I p} (hv : IsRealizableMinimal v) :
+    derivableWithinAt ℝ I.target (I p) (d% I p v) := by
+  obtain ⟨γ, hγ, hγp, hγv⟩ := hv
+  use I ∘ γ
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [← mdifferentiableWithinAt_iff_differentiableWithinAt]
+    exact I.mdifferentiableAt.comp_mdifferentiableWithinAt _ hγ
+  · rw [comp_apply, hγp]
+  · rw [← fderivWithin_derivWithin, ← mvfderivWithin_eq_fderivWithin,
+      mvfderiv_comp_mfderivWithin 0 I.mdifferentiableAt hγ
+        (uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.2 (uniqueDiffWithinAt_Ici 0)),
+      ContinuousLinearMap.comp_apply]
+    congr
+  · apply Filter.Eventually.of_forall
+    intro x
+    rw [comp_apply, ModelWithCorners.target_eq I]
+    exact mem_range_self (γ x)
+
+lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
+    (hv : derivableWithinAt ℝ I.target (I p) (d% I p v)) :
+    IsRealizableMinimal v := by
+  obtain ⟨γ, hγ, hγp, hγv, hγI⟩ := hv
+  use I.symm ∘ γ
+  refine ⟨?_, by simp [hγp], ?_⟩
+  · apply (I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p)).comp_of_preimage_mem_nhdsWithin
+      _ (mdifferentiableWithinAt_iff_differentiableWithinAt.2 hγ)
+    exact I.target_eq ▸ hγI
+  · rw [mfderivWithin_comp_of_preimage_mem_nhdsWithin _
+      (I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p))
+      (mdifferentiableWithinAt_iff_differentiableWithinAt.2 hγ) (I.target_eq ▸ hγI)
+      (uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.2 (uniqueDiffWithinAt_Ici 0))]
+    rw [ContinuousLinearMap.comp_apply]
+    have : Injective (mvfderiv I I p) := by
+      rw [I.mvfderiv]
+      exact injective_id
+    apply this
+    rw [← comp_apply (f := mvfderiv I I p) (g := (mfderivWithin _ _ I.symm (range I) (γ 0)))]
+    -- can't rewrite because of def-eq abuse
+    change (mvfderiv I I p ∘SL mfderivWithin _ _ I.symm (range I) (γ 0)) _= _
+    -- fixing defeq abuse
+    have : I.symm (γ 0) = p := by rw [hγp, I.left_inv p]
+    rw [← this]
+    rw [← mvfderiv_comp_mfderivWithin _ I.mdifferentiableAt
+      (I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p))
+      (I.uniqueMDiffOn _ (hγp ▸ mem_range_self p))]
+    rw [mvfderivWithin_congr (f := id) _ (by exact I.rightInvOn)
+      (I.rightInvOn (hγp ▸ mem_range_self p))]
+    rw [MDifferentiableWithinAt.mvfderivWithin_mono (s := univ) _ mdifferentiableWithinAt_id ?_
+      (subset_univ _)]
+    · sorry
+
+    sorry
+
+
+set_option backward.isDefEq.respectTransparency false in
+lemma isRealizable_iff_derivableWithinAt_traget {p : H} (v : TangentSpace I p) :
+    IsRealizableMinimal v ↔ derivableWithinAt ℝ I.target (I p) (d% I p v) := by
+  rw [isRealizable_iff_chartAt v]
+  --unfold IsRealizableMinimal derivableWithinAt
+  constructor
+  · intro ⟨γ, hγ, hγp, hγv⟩
+    use I ∘ γ
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · rw [← mdifferentiableWithinAt_iff_differentiableWithinAt]
+      exact I.mdifferentiableAt.comp_mdifferentiableWithinAt _ hγ
+    · rw [comp_apply, hγp]
+      rfl
+    · -- this proof is full with def-eq abuse
+      rw [← fderivWithin_derivWithin, ← mvfderivWithin_eq_fderivWithin,
+        mvfderiv_comp_mfderivWithin 0 I.mdifferentiableAt hγ
+          (uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.2 (uniqueDiffWithinAt_Ici 0)),
+        ContinuousLinearMap.comp_apply]
+      rw [ModelWithCorners.mvfderiv I, ModelWithCorners.mvfderiv I]
+      change (mfderivWithin _ _ γ (Ici 0) 0) 1 = v
+      rw [hγv]
+      simp only [OpenPartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source,
+        OpenPartialHomeomorph.singletonChartedSpace_chartAt_eq]
+      rw [OpenPartialHomeomorph.refl_apply H, mfderiv_id]
+      rfl
+    · apply Filter.Eventually.of_forall
+      intro x
+      rw [comp_apply, ModelWithCorners.target_eq I]
+      exact mem_range_self (γ x)
+  · sorry
+
 -- I think I need this because `PartialDiffeomorph` is private
 set_option backward.isDefEq.respectTransparency false in
 omit [IsManifold I ∞ M] in
@@ -177,7 +298,7 @@ lemma PartialDiffeomorph.interior_isRealizable_eq {M' : Type*} [TopologicalSpace
   rw [(isHomeomorph_mfderiv p f hp).image_interior]
   congrm interior ?_
   ext w
-  rw [mem_ofPred, f.symm.isRealizable_iff (f p) w (f.map_source' hp),
+  rw [mem_ofPred, f.symm.isRealizable_iff w (f.map_source' hp),
     show mfderiv% f p = ⇑(mfderiv p f hp).toEquiv from rfl,
     mem_image_equiv (f := (mfderiv p f hp).toEquiv), mem_ofPred]
   change IsRealizableMinimal ((mfderiv% f.symm (f p)) w) ↔
@@ -193,17 +314,6 @@ lemma PartialDiffeomorph.isInwardPointing_iff {M' : Type*} [TopologicalSpace M']
   unfold IsInwardPointingMinimal
   rw [interior_isRealizable_eq p f hp, (bijective_mfderiv p f hp).injective.mem_set_image]
 
-lemma isLocalDiffeomorphAt_iff {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type u_3} [NormedAddCommGroup F]
-    [NormedSpace 𝕜 F] {H₁ : Type u_5}
-    [TopologicalSpace H₁] {H₂ : Type u_6} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
-    (J : ModelWithCorners 𝕜 F H₂) {M : Type u_8} [TopologicalSpace M] [ChartedSpace H₁ M]
-    {N : Type u_9}
-    [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
-    IsLocalDiffeomorphAt I J n f x ↔
-      ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
- sorry
-
 omit [IsManifold I ∞ M] in
 lemma IsLocalDiffeomorphAt.isInwardPointing_iff {M' : Type*} [TopologicalSpace M']
     [ChartedSpace H M'] (p : M) (v : TangentSpace I p) (f : M → M')
@@ -214,36 +324,19 @@ lemma IsLocalDiffeomorphAt.isInwardPointing_iff {M' : Type*} [TopologicalSpace M
   rw [← mfderivWithin_of_isOpen φ.open_source hpφ, mfderivWithin_congr_of_mem hφf hpφ,
     mfderivWithin_of_isOpen φ.open_source hpφ, φ.isInwardPointing_iff p v hpφ, (hφf hpφ)]
 
-theorem ModelWithCorners.mfderivWithin_symm {𝕜 : Type*} [NontriviallyNormedField 𝕜]
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type u_3} [TopologicalSpace H]
-    (I : ModelWithCorners 𝕜 E H) {x : E} (hx : x ∈ Set.range ↑I) :
-    mfderivWithin 𝓘(𝕜, E) I I.symm (range I) x =
-      (ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) x)) := by
-  apply (hasMFDerivWithinAt_symm I hx).mfderivWithin
-  exact I.uniqueMDiffOn x hx
+omit [IsManifold I ∞ M] in
+lemma isInwardPointing_iff_of_mem_maximalAtlas {p : M} (v : TangentSpace I p)
+    (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) :
+    IsInwardPointingMinimal v ↔ IsInwardPointingMinimal (mfderiv% f p v) :=
+  (Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf ⟨p, hp⟩).isInwardPointing_iff _ _
 
-theorem ModelWithCorners.mfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
-    (I : ModelWithCorners 𝕜 E H) {x : H} :
-    mfderiv I 𝓘(𝕜, E) I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
-   I.hasMFDerivAt.mfderiv
+lemma isInwardPointing_iff_chartAt {p : M} (v : TangentSpace I p) :
+    IsInwardPointingMinimal v ↔ IsInwardPointingMinimal (mfderiv% (chartAt H p) p v) :=
+  isInwardPointing_iff_of_mem_maximalAtlas _ _ (mem_chart_source H p)
+    (IsManifold.chart_mem_maximalAtlas p)
 
-theorem ModelWithCorners.mvfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
-    (I : ModelWithCorners 𝕜 E H) {x : H} :
-    mvfderiv I I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
-   I.hasMFDerivAt.mfderiv
-
-omit [NormedSpace ℝ E] in
-lemma Topology.IsInducing.mvfderiv [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
-    IsInducing (d% I p) := by
-  rw [I.mvfderiv]
-  apply IsHomeomorph.isInducing
-  exact IsHomeomorph.id
-
-noncomputable instance [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
-    PseudoMetricSpace (TangentSpace I p) :=
-  Topology.IsInducing.comapPseudoMetricSpace Topology.IsInducing.mvfderiv
+-- **I am not sure if we actually need anything of the end of the file**
 
 omit [NormedSpace ℝ E] in
 lemma TangentSpace.dist_eq [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H}
@@ -295,6 +388,11 @@ lemma isRealizable_of_mem_range {p : H} {v : TangentSpace I p}
     exact uniqueDiffWithinAt_Ici 0
   · exact Ico_mem_nhdsGE hε
 
+
+
+
+
+
 lemma isInwardPointing_of_mem_interior_range {p : H} {v : TangentSpace I p}
     {ε : ℝ} (hε : ε > 0) (h : I p + ε • d% I p v ∈ interior (range I)) :
     IsInwardPointing v := by
@@ -309,6 +407,10 @@ lemma isInwardPointing_of_mem_interior_range {p : H} {v : TangentSpace I p}
   apply interior_subset
   apply hδI
   simpa [dist_smul₀, abs_of_pos hε, ← lt_div_iff₀' hε, ← TangentSpace.dist_eq] using hw
+
+
+
+
 
 lemma isInwardPointing_iff {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
     IsInwardPointing v ↔ ∃ (ε : ℝ) (_ : ε > 0), I p + ε • d% I p v ∈ interior (range I) := by
@@ -332,265 +434,3 @@ lemma isInwardPointing_iff {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace 
     apply interior_subset
     apply hδI
     simpa [dist_smul₀, abs_of_pos hε, ← lt_div_iff₀' hε, ← TangentSpace.dist_eq] using hw
-
-open Metric Nat
-
-noncomputable section
-
--- proof adapted from `https://arxiv.org/pdf/1810.05999`
-lemma isClosed_derivable' {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
-    IsClosed {v : E |
-      ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
-      derivWithin γ (Ici 0) (0 : ℝ) = v} := by
-  classical
-  rw [← isSeqClosed_iff_isClosed]
-  -- I need to pick the `v` such that they converge quickly enough
-  intro v w h hv
-  simp only [exists_and_left, exists_prop, mem_ofPred_eq] at h
-  let γ := fun n ↦ Classical.choose (h n)
-  have hγp : ∀ n, γ n 0 = p := fun n ↦ (Classical.choose_spec (h n)).1
-  have hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0 :=
-    fun n ↦ (Classical.choose_spec (h n)).2.1
-  have hγv : ∀ n, (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n :=
-    fun n ↦ (Classical.choose_spec (h n)).2.2
-  have hγnp : ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) := by
-    intro n
-    have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
-      rw [isOpen_ball.mem_nhds_iff]
-      exact mem_ball_self one_div_pos_of_nat
-    have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
-      rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
-      exact (hγ n).hasDerivWithinAt
-    specialize this hγn
-    simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
-    exact this
-  have hγn' : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
-      Icc 0 i ⊆ γ n ⁻¹' ball p (1 / (n + 1)) := by
-    intro n
-    have : ContinuousWithinAt (γ n) (Ici 0) 0 := (hγ n).continuousWithinAt
-    have hγn : Metric.ball p (1 / (n + 1)) ∈ 𝓝 (γ n 0) := by
-      rw [Metric.isOpen_ball.mem_nhds_iff, hγp]
-      exact mem_ball_self one_div_pos_of_nat
-    specialize this hγn
-    rw [mem_map, mem_nhdsGE_iff_exists_Icc_subset] at this
-    obtain ⟨i, hi0, hiγ⟩ := this
-    use min i (1 / (n + 1))
-    refine ⟨⟨?_, Std.min_le_right⟩, subset_trans (Icc_subset_Icc_right Std.min_le_left) hiγ ⟩
-    rw [lt_inf_iff]
-    exact ⟨hi0, one_div_pos_of_nat⟩
-  have hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
-      slope (γ n) 0 i ∈ ball (v n) (1 / (n + 1)) ∧ γ n i ∈  ball p (1 / (n + 1)) := by
-    intro n
-    obtain ⟨i, hi, hiv⟩ := hγnp n
-    obtain ⟨j, hj, hjp⟩ := hγn' n
-    use min i j
-    refine ⟨?_, ?_, ?_⟩
-    · exact ⟨lt_min hi hj.1, (min_le_right _ _).trans hj.2⟩
-    · exact hiv ⟨lt_min hi hj.1, min_le_left _ _⟩
-    · exact hjp ⟨(lt_min hi hj.1).le, min_le_right _ _⟩
-  -- i might have to define this recursively to be decreasing
-  -- apparently I need to define this outside of a proof as a separate definition :(
-  let rec j' := fun n ↦ match n with
-    | 0 => Classical.choose (hγn 0)
-    | n + 1 => min (j' n) (Classical.choose (hγn (n + 1)))
-  let j := fun n ↦ Classical.choose (hγn n)
-
-  have hj0 : ∀ (n : ℕ), j n ∈ Ioc (0 : ℝ) (1 / (n + 1)) := fun n ↦ (Classical.choose_spec (hγn n)).1
-  have hjn : ∀ (n : ℕ), γ n (j n) ∈ ball p (1 / (n + 1)) :=
-    fun n ↦ (Classical.choose_spec (hγn n)).2.2
-  have hjv : ∀ n, slope (γ n) 0 (j n) ∈ ball (v n) (1 / (n + 1)) :=
-    fun n ↦ (Classical.choose_spec (hγn n)).2.1
-  let δ : ℝ → E := fun x ↦
-      if h : ∃ (n : ℕ), x ∈ Ioc (j (n + 1)) (j n) then
-        letI n := (Classical.choose h)
-        γ n x
-      else p
-  use δ
-  have hδ0 : δ 0 = p := by
-    apply dif_neg
-    push Not
-    exact fun n ↦ notMem_Ioc_of_le (hj0 (n + 1)).1.le
-  suffices HasDerivWithinAt δ w (Ici 0) 0 from
-    ⟨this.differentiableWithinAt, hδ0,  this.derivWithin (uniqueDiffWithinAt_Ici 0)⟩
-  rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left]
-  unfold slope
-  simp only [sub_zero, hδ0, vsub_eq_sub, tendsto_nhdsWithin_nhds, gt_iff_lt, mem_Ioi,
-    dist_zero_right, Real.norm_eq_abs]
-  intro ε hε
-  let N := ⌈1 / ε⌉₊
-  use j N, (hj0 N).1
-  intro x hx0 hxj
-  unfold δ
-  -- we also need to show that this `n` is unique
-  have h : ∃ n, x ∈ Ioc (j (n + 1)) (j n) := by sorry
-  -- use a version of `StrictMono.exists_between_of_tendsto_atTop`
-  rw [dif_pos h]
-
-  sorry
-
--- proof adapted from `https://arxiv.org/pdf/1810.05999`
-lemma isClosed_derivable {s : Set E} (hs : IsClosed s) {p : E} (hp : p ∈ s) :
-    IsClosed {v : E |
-      ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
-      derivWithin γ (Ici 0) (0 : ℝ) = v} := by
-  classical
-  rw [← isSeqClosed_iff_isClosed]
-  -- I need to pick the `v` such that they converge quickly enough
-  intro v w h hv
-  simp only [exists_and_left, exists_prop, mem_ofPred_eq] at h
-  let γ := fun n ↦ Classical.choose (h n)
-  have hγp : ∀ n, γ n 0 = p := fun n ↦ (Classical.choose_spec (h n)).1
-  have hγ : ∀ n, DifferentiableWithinAt ℝ (γ n) (Ici 0) 0 :=
-    fun n ↦ (Classical.choose_spec (h n)).2.1
-  have hγv : ∀ n, (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n :=
-    fun n ↦ (Classical.choose_spec (h n)).2.2
-  have hγnp : ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) := by
-    intro n
-    have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
-      rw [isOpen_ball.mem_nhds_iff]
-      exact mem_ball_self one_div_pos_of_nat
-    have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
-      rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
-      exact (hγ n).hasDerivWithinAt
-    specialize this hγn
-    simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
-    exact this
-  have hγn' : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
-      Icc 0 i ⊆ γ n ⁻¹' ball p (1 / (n + 1)) := by
-    intro n
-    have : ContinuousWithinAt (γ n) (Ici 0) 0 := (hγ n).continuousWithinAt
-    have hγn : Metric.ball p (1 / (n + 1)) ∈ 𝓝 (γ n 0) := by
-      rw [Metric.isOpen_ball.mem_nhds_iff, hγp]
-      exact mem_ball_self one_div_pos_of_nat
-    specialize this hγn
-    rw [mem_map, mem_nhdsGE_iff_exists_Icc_subset] at this
-    obtain ⟨i, hi0, hiγ⟩ := this
-    use min i (1 / (n + 1))
-    refine ⟨⟨?_, Std.min_le_right⟩, subset_trans (Icc_subset_Icc_right Std.min_le_left) hiγ ⟩
-    rw [lt_inf_iff]
-    exact ⟨hi0, one_div_pos_of_nat⟩
-  have hγn : ∀ (n : ℕ), ∃ i ∈ Ioc (0 : ℝ) (1 / (n + 1)),
-      slope (γ n) 0 i ∈ ball (v n) (1 / (n + 1)) ∧ γ n i ∈  ball p (1 / (n + 1)) := by
-    intro n
-    obtain ⟨i, hi, hiv⟩ := hγnp n
-    obtain ⟨j, hj, hjp⟩ := hγn' n
-    use min i j
-    refine ⟨?_, ?_, ?_⟩
-    · exact ⟨lt_min hi hj.1, (min_le_right _ _).trans hj.2⟩
-    · exact hiv ⟨lt_min hi hj.1, min_le_left _ _⟩
-    · exact hjp ⟨(lt_min hi hj.1).le, min_le_right _ _⟩
-  let j := fun n ↦ Classical.choose (hγn n)
-  have hj0 : ∀ (n : ℕ), j n ∈ Ioc (0 : ℝ) (1 / (n + 1)) := fun n ↦ (Classical.choose_spec (hγn n)).1
-  have hjn : ∀ (n : ℕ), γ n (j n) ∈ ball p (1 / (n + 1)) :=
-    fun n ↦ (Classical.choose_spec (hγn n)).2.2
-  have hjv : ∀ n, slope (γ n) 0 (j n) ∈ ball (v n) (1 / (n + 1)) :=
-    fun n ↦ (Classical.choose_spec (hγn n)).2.1
-  -- I think I need to choose a different `δ` such that `δ` agrees with the `γ` on certain
-  -- intervals
-  let δ' : ℝ → E := fun x ↦
-      if h : ∃ (n : ℕ), x ∈ Ioc (j (n + 1)) (j n) then
-        letI n := (Classical.choose h)
-        γ n x
-      else p
-  let δ : ℝ → E := fun x ↦
-    if h : ∃ (n : ℕ), x ∈ Ioc (1 / (n + 1) : ℝ) (1 / n) then
-      letI n := (Classical.choose h)
-      γ n (j n)
-    else p
-  -- we need to do this for elements of R with Gauss Brackets
-  have hδ : ∀ (n : ℕ), ∀ x ∈ Ioc (1 / (n + 1) : ℝ) (1 / n), δ x = γ n (j n) := by
-    intro n x hxn
-    have : ∃ (n : ℕ), x ∈ Ioc (1 / (n + 1) : ℝ) (1 / n) := ⟨n, hxn⟩
-    unfold δ
-    rw [dif_pos this]
-    suffices Classical.choose this = n by rw [this]
-    have hxn' := Classical.choose_spec this
-    by_contra! hn
-    rw [Nat.lt_or_gt] at hn
-    rcases hn with hn | hn
-    · rw [← lt_self_iff_false x]
-      let i := Classical.choose this
-      calc
-        x ≤ 1 / n := hxn.2
-        _ ≤ 1 / (i + 1) := by
-          apply one_div_le_one_div_of_le (cast_add_one_pos (Classical.choose this)) ?_
-          norm_cast
-        _ < x := hxn'.1
-    · rw [← lt_self_iff_false x]
-      let i := Classical.choose this
-      calc
-        x ≤ 1 / i := hxn'.2
-        _ ≤ 1 / (n + 1) := by
-          apply one_div_le_one_div_of_le (cast_add_one_pos n) ?_
-          norm_cast
-        _ < x := hxn.1
-  have hδ' : ∀ x ∈ Ici 1, δ (1 / x) = γ ⌊x⌋₊ (j ⌊x⌋₊) := by
-    intro x hx
-    apply hδ
-    refine ⟨?_, ?_⟩
-    · rw [div_lt_div_iff_of_pos_left zero_lt_one (cast_add_one_pos ⌊x⌋₊)
-        (lt_of_lt_of_le zero_lt_one hx)]
-      exact lt_floor_add_one x
-    · rw [div_le_div_iff_of_pos_left zero_lt_one (lt_of_lt_of_le zero_lt_one hx)]
-      · exact floor_le (zero_le_one.trans hx)
-      · norm_cast
-        rw [Nat.floor_pos]
-        exact hx
-  use δ
-  have hδ0 : δ 0 = p := by
-    apply dif_neg
-    push Not
-    simp [(cast_add_one_pos _).le]
-  suffices HasDerivWithinAt δ w (Ici 0) 0 from
-    ⟨this.differentiableWithinAt, hδ0,  this.derivWithin (uniqueDiffWithinAt_Ici 0)⟩
-  rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left]
-  unfold slope
-  simp only [sub_zero, hδ0, vsub_eq_sub]
-  apply tendsto_nhdsGT_zero_of_comp_inv_tendsto_atTop
-  simp only [inv_inv]
-  rw [← Filter.tendsto_comp_val_Ioi_atTop (a := 1)]
-  rw [Filter.tendsto_congr (f₂ := fun x ↦ ((j ⌊x.1⌋₊) * x.1) • slope (γ ⌊x.1⌋₊) 0 (j ⌊x.1⌋₊))]
-  ·
-    sorry
-  · intro ⟨x, hx⟩
-    simp [slope]
-    sorry
-
-
--- see `https://arxiv.org/pdf/1810.05999` (only continuous curve :((()
--- I think the backward direction might be really hard to show
-lemma isRealizable_iff_posTangentCone {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
-    IsRealizable v ↔ v ∈ posTangentConeAt (range I) (I p) := by
-  constructor
-  · intro ⟨γ, hγ, ε⟩
-    sorry
-
-  · intro h
-
-    sorry
-
-lemma huahoaa {p : H} (hp : I.IsBoundaryPoint p) :
-    { v : TangentSpace I p | IsRealizable v } = (fun γ ↦ mfderiv[Ici 0] γ 0 1) ''
-    { γ : ℝ → H | γ 0 = p ∧ ∃ x, ContMDiffOn 𝓘(ℝ, ℝ) I ∞ γ (Ico 0 x) ∧ 0 < x} := by
-  ext x
-  simp [IsRealizable]
-  sorry
-
--- this is probably false :((
-lemma jid {p : H} : IsClosed
-    { γ : ℝ → H | γ 0 = p ∧ ∃ x, ContMDiffOn 𝓘(ℝ, ℝ) I ∞ γ (Ico 0 x) ∧ 0 < x} := by
-
-  rw [isClosed_iff_clusterPt]
-
-  sorry
-
-set_option backward.isDefEq.respectTransparency false in
-lemma ijiodsaso {p : H} (hp : I.IsBoundaryPoint p) :
-    IsClosed { v : TangentSpace I p | IsRealizable v } := by
-  --rw [huahoaa hp]
-  --rw [isClosed_iff_clusterPt]
-  --intro v hv
-  rw [huahoaa hp]
-  rw [isClosed_iff_clusterPt]
-
-  sorry

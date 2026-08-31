@@ -198,12 +198,35 @@ lemma PartialDiffeomorph.isOpen_image_source_inter {M' : Type*} [TopologicalSpac
     IsOpen (↑e '' (e.source ∩ s)) :=
   e.toOpenPartialHomeomorph.isOpen_image_source_inter hs
 
-
 theorem nhdsWithin_of_mem_of_subset {α : Type u_1} [TopologicalSpace α] {a : α} {s t : Set α}
     (h : s ∈ nhdsWithin a t) (h1 : s ⊆ t) :
     nhdsWithin a s = nhdsWithin a t := by
   rw [← inter_eq_self_of_subset_left h1]
   exact nhdsWithin_inter_of_mem h
+
+theorem mvfderiv_congr {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E]
+    [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H)
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {f f' : M → F} {x : M} (h : f = f') :
+    d% f x = d% f' x := by subst h; rfl
+
+theorem mvfderivWithin_congr {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E]
+    [NormedSpace 𝕜 E] {H : Type u_3} [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H)
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {f f' : M → F} {x : M} {s : Set M} (hL : ∀ x ∈ s, f' x = f x)
+    (hx : f' x = f x) : d[s] f' x = d[s] f x :=
+  (Filter.eventuallyEq_of_mem self_mem_nhdsWithin hL).mfderivWithin_eq hx
+
+theorem MDifferentiableWithinAt.mvfderivWithin_mono {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+    {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H)
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {f : M → F} {x : M} {s t : Set M} (h : MDiffAt[s] f x)
+    (hxt : UniqueMDiffAt[t] x) (h₁ : t ⊆ s) :
+    d[t] f x = d[s] f x :=
+  h.mfderivWithin_mono hxt h₁
 
 omit [IsManifold I ∞ M] in
 theorem extChartAt_target_subset {p : M} : (extChartAt I p).target ⊆ I.target := by simp
@@ -225,3 +248,34 @@ theorem Convex.add_smul_mem_icc {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜
   rw [← div_mul_cancel₀ t hr.ne.symm, mul_smul]
   apply hs.add_smul_mem hx hy
   refine ⟨div_nonneg ht.1 hr.le, (div_le_one hr).mpr ht.2⟩
+
+theorem ModelWithCorners.mfderivWithin_symm {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    (I : ModelWithCorners 𝕜 E H) {x : E} (hx : x ∈ Set.range ↑I) :
+    mfderivWithin 𝓘(𝕜, E) I I.symm (range I) x =
+      (ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) x)) := by
+  apply (hasMFDerivWithinAt_symm I hx).mfderivWithin
+  exact I.uniqueMDiffOn x hx
+
+theorem ModelWithCorners.mfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    (I : ModelWithCorners 𝕜 E H) {x : H} :
+    mfderiv I 𝓘(𝕜, E) I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
+   I.hasMFDerivAt.mfderiv
+
+theorem ModelWithCorners.mvfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    (I : ModelWithCorners 𝕜 E H) {x : H} :
+    mvfderiv I I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
+   I.hasMFDerivAt.mfderiv
+
+omit [NormedSpace ℝ E] in
+lemma Topology.IsInducing.mvfderiv [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
+    IsInducing (d% I p) := by
+  rw [I.mvfderiv]
+  apply IsHomeomorph.isInducing
+  exact IsHomeomorph.id
+
+noncomputable instance [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
+    PseudoMetricSpace (TangentSpace I p) :=
+  Topology.IsInducing.comapPseudoMetricSpace Topology.IsInducing.mvfderiv
