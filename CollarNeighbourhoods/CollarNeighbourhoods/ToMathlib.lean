@@ -146,7 +146,7 @@ theorem mvfderiv_comp
     {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
     {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
     {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
-    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type u_6} [TopologicalSpace H']
+    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type*} [TopologicalSpace H']
     {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
     {f : M → M'} (x : M) {g : M' → F} (hg : MDiffAt g (f x)) (hf : MDiffAt f x) :
     d% (g ∘ f) x = (d% g (f x)).comp (mfderiv% f x) := by
@@ -227,6 +227,15 @@ theorem MDifferentiableWithinAt.mvfderivWithin_mono {𝕜 : Type*} [Nontrivially
     (hxt : UniqueMDiffAt[t] x) (h₁ : t ⊆ s) :
     d[t] f x = d[s] f x :=
   h.mfderivWithin_mono hxt h₁
+
+theorem mvfderiv_id_comp_mfderivWithin {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+    {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H)
+    {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {f : M → F} {x : M} {s : Set M} (h : MDiffAt[s] f x)
+    (hxs : UniqueMDiffAt[s] x) :
+    d% (id : F → F) (f x) ∘SL mfderiv[s] f x = d[s] f x := by
+  rw [← mvfderiv_comp_mfderivWithin x mdifferentiableAt_id h hxs, id_comp f]
 
 omit [IsManifold I ∞ M] in
 theorem extChartAt_target_subset {p : M} : (extChartAt I p).target ⊆ I.target := by simp

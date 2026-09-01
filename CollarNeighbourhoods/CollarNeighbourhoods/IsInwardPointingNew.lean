@@ -204,7 +204,7 @@ lemma isRealizable_iff_chartAt {p : M} (v : TangentSpace I p) :
 
 set_option backward.isDefEq.respectTransparency false in
 lemma IsRealizable.derivableWithinAt {p : H} {v : TangentSpace I p} (hv : IsRealizableMinimal v) :
-    derivableWithinAt ℝ I.target (I p) (d% I p v) := by
+    derivableWithinAt ℝ (range I) (I p) (d% I p v) := by
   obtain ⟨γ, hγ, hγp, hγv⟩ := hv
   use I ∘ γ
   refine ⟨?_, ?_, ?_, ?_⟩
@@ -218,11 +218,11 @@ lemma IsRealizable.derivableWithinAt {p : H} {v : TangentSpace I p} (hv : IsReal
     congr
   · apply Filter.Eventually.of_forall
     intro x
-    rw [comp_apply, ModelWithCorners.target_eq I]
+    rw [comp_apply]
     exact mem_range_self (γ x)
 
 lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
-    (hv : derivableWithinAt ℝ I.target (I p) (d% I p v)) :
+    (hv : derivableWithinAt ℝ (range I) (I p) (d% I p v)) :
     IsRealizableMinimal v := by
   obtain ⟨γ, hγ, hγp, hγv, hγI⟩ := hv
   use I.symm ∘ γ
@@ -230,63 +230,54 @@ lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
   · apply (I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p)).comp_of_preimage_mem_nhdsWithin
       _ (mdifferentiableWithinAt_iff_differentiableWithinAt.2 hγ)
     exact I.target_eq ▸ hγI
-  · rw [mfderivWithin_comp_of_preimage_mem_nhdsWithin _
-      (I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p))
-      (mdifferentiableWithinAt_iff_differentiableWithinAt.2 hγ) (I.target_eq ▸ hγI)
-      (uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.2 (uniqueDiffWithinAt_Ici 0))]
-    rw [ContinuousLinearMap.comp_apply]
+  · have hI := I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p)
+    have hIγ : UniqueMDiffAt[range I] (γ 0) := I.uniqueMDiffOn _ (hγp ▸ mem_range_self p)
+    have h := uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.2 (uniqueDiffWithinAt_Ici 0)
+    rw [← mdifferentiableWithinAt_iff_differentiableWithinAt] at hγ
+    rw [mfderivWithin_comp_of_preimage_mem_nhdsWithin _ hI hγ (I.target_eq ▸ hγI) h,
+      ContinuousLinearMap.comp_apply]
     have : Injective (mvfderiv I I p) := by
       rw [I.mvfderiv]
       exact injective_id
     apply this
-    rw [← comp_apply (f := mvfderiv I I p) (g := (mfderivWithin _ _ I.symm (range I) (γ 0)))]
+    rw [← hγv, ← comp_apply (f := mvfderiv I I p) (g := (mfderivWithin _ _ I.symm (range I) (γ 0)))]
     -- can't rewrite because of def-eq abuse
     change (mvfderiv I I p ∘SL mfderivWithin _ _ I.symm (range I) (γ 0)) _= _
     -- fixing defeq abuse
     have : I.symm (γ 0) = p := by rw [hγp, I.left_inv p]
-    rw [← this]
-    rw [← mvfderiv_comp_mfderivWithin _ I.mdifferentiableAt
-      (I.mdifferentiableOn_symm (γ 0) (hγp ▸ mem_range_self p))
-      (I.uniqueMDiffOn _ (hγp ▸ mem_range_self p))]
-    rw [mvfderivWithin_congr (f := id) _ (by exact I.rightInvOn)
-      (I.rightInvOn (hγp ▸ mem_range_self p))]
-    rw [MDifferentiableWithinAt.mvfderivWithin_mono (s := univ) _ mdifferentiableWithinAt_id ?_
-      (subset_univ _)]
-    · sorry
+    rw [← this, ← mvfderiv_comp_mfderivWithin _ I.mdifferentiableAt hI hIγ,
+      mvfderivWithin_congr (f := id) _ (by exact I.rightInvOn)
+      (I.rightInvOn (hγp ▸ mem_range_self p)), mdifferentiableWithinAt_id.mvfderivWithin_mono
+      (s := univ) _ hIγ (subset_univ _), mvfderivWithin_univ, ← ContinuousLinearMap.comp_apply,
+      mvfderiv_id_comp_mfderivWithin _ hγ h, mvfderivWithin_eq_fderivWithin]
+    exact fderivWithin_derivWithin (𝕜 := ℝ)
 
-    sorry
+lemma isRealizable_iff_derivableWithinAt {p : H} {v : TangentSpace I p} :
+    IsRealizableMinimal v ↔ derivableWithinAt ℝ (range I) (I p) (d% I p v) :=
+  ⟨IsRealizable.derivableWithinAt, derivableWithinAt.IsRealizable⟩
 
+--lemma isRealizable_iff_mem_posTangentConeAt {p : H} {v : TangentSpace I p} :
+--    IsRealizableMinimal v ↔ d% I p v ∈ posTangentConeAt (range I) (I p) :=
+--  isRealizable_iff_derivableWithinAt.trans
+--    (I.convex_range.derivableWithinAt_iff_mem_posTangentConeAt (mem_range_self p))
 
-set_option backward.isDefEq.respectTransparency false in
-lemma isRealizable_iff_derivableWithinAt_traget {p : H} (v : TangentSpace I p) :
-    IsRealizableMinimal v ↔ derivableWithinAt ℝ I.target (I p) (d% I p v) := by
-  rw [isRealizable_iff_chartAt v]
-  --unfold IsRealizableMinimal derivableWithinAt
-  constructor
-  · intro ⟨γ, hγ, hγp, hγv⟩
-    use I ∘ γ
-    refine ⟨?_, ?_, ?_, ?_⟩
-    · rw [← mdifferentiableWithinAt_iff_differentiableWithinAt]
-      exact I.mdifferentiableAt.comp_mdifferentiableWithinAt _ hγ
-    · rw [comp_apply, hγp]
-      rfl
-    · -- this proof is full with def-eq abuse
-      rw [← fderivWithin_derivWithin, ← mvfderivWithin_eq_fderivWithin,
-        mvfderiv_comp_mfderivWithin 0 I.mdifferentiableAt hγ
-          (uniqueMDiffWithinAt_iff_uniqueDiffWithinAt.2 (uniqueDiffWithinAt_Ici 0)),
-        ContinuousLinearMap.comp_apply]
-      rw [ModelWithCorners.mvfderiv I, ModelWithCorners.mvfderiv I]
-      change (mfderivWithin _ _ γ (Ici 0) 0) 1 = v
-      rw [hγv]
-      simp only [OpenPartialHomeomorph.refl_partialEquiv, PartialEquiv.refl_source,
-        OpenPartialHomeomorph.singletonChartedSpace_chartAt_eq]
-      rw [OpenPartialHomeomorph.refl_apply H, mfderiv_id]
-      rfl
-    · apply Filter.Eventually.of_forall
-      intro x
-      rw [comp_apply, ModelWithCorners.target_eq I]
-      exact mem_range_self (γ x)
-  · sorry
+omit [IsManifold I ∞ M] in
+lemma isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas {p : M} {v : TangentSpace I p}
+    (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) :
+    IsRealizableMinimal v ↔
+      derivableWithinAt ℝ (range I) (f.extend I p) (d% (f.extend I) p v) := by
+  have hfp := mdifferentiableAt_of_mem_maximalAtlas
+    (IsManifold.maximalAtlas_subset_of_le ENat.LEInfty.out hf) hp
+  rw [isRealizable_iff_of_mem_maximalAtlas v f hp hf, isRealizable_iff_derivableWithinAt,
+    ← ContinuousLinearMap.comp_apply, ← mvfderiv_comp (g := I) (f := f) p I.mdifferentiableAt hfp,
+    f.extend_coe, comp_apply]
+
+lemma isRealizable_iff_extChartAt_mem_posTangentConeAt {p : M} {v : TangentSpace I p} :
+    IsRealizableMinimal v ↔
+      derivableWithinAt ℝ (range I) (extChartAt I p p) (d% (extChartAt I p) p v) :=
+  isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas _ (mem_chart_source H p)
+    (IsManifold.chart_mem_maximalAtlas p)
 
 -- I think I need this because `PartialDiffeomorph` is private
 set_option backward.isDefEq.respectTransparency false in
