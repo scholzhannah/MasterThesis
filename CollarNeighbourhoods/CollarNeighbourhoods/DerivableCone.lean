@@ -19,6 +19,7 @@ public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
 public import Mathlib.Analysis.Calculus.TangentCone.Seq
 public import CollarNeighbourhoods.ToMathlib
+public import Mathlib.Geometry.Manifold.Instances.Real
 
 
 /-! Header
@@ -488,3 +489,50 @@ lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p 
 lemma Convex.derivableWithinAt_iff_mem_posTangentConeAt {s : Set E} (hs : Convex ℝ s) {p : E}
     (hp : p ∈ s) {v : E} : derivableWithinAt ℝ s p v ↔ v ∈ posTangentConeAt s p :=
   ⟨mem_posTangentCone_of_derivable hs hp, derivable_of_mem_posTangentCone hs hp⟩
+
+-- `https://hal.science/hal-01552475v1/document` has a characterisation of the interior of the
+-- tangent cone
+
+lemma posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
+    (hp : p.ofLp 0 = 0) : posTangentConeAt {x | 0 ≤ x.ofLp 0} p = {v | 0 ≤ v.ofLp 0} := by
+  rw [EuclideanHalfSpace.convex.posTangentConeAt_eq_closure (by exact hp.ge)]
+  suffices {v : EuclideanSpace ℝ (Fin n) | ∃ r, 0 < r ∧ 0 ≤ r * v.ofLp 0} =  {v | 0 ≤ v.ofLp 0} by
+    simp [this, hp]
+  ext v
+  exact ⟨fun ⟨r, hr, hv⟩ ↦ (mul_nonneg_iff_right_nonneg_of_pos hr).1 hv,
+    fun hv ↦ ⟨1, zero_lt_one, (one_mul (v.ofLp 0)).symm ▸ hv⟩⟩
+
+lemma interior_posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
+    (hp : p.ofLp 0 = 0) :
+    interior (posTangentConeAt {x | 0 ≤ x.ofLp 0} p) = {v | 0 < v.ofLp 0} := by
+  rw [posTangentConeAt_euclideanHalfSpace hp]
+  exact interior_halfSpace 2 0 0
+
+theorem closure_iInter_subset {X : Type*} [TopologicalSpace X] {ι : Sort*} (s : ι → Set X) :
+     closure (⋂ i, s i) ⊆ ⋂ i, closure (s i) :=
+  subset_iInter fun i ↦ closure_mono (iInter_subset s i)
+
+@[simp]
+theorem closure_quadrant {n : ℕ} (p : ENNReal) (a : ℝ) :
+    closure { y : PiLp p (fun _ : Fin n ↦ ℝ) | ∀ i, a ≤ y i } = { y | ∀ i, a ≤ y i } := by
+  rw [ofPred_forall]
+  refine subset_antisymm ?_ subset_closure
+  apply (closure_iInter_subset _).trans
+  simp
+
+lemma posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
+    (hp : ∀ i, p.ofLp i = 0) :
+    posTangentConeAt {x | ∀ i, 0 ≤ x.ofLp i} p = {v | ∀ i, 0 ≤ v.ofLp i} := by
+  rw [EuclideanQuadrant.convex.posTangentConeAt_eq_closure (by exact fun i ↦ (hp i).ge)]
+  suffices {v : EuclideanSpace ℝ (Fin n) | ∃ r, 0 < r ∧ ∀ i, 0 ≤ r * v.ofLp i} =
+      {v | ∀ i, 0 ≤ v.ofLp i} by
+    simp [hp, this]
+  ext x
+  exact ⟨fun ⟨r, hr, hrx⟩ i ↦ (mul_nonneg_iff_right_nonneg_of_pos hr).1 (hrx i),
+    fun hx ↦ ⟨1, zero_lt_one, fun i ↦ (one_mul (x.ofLp i)).symm ▸ (hx i)⟩⟩
+
+lemma interior_posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
+    (hp : ∀ i, p.ofLp i = 0) :
+    interior (posTangentConeAt {x | ∀ i, 0 ≤ x.ofLp i} p) = {v | ∀ i, 0 < v.ofLp i} := by
+  rw [posTangentConeAt_euclideanQuadrant hp]
+  exact interior_euclideanQuadrant n 2 0
