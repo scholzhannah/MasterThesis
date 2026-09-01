@@ -212,7 +212,7 @@ lemma limitFun_of_not_mem_Ioc {γ : ℕ → ℝ → E} {v : ℕ → E}
     (hx : x ∉ Ioc 0 (decIndexSeq (fun n ↦ exists_slope_and_mem hγv hγ (hs n)) 0)) :
     limitFun hγv hγ hs p x = p := by
   have hγn n := exists_slope_and_mem hγv hγ (hs n)
-  apply dif_neg
+  apply dite_eq_right
   push Not
   intro n hn
   apply hx
@@ -273,7 +273,8 @@ lemma limitFun_eq_limitFunPoint {γ : ℕ → ℝ → E} {v : ℕ → E}
   have h := existsUnique_between_of_tendsto_atTop_nhds (antitone_decIndexSeq hγn) 0
       (tendsto_decIndexSeq hγn) hx
   unfold limitFun
-  rw [dif_pos h.exists, eq_limitFunPoint_of_mem_Ioc hγv hγ hs hx (Classical.choose_spec h.exists)]
+  rw [dite_eq_left h.exists,
+    eq_limitFunPoint_of_mem_Ioc hγv hγ hs hx (Classical.choose_spec h.exists)]
 
 lemma limitFun_mem {γ : ℕ → ℝ → E} {v : ℕ → E}
     (hγv : ∀ (n : ℕ), (fderivWithin ℝ (γ n) (Ici 0) 0) 1 = v n)

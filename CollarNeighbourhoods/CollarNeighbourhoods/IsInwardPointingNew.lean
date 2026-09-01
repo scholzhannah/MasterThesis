@@ -118,6 +118,7 @@ lemma IsLocalDiffeomorphAt.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [
   obtain ⟨φ, hpφ, hφf⟩ := hf
   rw [← mfderivWithin_of_isOpen φ.open_source hpφ, mfderivWithin_congr_of_mem hφf hpφ,
     mfderivWithin_of_isOpen φ.open_source hpφ, φ.isRealizable_iff v hpφ, (hφf hpφ)]
+  rfl
 
 omit [IsManifold I ∞ M] in
 lemma isRealizable_iff_of_mem_maximalAtlas {p : M} (v : TangentSpace I p)
@@ -253,6 +254,7 @@ lemma IsLocalDiffeomorphAt.isInwardPointing_iff {M' : Type*} [TopologicalSpace M
   obtain ⟨φ, hpφ, hφf⟩ := hf
   rw [← mfderivWithin_of_isOpen φ.open_source hpφ, mfderivWithin_congr_of_mem hφf hpφ,
     mfderivWithin_of_isOpen φ.open_source hpφ, φ.isInwardPointing_iff p v hpφ, (hφf hpφ)]
+  rfl
 
 omit [IsManifold I ∞ M] in
 lemma isInwardPointing_iff_of_mem_maximalAtlas {p : M} (v : TangentSpace I p)

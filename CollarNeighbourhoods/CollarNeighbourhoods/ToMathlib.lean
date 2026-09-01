@@ -40,9 +40,6 @@ section
 
 variable {n : ℕ} [NeZero n]
 
-lemma modelWithCornersEuclideanHalfSpace_apply {p : EuclideanHalfSpace n} : (𝓡∂ n) p = p.val :=
-  rfl
-
 @[simp]
 lemma modelWithCornersEuclideanHalfSpace_symm_val_apply {p : EuclideanHalfSpace n} :
     (𝓡∂ n).symm p.val = p := by
@@ -51,8 +48,7 @@ lemma modelWithCornersEuclideanHalfSpace_symm_val_apply {p : EuclideanHalfSpace 
 lemma modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff {p : EuclideanHalfSpace n} :
     (𝓡∂ n).IsBoundaryPoint p ↔ ((𝓡∂ n) p).ofLp 0 = 0 := by
   simp [ModelWithCorners.isBoundaryPoint_iff, eq_comm,
-    range_modelWithCornersEuclideanHalfSpace, chartAt_self_eq,
-    -modelWithCornersEuclideanHalfSpace_toFun]
+    range_modelWithCornersEuclideanHalfSpace, chartAt_self_eq]
 
 lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace'
     {p : EuclideanHalfSpace n}
@@ -71,9 +67,9 @@ lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfS
     (hp : (𝓡∂ n).IsBoundaryPoint p) : ((extChartAt (𝓡∂ n) p) p).ofLp 0 = 0 :=
   modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff.mp hp
 
-lemma modelWithCornersEuclideanHalfSpace_symm_apply_of_IsBoundaryPoint {p : EuclideanHalfSpace n}
-    : (𝓡∂ n).symm ((𝓡∂ n) p) = p := by
-  simp [-modelWithCornersEuclideanHalfSpace_toFun]
+lemma modelWithCornersEuclideanHalfSpace_symm_apply_of_IsBoundaryPoint {p : EuclideanHalfSpace n} :
+    (𝓡∂ n).symm ((𝓡∂ n) p) = p := by
+  simp
 
 lemma modelWithCornersEuclideanHalfSpace_boundary_eq :
     (𝓡∂ n).boundary (EuclideanHalfSpace n) = {p | ((𝓡∂ n) p).ofLp 0 = 0} := by
@@ -83,40 +79,11 @@ lemma modelWithCornersEuclideanHalfSpace_boundary_eq :
 lemma modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff {p : EuclideanHalfSpace n} :
     (𝓡∂ n).IsInteriorPoint p ↔ ((𝓡∂ n) p).ofLp 0 > 0 := by
   simp [ModelWithCorners.isInteriorPoint_iff, range_modelWithCornersEuclideanHalfSpace,
-    chartAt_self_eq, -modelWithCornersEuclideanHalfSpace_toFun]
+    chartAt_self_eq]
 
 lemma modelWithCornersEuclideanHalfSpace_interior_eq :
     (𝓡∂ n).interior (EuclideanHalfSpace n) = {p | 0 < ((𝓡∂ n) p).ofLp 0} := by
   simp_rw [← modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff]
-  rfl
-
--- **PR**
-theorem mvfderivWithin_comp
-    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
-    {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
-    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type u_6} [TopologicalSpace H']
-    {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
-    {f : M → M'} (x : M) {s : Set M} {g : M' → F} {u : Set M'}
-    (hg : MDiffAt[u] g (f x)) (hf : MDiffAt[s] f x) (h : s ⊆ f ⁻¹' u) (hxs : UniqueMDiffAt[s] x) :
-    d[s] (g ∘ f) x = (d[u] g (f x)).comp (mfderiv[s] f x) := by
-  unfold mvfderivWithin
-  rw [mfderivWithin_comp x hg hf h hxs, ContinuousLinearMap.comp_assoc]
-  rfl
-
--- **PR**
-theorem mvfderiv_comp_mfderivWithin
-    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
-    {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
-    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type*} [TopologicalSpace H']
-    {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
-    {f : M → M'} (x : M) {s : Set M} {g : M' → F}
-    (hg : MDiffAt g (f x)) (hf : MDiffAt[s] f x)
-    (hxs : UniqueMDiffAt[s] x) :
-    d[s] (g ∘ f) x = (d% g (f x)).comp (mfderiv[s] f x) := by
-  unfold mvfderivWithin
-  rw [mfderiv_comp_mfderivWithin x hg hf hxs, ← ContinuousLinearMap.comp_assoc]
   rfl
 
 -- **PR by Michael**
@@ -140,19 +107,6 @@ lemma mvfderiv_extChartAt_self {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] 
   {M : Type u_4} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M] {x : M} :
     d% (extChartAt I x) x = ContinuousLinearMap.id 𝕜 E :=
   mfderiv_extChartAt_self
-
--- **PR**
-theorem mvfderiv_comp
-    {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
-    {I : ModelWithCorners 𝕜 E H} {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {E' : Type*}
-    [NormedAddCommGroup E'] [NormedSpace 𝕜 E'] {H' : Type*} [TopologicalSpace H']
-    {I' : ModelWithCorners 𝕜 E' H'} {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
-    {f : M → M'} (x : M) {g : M' → F} (hg : MDiffAt g (f x)) (hf : MDiffAt f x) :
-    d% (g ∘ f) x = (d% g (f x)).comp (mfderiv% f x) := by
-  unfold mvfderiv
-  rw [mfderiv_comp x hg hf]
-  rfl
 
 -- **To-Do**: Zulip discussion about having `PartialHomeomorph` be public API
 
@@ -247,7 +201,7 @@ theorem mfderivWithin_target_extChartAt_symm {𝕜 : Type*} [NontriviallyNormedF
     mfderiv[(extChartAt I x).target] (extChartAt I x).symm ((extChartAt I x) x) =
     ContinuousLinearMap.id 𝕜 (TangentSpace 𝓘(𝕜, E) ((extChartAt I x) x)) := by
   rw [mfderivWithin_congr_set (t := range I) ?_, mfderivWithin_range_extChartAt_symm]
-  rw [← nhdsWithin_eq_iff_eventuallyEq, nhdsWithin_extChartAt_target_eq]
+  rw [← nhdsWithin_eq_iff_eventuallyEqSet, nhdsWithin_extChartAt_target_eq]
 
 theorem Convex.add_smul_mem_icc {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜] [PosMulReflectLT 𝕜]
     [AddCommGroup E]
