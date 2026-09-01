@@ -81,83 +81,12 @@ lemma PartialDiffeomorph.isRealizable_apply {M' : Type*} [TopologicalSpace M'] [
   rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
   exact uniqueDiffWithinAt_Ici 0
 
-noncomputable def TangentSpace.ofEq (I : ModelWithCorners ℝ E H) {p q : M} (h : p = q) :
-    TangentSpace I p ≃ₜ TangentSpace I q := Homeomorph.refl (TangentSpace I p)
-
-@[simps]
-noncomputable def PartialDiffeomorph.mfderiv {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    (p : M) (f : PartialDiffeomorph I I M M' ∞)
-    (hp : p ∈ f.source) : Homeomorph (TangentSpace I p) (TangentSpace I (f p)) where
-  toFun := mfderiv% f p
-  invFun := TangentSpace.ofEq I (f.leftInvOn hp) ∘ mfderiv% f.symm (f p)
-  left_inv v := by
-    change (mfderiv% f.symm (f p)) ((mfderiv% f.toPartialEquiv p) v) = v
-    rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (ne_of_beq_false rfl) hp) v]
-    · rw [← mfderivWithin_of_isOpen f.open_source hp, mfderivWithin_congr_of_mem (f := id) ?_ hp]
-      · rw [mfderivWithin_of_isOpen f.open_source hp, comp_apply, mfderiv_id]
-        rfl
-      exact f.leftInvOn
-    · apply f.symm.mdifferentiableAt (ne_of_beq_false rfl)
-      exact f.map_source' hp
-  right_inv v := by
-    change (mfderiv% f p) ((mfderiv% f.symm (f p)) v) = v
-    have : f.symm (f p) = p := f.leftInvOn hp
-    have : (mfderiv% f p) ((mfderiv% f.symm (f p)) v) = mfderiv% (f ∘ f.symm) (f p) v := by
-      rw [mfderiv_comp_apply (f p) ?_
-        (f.symm.mdifferentiableAt (ne_of_beq_false rfl) (f.map_source' hp)), symm_toPartialEquiv,
-        f.leftInvOn hp]
-      rw [symm_toPartialEquiv, f.leftInvOn hp]
-      exact f.mdifferentiableAt (ne_of_beq_false rfl) hp
-    rw [this]
-    rw [← mfderivWithin_of_isOpen f.open_target (f.map_source' hp)]
-    rw [mfderivWithin_congr_of_mem (f := id) ?_ (f.map_source' hp)]
-    · rw [mfderivWithin_of_isOpen f.open_target (f.map_source' hp), comp_apply, mfderiv_id]
-      rfl
-    · exact f.symm.leftInvOn
-  continuous_toFun := (mfderiv% f p).continuous
-  continuous_invFun := (mfderiv% f.symm (f p)).continuous
-
-omit [IsManifold I ∞ M] in
-lemma PartialDiffeomorph.leftInverse_mfderiv_symm {M' : Type*} [TopologicalSpace M']
-    [ChartedSpace H M'] (p : M) (f : PartialDiffeomorph I I M M' ∞)
-    (hp : p ∈ f.source) : LeftInverse (mfderiv% f.symm (f p)) (mfderiv% f p) :=
-  (f.mfderiv p hp).left_inv
-
-omit [IsManifold I ∞ M] in
-lemma PartialDiffeomorph.rightInverse_mfderiv_symm {M' : Type*} [TopologicalSpace M']
-    [ChartedSpace H M'] (p : M) (f : PartialDiffeomorph I I M M' ∞)
-    (hp : p ∈ f.source) : RightInverse (mfderiv% f.symm (f p)) (mfderiv% f p) :=
-  (f.mfderiv p hp).right_inv
-
-omit [IsManifold I ∞ M] in
-lemma PartialDiffeomorph.isHomeomorph_mfderiv {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    (p : M) (f : PartialDiffeomorph I I M M' ∞)
-    (hp : p ∈ f.source) : IsHomeomorph (mfderiv% f p) :=
-  (mfderiv p f hp).isHomeomorph
-
-omit [IsManifold I ∞ M] in
-lemma PartialDiffeomorph.bijective_mfderiv {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    (p : M) (f : PartialDiffeomorph I I M M' ∞)
-    (hp : p ∈ f.source) : Bijective (mfderiv% f p) :=
-  (mfderiv p f hp).toEquiv.bijective
-
 omit [IsManifold I ∞ M] in
 lemma TangentSpace.ofEq_isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
     {p q : M} (v : TangentSpace I p) (h : p = q) :
     IsRealizableMinimal v ↔ IsRealizableMinimal (TangentSpace.ofEq I h v) := by
   subst p
   rfl
-
-lemma isLocalDiffeomorphAt_iff {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type u_3} [NormedAddCommGroup F]
-    [NormedSpace 𝕜 F] {H₁ : Type u_5}
-    [TopologicalSpace H₁] {H₂ : Type u_6} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
-    (J : ModelWithCorners 𝕜 F H₂) {M : Type u_8} [TopologicalSpace M] [ChartedSpace H₁ M]
-    {N : Type u_9}
-    [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
-    IsLocalDiffeomorphAt I J n f x ↔
-      ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
- sorry
 
 omit [IsManifold I ∞ M] in
 lemma PartialDiffeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
@@ -256,13 +185,8 @@ lemma isRealizable_iff_derivableWithinAt {p : H} {v : TangentSpace I p} :
     IsRealizableMinimal v ↔ derivableWithinAt ℝ (range I) (I p) (d% I p v) :=
   ⟨IsRealizable.derivableWithinAt, derivableWithinAt.IsRealizable⟩
 
---lemma isRealizable_iff_mem_posTangentConeAt {p : H} {v : TangentSpace I p} :
---    IsRealizableMinimal v ↔ d% I p v ∈ posTangentConeAt (range I) (I p) :=
---  isRealizable_iff_derivableWithinAt.trans
---    (I.convex_range.derivableWithinAt_iff_mem_posTangentConeAt (mem_range_self p))
-
 omit [IsManifold I ∞ M] in
-lemma isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas {p : M} {v : TangentSpace I p}
+lemma isRealizable_iff_derivableWithinAt_of_mem_maximalAtlas {p : M} {v : TangentSpace I p}
     (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
     (hf : f ∈ IsManifold.maximalAtlas I ∞ M) :
     IsRealizableMinimal v ↔
@@ -273,11 +197,26 @@ lemma isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas {p : M} {v : Tan
     ← ContinuousLinearMap.comp_apply, ← mvfderiv_comp (g := I) (f := f) p I.mdifferentiableAt hfp,
     f.extend_coe, comp_apply]
 
-lemma isRealizable_iff_extChartAt_mem_posTangentConeAt {p : M} {v : TangentSpace I p} :
+omit [IsManifold I ∞ M] in
+lemma isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas {p : M} {v : TangentSpace I p}
+    (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) :
+    IsRealizableMinimal v ↔
+      d% (f.extend I) p v ∈ posTangentConeAt (range I) (f.extend I p) :=
+  (isRealizable_iff_derivableWithinAt_of_mem_maximalAtlas f hp hf).trans
+    (I.convex_range.derivableWithinAt_iff_mem_posTangentConeAt (mem_range_self _))
+
+lemma isRealizable_iff_derivablewithinAt_extChartAt {p : M} {v : TangentSpace I p} :
     IsRealizableMinimal v ↔
       derivableWithinAt ℝ (range I) (extChartAt I p p) (d% (extChartAt I p) p v) :=
-  isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas _ (mem_chart_source H p)
+  isRealizable_iff_derivableWithinAt_of_mem_maximalAtlas _ (mem_chart_source H p)
     (IsManifold.chart_mem_maximalAtlas p)
+
+lemma isRealizable_iff_mem_posTangentConeAt_extChartAt {p : M} {v : TangentSpace I p} :
+    IsRealizableMinimal v ↔
+      d% (extChartAt I p) p v ∈ posTangentConeAt (range I) (extChartAt I p p) :=
+  isRealizable_iff_derivablewithinAt_extChartAt.trans
+    (I.convex_range.derivableWithinAt_iff_mem_posTangentConeAt (mem_range_self _))
 
 -- I think I need this because `PartialDiffeomorph` is private
 set_option backward.isDefEq.respectTransparency false in
@@ -327,101 +266,35 @@ lemma isInwardPointing_iff_chartAt {p : M} (v : TangentSpace I p) :
   isInwardPointing_iff_of_mem_maximalAtlas _ _ (mem_chart_source H p)
     (IsManifold.chart_mem_maximalAtlas p)
 
--- **I am not sure if we actually need anything of the end of the file**
+lemma interior_posTangentConeAt_eq {p : H} :
+    interior (posTangentConeAt (range I) (I p)) =
+      d% I p '' interior {v | IsRealizableMinimal v} := by
+  rw [(isHomeomorph_mvfderiv_modelWithCorners I p).image_interior]
+  congr
+  ext w
+  rw [← I.convex_range.derivableWithinAt_iff_mem_posTangentConeAt (mem_range_self p)]
+  change _ ↔ _ ∈ (mvfderivModelWithCorners I p).toEquiv '' _
+  rw [mem_image_equiv, mem_ofPred, isRealizable_iff_derivableWithinAt,
+    ← mvfderivModelWithCorners_apply]
+  congrm derivableWithinAt ℝ (range I) (I p) ?_
+  exact (Homeomorph.symm_apply_eq (mvfderivModelWithCorners I p)).mp rfl
 
-omit [NormedSpace ℝ E] in
-lemma TangentSpace.dist_eq [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H}
-    {v w : TangentSpace I p} : dist v w = dist (d% I p v) (d% I p w) :=
-  rfl
+omit [IsManifold I ∞ M] in
+lemma isInwardPointing_iff_mem_interior_posTangentConeAt_of_mem_maximalAtlas {p : M}
+    {v : TangentSpace I p} (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
+    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) :
+    IsInwardPointingMinimal v ↔
+      d% (f.extend I) p v ∈ interior (posTangentConeAt (range I) (f.extend I p)) := by
+  have hfp := mdifferentiableAt_of_mem_maximalAtlas
+    (IsManifold.maximalAtlas_subset_of_le ENat.LEInfty.out hf) hp
+  rw [isInwardPointing_iff_of_mem_maximalAtlas v f hp hf, f.extend_coe, comp_apply,
+    interior_posTangentConeAt_eq, mvfderiv_comp p I.mdifferentiableAt hfp,
+    ContinuousLinearMap.comp_apply,
+    (bijective_mvfderiv_modelWithCorners I _).injective.mem_set_image, IsInwardPointingMinimal]
 
-lemma isRealizable_of_mem_range {p : H} {v : TangentSpace I p}
-    {ε : ℝ} (hε : ε > 0) (h : I p + ε • d% I p v ∈ (range I)) :
-    IsRealizable v := by
-  unfold IsRealizable
-  let γ : ℝ → H := I.symm ∘ fun i ↦ I p + i • mvfderiv I I p v
-  have hεI : Ico 0 ε ⊆ (fun i ↦ I p + i • mvfderiv I I p v) ⁻¹' range I := by
-    intro i hi
-    exact I.convex_range.add_smul_mem_icc (mem_range_self p) hε h
-      (Ico_subset_Icc_self hi)
-  have : ContMDiffOn 𝓘(ℝ, ℝ) I ∞ γ (Ico 0 ε) := by
-    apply I.contMDiffOn_symm.comp ?_ hεI
-    rw [contMDiffOn_iff_contDiffOn]
-    fun_prop
-  use γ, ε, hε, this, by simp [γ]
-  have h0 := (uniqueDiffOn_Ico 0 ε).uniqueDiffWithinAt (left_mem_Ico.mpr hε)
-  unfold γ
-  rw [MDifferentiableWithinAt.mfderivWithin_mono_of_mem_nhdsWithin (s := Ico 0 ε)]
-  · have hI : MDifferentiableWithinAt 𝓘(ℝ, E) I I.symm (range I) (I p) := by
-      exact I.mdifferentiableWithinAt_symm (mem_range_self p)
-    rw [mfderivWithin_comp_of_eq hI (u := range I) (g := I.symm)]
-    · -- defeq wise pretty broken
-      rw [ModelWithCorners.mfderivWithin_symm I (mem_range_self p)]
-      change mfderivWithin 𝓘(ℝ, ℝ) 𝓘(ℝ, E) (
-          fun (i : ℝ) ↦ I p + i • mvfderiv I I p v) (Ico 0 ε) 0 1 = v
-      rw [zero_smul, add_zero, mfderivWithin_eq_fderivWithin, fderivWithin_const_add]
-      rw [fderivWithin_smul_const h0
-        differentiableWithinAt_fun_id]
-      rw [fderivWithin_fun_id h0]
-      rw [I.mvfderiv]
-      rw [ContinuousLinearMap.smulRight_id]
-      -- fixing some defeq issue
-      change (ContinuousLinearMap.toSpanSingleton ℝ
-        ((ContinuousLinearMap.id ℝ (TangentSpace I p)) v)) 1 = v
-      rw [ContinuousLinearMap.toSpanSingleton_apply, one_smul]
-      rfl
-    · rw [mdifferentiableWithinAt_iff_differentiableWithinAt]
-      fun_prop
-    · exact hεI
-    · exact h0.uniqueMDiffWithinAt
-    · simp
-  · exact this.mdifferentiableOn (ne_of_beq_false rfl) 0 (left_mem_Ico.mpr hε)
-  · rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
-    exact uniqueDiffWithinAt_Ici 0
-  · exact Ico_mem_nhdsGE hε
-
-
-
-
-
-
-lemma isInwardPointing_of_mem_interior_range {p : H} {v : TangentSpace I p}
-    {ε : ℝ} (hε : ε > 0) (h : I p + ε • d% I p v ∈ interior (range I)) :
-    IsInwardPointing v := by
-  unfold IsInwardPointing
-  rw [mem_interior]
-  rw [← IsOpen.mem_nhds_iff isOpen_interior, Metric.mem_nhds_iff] at h
-  obtain ⟨δ, hδ, hδI⟩ := h
-  use Metric.ball v (δ / ε)
-  refine ⟨?_, Metric.isOpen_ball, Metric.mem_ball_self (div_pos hδ hε)⟩
-  intro w hw
-  apply isRealizable_of_mem_range hε
-  apply interior_subset
-  apply hδI
-  simpa [dist_smul₀, abs_of_pos hε, ← lt_div_iff₀' hε, ← TangentSpace.dist_eq] using hw
-
-
-
-
-
-lemma isInwardPointing_iff {p : H} (hp : I.IsBoundaryPoint p) (v : TangentSpace I p) :
-    IsInwardPointing v ↔ ∃ (ε : ℝ) (_ : ε > 0), I p + ε • d% I p v ∈ interior (range I) := by
-  constructor
-  · intro h
-    by_contra! hv
-    unfold IsInwardPointing at h
-
-    sorry
-  · intro ⟨ε, hε, h⟩
-    unfold IsInwardPointing
-    rw [mem_interior]
-    rw [← IsOpen.mem_nhds_iff isOpen_interior, Metric.mem_nhds_iff] at h
-    obtain ⟨δ, hδ, hδI⟩ := h
-    --let f := (NormedSpace.fromTangentSpace (𝕜 := ℝ) (I p))
-    --let f := mvfderiv I I p
-    use Metric.ball v (δ / ε)
-    refine ⟨?_, Metric.isOpen_ball, Metric.mem_ball_self (div_pos hδ hε)⟩
-    intro w hw
-    apply isRealizable_of_mem_range hε
-    apply interior_subset
-    apply hδI
-    simpa [dist_smul₀, abs_of_pos hε, ← lt_div_iff₀' hε, ← TangentSpace.dist_eq] using hw
+lemma isInwardPointing_iff_extChartAt_mem_interior_posTangentConeAt {p : M}
+    {v : TangentSpace I p} :
+    IsInwardPointingMinimal v ↔
+      d% (extChartAt I p) p v ∈ interior (posTangentConeAt (range I) (extChartAt I p p)) :=
+  isInwardPointing_iff_mem_interior_posTangentConeAt_of_mem_maximalAtlas _ (mem_chart_source H p)
+    (IsManifold.chart_mem_maximalAtlas p)
