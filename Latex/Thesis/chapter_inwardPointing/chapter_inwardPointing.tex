@@ -62,7 +62,7 @@ For some manifolds this definition includes vectors tangent to the boundary:
 
 To remedy this we came up with this definition: 
 
-\begin{defi}[our idea inspired by Definition \ref{defi:InwMelrose}]\label{defi:InwMelrose2}
+\begin{defi}[Our idea inspired by Definition \ref{defi:InwMelrose}]\label{defi:InwMelrose2}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is a non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$ such that $\direcderiv{v}f (p) > 0$. 
 \end{defi}
 
@@ -106,7 +106,7 @@ We first note conditions for such a definition:
 \begin{rem}\label{rem:realcond}
     A sensible definition of realisability needs to fulfil these two conditions: 
     \begin{enumerate}
-        \item The definition needs to be preserved by local diffeomorphisms (in particular it should be preserved by smooth charts). 
+        \item The definition needs to be preserved by local diffeomorphisms (in particular it should be preserved by smooth charts). \label{rem:realcond1}
         \item The definition should reduce to a sensible notion on the model space that is easily verifiable in the cases of the typical examples (e.g.\ upper half space in $\bR^n$). \label{rem:realcond2}
     \end{enumerate}
 \end{rem}
@@ -115,8 +115,60 @@ Let us first discuss what this ``sensible notion'' in Remark \ref{rem:realcond2}
 
 We first need the following definition:
 
-\begin{defi}[Clarke Tangent Cone]
-    noidwq
+\begin{defi}[Contingent Tangent Cone, \cite{Aubin1990} after Definition 4.1.1]
+    Let $E$ be a normed vector space, $K \subset E$ and $x \in \closure{E}$. 
+    Then the \emph{contingent tangent cone} to $K$ at $x$ is the set of all $v \in E$ such that there is a sequence of scalars $c \colon \bN \to \bR_\ge$ and a sequence of vectors $d \colon \bN \to E$ such that 
+    \begin{enumerate}
+        \item $\lim_{n \to \infty} d_n = 0$, 
+        \item $x + d_n \in K$ for all $n \in \bN$, and 
+        \item $\lim_{n \to \infty} c_n \cdot d_n = v$.
+    \end{enumerate}
+    We denote this tangent cone by $\tancone{K}{x}$. 
 \end{defi}
 
-In the following we will 
+In \mathlib this is referred to as \lstinline|posTangentConeAt|.
+In the following we will only consider contingent tangent cones to convex sets for which the contingent tangent cone agrees with other notions of tangent cones such as the Clarke tangent cone (\cite{Aubin1990} Proposition 4.2.1).
+Thus we will refer to it simply as the tangent cone. 
+
+This captures exactly our notion of realisable: intuitively, the tangent cone $\tancone{K}{x}$ is composed of all vectors at $x$ that are either inward pointing or tangent to $K$. 
+You can see examples of tangent cones in Figure \ref{fig:tancone}.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale = 1.5]
+    \fill[gray!10] (-4, -1.5) rectangle (-1.5, 1.5);
+    \draw (-3, 0) circle [radius=1];
+    \fill[gray!20] (-3, 0) circle [radius=1];
+    \node at (-3, 0) {$K$};
+    \node[circle, fill, inner sep=1.5pt] at (-4, 0) {};
+    \node at (-4.3, 0) {$x$};
+    \draw (-4, -1.5) -- (-4, 1.5);
+    \node at (-2, 1.2) {$\tancone{K}{x}$};
+
+    \fill[gray!10] (0, -1) rectangle (2.5, 1.5);
+    \draw (0, -1) rectangle (2, 1);
+    \fill[gray!20] (0, -1) rectangle (2, 1);
+    \node at (1, 0) {$K$};
+    \node[circle, fill, inner sep=1.5pt] at (0, -1) {};
+    \node at (-0.3, -1) {$x$};
+    \draw (0, -1) -- (0, 1.5);
+    \draw (0, -1) -- (2.5, -1);
+    \node at (2, 1.2) {$\tancone{K}{x}$};
+\end{tikzpicture}
+\caption{Two examples of tangent cones}
+\label{fig:tancone}
+\end{figure}
+
+So we can take the ``sensible notion'' in Remark \ref{rem:realcond2} to mean that a vector $v$ should be inward pointing to a point $x$ in the model space if and only if $v$ is in the tangent cone at the point $x$ to the model space. 
+
+Now let us consider possibilities for the definition of realisability.
+The first was already provided to us in Definition \ref{defi:InwLee1}: 
+
+\begin{defi}[\cite{Lee2006} p.\ 136]
+    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is \emph{realisable} if and only if there is an $\varepsilon > 0$ and a smooth curve $\gamma \colon [0, \varepsilon) \to M$ such that $\gamma (0) = p$ and $\gamma' (0) = v$.
+\end{defi}
+
+It is easy to show that this definition fulfils Remark \ref{rem:realcond1}. 
+It also fulfils Remark \ref{rem:realcond2} but this is surprisingly hard to show for general model spaces $H$. 
+Taking a vector tangent to the boundary, it is hard to describe a method for picking a smooth curve $\gamma \colon [0, \varepsilon) \to H$ such that $\gamma (0) = p$ and $\gamma' (0) = v$. 
+
