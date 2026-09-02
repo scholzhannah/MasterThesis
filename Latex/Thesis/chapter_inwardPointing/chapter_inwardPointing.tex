@@ -14,29 +14,109 @@ The existence of the $\gamma \colon : [0, \varepsilon) \to M$ by itself characte
 
 So for manifolds with corners we either need a completely new definition that intrinsically excludes the vectors tangent to the boundary or we need a definition of realisability and a way to exclude the tangent vectors. 
 
-We first tried the first option and came up with these candidates for definitions which we either came up with ourselves or found in the literature: 
+\section{Definitions intrinsically excluding vectors tangent to boundary}
+
+We first tried the first option and considered these candidates for definitions which we either came up with ourselves or found in the literature: 
 
 \begin{defi}[Our idea inspired by Definition \ref{defi:InwLee1}]
-    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is an $\varepsilon > 0$ and a smooth curve $\gamma \colon [0, \varepsilon) \to M$ such that $\gamma (0) = p$, $\gamma' (0) = v$ and $\gamma ((0, \varepsilon)) \subseteq \interior{M}$.
+    Let $M$ be a smooth manifold with corners. 
+    Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is an $\varepsilon > 0$ and a smooth curve $\gamma \colon [0, \varepsilon) \to M$ such that $\gamma (0) = p$, $\gamma' (0) = v$ and $\gamma ((0, \varepsilon)) \subseteq \interior{M}$.
 \end{defi}
 
 Unfortunately, this definition doesn't exclude vectors tangent to the boundary: 
 
-\begin{example}
-    Take $M$ to be the upper half plane $\mathcal{H}$ in $\bR^2$ let $p$ be $(0, 0)$ and let $\gamma \colon [0, 1) \to \mathcal{H}, x \mapsto x^2$. Then $\gamma'(0) = (1, 0)$ and thus by this definition $(1, 0)$ would be inward pointing even though it is clearly tangent to the boundary.
+\begin{example}\label{ex:InwLee2}
+    Take $M$ to be the upper half plane $\mathcal{H}$ in $\bR^2$ let $p$ be $(0, 0)$ and let $\gamma \colon [0, 1) \to \mathcal{H}, x \mapsto x^2$. 
+    Then $\gamma'(0) = (1, 0)$ and thus by this definition $(1, 0)$ would be inward pointing even though it is clearly tangent to the boundary.
+    See Figure \ref{fig:InwLee2} for an illustration of this example. 
 \end{example}
 
 \begin{figure}
 \centering
 \begin{tikzpicture}[scale=3]
+    \fill[gray!20] (-1.3, 0) rectangle (1.3, 1.3);
+    \node at (-1, 1) {$\mathcal{H}$};
     \draw (0, 0) parabola (1, 1);
-    \draw (-1, 0) -- (1, 0);
+    \draw (-1.3, 0) -- (1.3, 0);
     \node[label={[yshift=0.3](0, 0)}, circle, fill, inner sep=1.5pt] at (0, 0) {};
     \node at (0.6, 0.5) {$\gamma$};
-    %\fill (-1, 1) -- (-1, 0) -- (1, 1) -- (0, 1)
+    \draw[->, thick] (0, 0) -- (1, 0);
+    \node[label={[yshift=0.3](1, 0)}] at (1, 0) {};
 \end{tikzpicture}
+\caption{Illustration of Example \ref{ex:InwLee2}}
+\label{fig:InwLee2}
 \end{figure}
 
-\begin{defi}
+\begin{defi}[\cite{Melrose1996} Definition 1.13.10]\label{defi:InwMelrose}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if $\direcderiv{v}f (p) \ge 0$ for every non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$. 
 \end{defi}
+
+For some manifolds this definition includes vectors tangent to the boundary: 
+
+\begin{example}
+    Take $M$ to be the upper half plane $\mathcal{H}$ in $\bR^2$ and let $p$ be $(0, 0)$. 
+    Let $f$ be any non-negative function in $\smoothfunc{\mathcal{H}}$ that is zero on $\boundary{\mathcal{H}}$. 
+    Then $\direcderiv{(0, 1)}f (0, 0) = 0$. 
+    Thus $(0, 1)$ is inward pointing by this definition even though it is clearly tangent to the boundary. 
+\end{example}
+
+To remedy this we came up with this definition: 
+
+\begin{defi}[our idea inspired by Definition \ref{defi:InwMelrose}]\label{defi:InwMelrose2}
+    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is a non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$ such that $\direcderiv{v}f (p) > 0$. 
+\end{defi}
+
+Unfortunately, both of the above definitions do not work for manifolds with corners: 
+
+\begin{example}
+    Take $M$ to be the right upper quadrant $Q_I$ and let $p$ be $(0, 0)$. 
+    Let $f$ be any non-negative function in $\smoothfunc{Q_I}$ that is zero on $\boundary{\mathcal{Q_I}}$. 
+    Then clearly $\direcderiv{(0, 1)}f (0, 0) =\direcderiv{(1, 0)}f (0, 0) = 0$. 
+    This means that the Jacobian is zero and since $f$ is smooth and thus differentiable at $(0, 0)$, this means that $\direcderiv{v}f (0, 0) = 0$ for all vectors $v$. 
+
+    So in the case of Definition \ref{defi:InwMelrose}, this would mean that any vector was inward pointing, and in the case of Definition \ref{defi:InwMelrose2}, no vector would be inward pointing. 
+\end{example}
+
+Lastly, here is another popular definition that falls into this category: 
+
+\begin{defi}[E.g.\ \cite{Joyce2009} Definition 2.2]
+    Let $M$ be a smooth manifold with corners. 
+    Let $p \in M$ be a corner point of codimension $k$, i.e.\ let there be a chart $(U, \varphi)$ with $U \subseteq \bR^n_k = [0, \infty)^k \times \bR^{n - k}$ such that $0 \in U$ and $\varphi(U) = p$. 
+    Then a vector $v \in \tanspace{p}{M}$ is inward pointing if and only if it is in $\derivat{\varphi}{0} ((0, \infty)^k \times \bR^{n - k})$ where $\derivat{\varphi}{0} \colon \bR^n = \tanspace{0}{\bR^n_k} \to \tanspace{p}{M}$.
+\end{defi}
+
+This definition is of course correct, however it depends on a choice of chart. 
+In Mathlib definitions are generally preferred to not depend on choices. \todo{Why exactly? Reference?}
+
+\section{Definitions through realisability}
+
+After failing to find a usable definition intrinsically excluding vectors, we moved on to defining realisable vectors.
+Where as mentioned above, we want a realisable vector to be one that is either inward pointing or tangent to the boundary. 
+
+Firstly, we could only find the following way to define inward pointing vectors from realisable ones: 
+
+\begin{defi}[\cite{Amr2021}]
+    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if it is in the interior of the set of realisable vectors. 
+\end{defi}
+
+Now we can move on to finding a definition of realisability. 
+
+We first note conditions for such a definition: 
+
+\begin{rem}\label{rem:realcond}
+    A sensible definition of realisability needs to fulfil these two conditions: 
+    \begin{enumerate}
+        \item The definition needs to be preserved by local diffeomorphisms (in particular it should be preserved by smooth charts). 
+        \item The definition should reduce to a sensible notion on the model space that is easily verifiable in the cases of the typical examples (e.g.\ upper half space in $\bR^n$). \label{rem:realcond2}
+    \end{enumerate}
+\end{rem}
+
+Let us first discuss what this ``sensible notion'' in Remark \ref{rem:realcond2} should be. 
+
+We first need the following definition:
+
+\begin{defi}[Clarke Tangent Cone]
+    noidwq
+\end{defi}
+
+In the following we will 
