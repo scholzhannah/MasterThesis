@@ -139,12 +139,24 @@ lemma Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorp
   ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isBoundaryPoint_iff
       (ne_of_beq_false rfl)
 
+@[simp]
+lemma Manifold.isBoundaryPoint_chartAt_iff {p : M} :
+    I.IsBoundaryPoint (chartAt H p p) ↔ I.IsBoundaryPoint p :=
+  (Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas (IsManifold.chart_mem_maximalAtlas p)
+    (mem_chart_source H p)).symm
+
 omit [IsManifold I ∞ M] in
 lemma Manifold.isInteriorPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
     (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
     I.IsInteriorPoint p ↔ I.IsInteriorPoint (f p) :=
   ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isInteriorPoint_iff
     (ne_of_beq_false rfl)
+
+@[simp]
+lemma Manifold.isInteriorPoint_chartAt_iff {p : M} :
+    I.IsInteriorPoint (chartAt H p p) ↔ I.IsInteriorPoint p :=
+  (Manifold.isInteriorPoint_iff_of_mem_maximalAtlas (IsManifold.chart_mem_maximalAtlas p)
+    (mem_chart_source H p)).symm
 
 omit [IsManifold I ∞ M] in
 lemma PartialDiffeomorph.isOpen_image_source_inter {M' : Type*} [TopologicalSpace M']
@@ -337,3 +349,21 @@ lemma isLocalDiffeomorphAt_iff {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] 
     IsLocalDiffeomorphAt I J n f x ↔
       ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
  sorry
+
+theorem closure_iInter_subset {X : Type*} [TopologicalSpace X] {ι : Sort*} (s : ι → Set X) :
+     closure (⋂ i, s i) ⊆ ⋂ i, closure (s i) :=
+  subset_iInter fun i ↦ closure_mono (iInter_subset s i)
+
+@[simp]
+theorem closure_quadrant {n : ℕ} (p : ENNReal) (a : ℝ) :
+    closure { y : PiLp p (fun _ : Fin n ↦ ℝ) | ∀ i, a ≤ y i } = { y | ∀ i, a ≤ y i } := by
+  rw [ofPred_forall]
+  refine subset_antisymm ?_ subset_closure
+  apply (closure_iInter_subset _).trans
+  simp
+
+/-- The model space used to define `n`-dimensional real manifolds with boundary. -/
+scoped[Manifold]
+  notation3 "𝓡∠ " n =>
+    (modelWithCornersEuclideanQuadrant n :
+      ModelWithCorners ℝ (EuclideanSpace ℝ (Fin n)) (EuclideanQuadrant n))

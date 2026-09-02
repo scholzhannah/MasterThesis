@@ -219,6 +219,19 @@ lemma isRealizable_iff_mem_posTangentConeAt_extChartAt {p : M} {v : TangentSpace
   isRealizable_iff_derivablewithinAt_extChartAt.trans
     (I.convex_range.derivableWithinAt_iff_mem_posTangentConeAt (mem_range_self _))
 
+lemma isRealizable_iff_euclideanHalfSpace {n : ℕ} [NeZero n] {M : Type*} [TopologicalSpace M]
+    [ChartedSpace (EuclideanHalfSpace n) M] [IsManifold (𝓡∂ n) ∞ M] {p : M}
+    (hp : (𝓡∂ n).IsBoundaryPoint p) {v : TangentSpace (𝓡∂ n) p} :
+    IsRealizableMinimal v ↔ 0 ≤ ((d% (extChartAt (𝓡∂ n) p) p) v).ofLp 0 := by
+  rw [isRealizable_iff_derivablewithinAt_extChartAt,
+    range_modelWithCornersEuclideanHalfSpace n]
+  apply derivableWithinAt_iff_euclideanHalfSpace
+  rw [extChartAt, OpenPartialHomeomorph.extend_coe, comp_apply,
+    ← modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff, Manifold.isBoundaryPoint_chartAt_iff]
+  exact hp
+
+-- **Question**: How do i say corner point in mathlib?
+
 -- I think I need this because `PartialDiffeomorph` is private
 set_option backward.isDefEq.respectTransparency false in
 omit [IsManifold I ∞ M] in
@@ -300,3 +313,14 @@ lemma isInwardPointing_iff_extChartAt_mem_interior_posTangentConeAt {p : M}
       d% (extChartAt I p) p v ∈ interior (posTangentConeAt (range I) (extChartAt I p p)) :=
   isInwardPointing_iff_mem_interior_posTangentConeAt_of_mem_maximalAtlas _ (mem_chart_source H p)
     (IsManifold.chart_mem_maximalAtlas p)
+
+lemma isInwardPointing_iff_euclideanHalfSpace {n : ℕ} [NeZero n] {M : Type*} [TopologicalSpace M]
+    [ChartedSpace (EuclideanHalfSpace n) M] [IsManifold (𝓡∂ n) ∞ M] {p : M}
+    (hp : (𝓡∂ n).IsBoundaryPoint p) {v : TangentSpace (𝓡∂ n) p} :
+    IsInwardPointingMinimal v ↔ 0 < ((d% (extChartAt (𝓡∂ n) p) p) v).ofLp 0 := by
+  rw [isInwardPointing_iff_extChartAt_mem_interior_posTangentConeAt,
+    range_modelWithCornersEuclideanHalfSpace n,
+    interior_posTangentConeAt_euclideanHalfSpace ?_, mem_ofPred]
+  rw [extChartAt, OpenPartialHomeomorph.extend_coe, comp_apply,
+    ← modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff, Manifold.isBoundaryPoint_chartAt_iff]
+  exact hp

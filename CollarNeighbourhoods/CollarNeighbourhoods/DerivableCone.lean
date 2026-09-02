@@ -502,23 +502,17 @@ lemma posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpa
   exact ⟨fun ⟨r, hr, hv⟩ ↦ (mul_nonneg_iff_right_nonneg_of_pos hr).1 hv,
     fun hv ↦ ⟨1, zero_lt_one, (one_mul (v.ofLp 0)).symm ▸ hv⟩⟩
 
+lemma derivableWithinAt_iff_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
+    (hp : p.ofLp 0 = 0) {v : EuclideanSpace ℝ (Fin n)} :
+    derivableWithinAt ℝ {x | 0 ≤ x.ofLp 0} p v ↔ 0 ≤ v.ofLp 0 := by
+  rw [EuclideanHalfSpace.convex.derivableWithinAt_iff_mem_posTangentConeAt hp.ge,
+    posTangentConeAt_euclideanHalfSpace hp, mem_ofPred]
+
 lemma interior_posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : p.ofLp 0 = 0) :
     interior (posTangentConeAt {x | 0 ≤ x.ofLp 0} p) = {v | 0 < v.ofLp 0} := by
   rw [posTangentConeAt_euclideanHalfSpace hp]
   exact interior_halfSpace 2 0 0
-
-theorem closure_iInter_subset {X : Type*} [TopologicalSpace X] {ι : Sort*} (s : ι → Set X) :
-     closure (⋂ i, s i) ⊆ ⋂ i, closure (s i) :=
-  subset_iInter fun i ↦ closure_mono (iInter_subset s i)
-
-@[simp]
-theorem closure_quadrant {n : ℕ} (p : ENNReal) (a : ℝ) :
-    closure { y : PiLp p (fun _ : Fin n ↦ ℝ) | ∀ i, a ≤ y i } = { y | ∀ i, a ≤ y i } := by
-  rw [ofPred_forall]
-  refine subset_antisymm ?_ subset_closure
-  apply (closure_iInter_subset _).trans
-  simp
 
 lemma posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : ∀ i, p.ofLp i = 0) :
@@ -530,6 +524,12 @@ lemma posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpac
   ext x
   exact ⟨fun ⟨r, hr, hrx⟩ i ↦ (mul_nonneg_iff_right_nonneg_of_pos hr).1 (hrx i),
     fun hx ↦ ⟨1, zero_lt_one, fun i ↦ (one_mul (x.ofLp i)).symm ▸ (hx i)⟩⟩
+
+lemma derivableWithinAt_iff_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
+    (hp : ∀ i, p.ofLp i = 0) {v : EuclideanSpace ℝ (Fin n)} :
+    derivableWithinAt ℝ {x | ∀ i, 0 ≤ x.ofLp i} p v ↔ ∀ i, 0 ≤ v.ofLp i := by
+  rw [EuclideanQuadrant.convex.derivableWithinAt_iff_mem_posTangentConeAt (fun i ↦ (hp i).ge),
+    posTangentConeAt_euclideanQuadrant hp, mem_ofPred]
 
 lemma interior_posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : ∀ i, p.ofLp i = 0) :
