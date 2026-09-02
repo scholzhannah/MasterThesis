@@ -1,0 +1,42 @@
+\chapter{Inward Pointing Vectors in Manifolds with Corners}
+
+Defining the notion of inward pointing vectors in manifolds with corners is substantially harder than in manifolds with boundary without corners. Let us first examine why this is. 
+
+Here is a common definition for manifolds with boundary without corners:
+
+\begin{defi}[\cite{Lee2006} p.\ 136]\label{defi:InwLee1}
+    Let $M$ be a smooth manifold with boundary without corners. Let $p \in M$. Then $v \in \tanspace{p}{M} \setminus \tanspace{p}{\boundary M}$ is inward pointing if and only if there is an $\varepsilon > 0$ and a smooth curve $\gamma \colon [0, \varepsilon) \to M$ such that $\gamma (0) = p$ and $\gamma' (0) = v$.
+\end{defi}
+
+This definition cannot be used for manifolds with corners as in this case $\boundary M$ is not always a manifold and thus $\tanspace{p}{\boundary M}$ is not defined. 
+
+The existence of the $\gamma \colon : [0, \varepsilon) \to M$ by itself characterises whether a vector is inward pointing or tangent to the boundary, a notion which we will call \emph{realisable}. 
+
+So for manifolds with corners we either need a completely new definition that intrinsically excludes the vectors tangent to the boundary or we need a definition of realisability and a way to exclude the tangent vectors. 
+
+We first tried the first option and came up with these candidates for definitions which we either came up with ourselves or found in the literature: 
+
+\begin{defi}[Our idea inspired by Definition \ref{defi:InwLee1}]
+    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is an $\varepsilon > 0$ and a smooth curve $\gamma \colon [0, \varepsilon) \to M$ such that $\gamma (0) = p$, $\gamma' (0) = v$ and $\gamma ((0, \varepsilon)) \subseteq \interior{M}$.
+\end{defi}
+
+Unfortunately, this definition doesn't exclude vectors tangent to the boundary: 
+
+\begin{example}
+    Take $M$ to be the upper half plane $\mathcal{H}$ in $\bR^2$ let $p$ be $(0, 0)$ and let $\gamma \colon [0, 1) \to \mathcal{H}, x \mapsto x^2$. Then $\gamma'(0) = (1, 0)$ and thus by this definition $(1, 0)$ would be inward pointing even though it is clearly tangent to the boundary.
+\end{example}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale=3]
+    \draw (0, 0) parabola (1, 1);
+    \draw (-1, 0) -- (1, 0);
+    \node[label={[yshift=0.3](0, 0)}, circle, fill, inner sep=1.5pt] at (0, 0) {};
+    \node at (0.6, 0.5) {$\gamma$};
+    %\fill (-1, 1) -- (-1, 0) -- (1, 1) -- (0, 1)
+\end{tikzpicture}
+\end{figure}
+
+\begin{defi}
+    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if $\direcderiv{v}f (p) \ge 0$ for every non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$. 
+\end{defi}
