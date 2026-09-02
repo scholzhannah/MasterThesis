@@ -1,0 +1,83 @@
+\section{Prerequisites}
+
+\subsection{Vector fields}
+
+\begin{lem}\label{lem:ballinward}
+    Let $M$ be a smooth $n$-manifold with boundary. Let $B$ be a coordinate half ball with corresponding map $\varphi \colon B \to \bH^n$. 
+    Then $\frac{\partial}{\partial x^n}$ is a smooth vector field on $B$ which is inward-pointing when restricted to $\boundary M \cap B$.
+\end{lem}
+\begin{proof}
+    The vector field is smooth by Example 8.2 in \cite{Lee2006}. 
+    Let $p \in B$. 
+    We need to show that $\restrict{\frac{\partial}{\partial x^n}}{p}$ is inward-pointing. 
+    By Proposition 5.42 in \cite{Lee2006}, it suffices to show that the $n$-th component of $\restrict{\frac{\partial}{\partial x^n}}{p}$ is positive. 
+    Its $n$-th component is 1 so we are done. 
+\end{proof}
+
+\begin{lem}\label{lem:vecfieldextension}
+    Let $M$ be a smooth manifold, $A$ a closed and $U$ an open subset of $M$ with $A \subseteq U$. 
+    Let $X \colon A \to \tanbun{M}$ be a smooth vector field along $A$.
+    Then there is a smooth vector field $\tilde{X} \colon M \to \tanbun{M}$ with support in $U$ which agrees with $X$ on $A$. 
+\end{lem}
+
+\begin{proof}
+    We first notice that the proof of Lemma 2.26 (Extension Lemma for Smooth Functions) in \cite{Lee2006} also works for the domain $\tanbun{M}$ \todo{General Lemma?}. 
+    Now we need to verify that a smooth map of the form 
+    \begin{equation*}
+        \tilde{X} = \sum_{p \in A} \tau_p (x) \tilde{X}_p (x)
+    \end{equation*}
+    is a vector field.
+    Here the $\tau_p{x}$ are bump functions and the $\tilde{X}_p$ local extensions of the vector field. 
+    Now locally this sum is finite. 
+    Module over $\smoothfunc{M}$ ... blah blah blah
+\end{proof}
+
+\begin{lem}[Problem 8-4 in \cite{Lee2006}]
+    Let $M$ be a smooth $n$-manifold with boundary. There exists a smooth vector field on $M$, which is inward-pointing when restricted to the boundary.
+\end{lem}
+
+\begin{proof}
+    Cover $\boundary M$ with a countable number of regular coordinate half-balls $(B_i)_i$. 
+    This is possible by Exercise 1.42 in \cite{Lee2006}.
+    Let us call the corresponding larger coordinate half-balls $B_i'$ and the corresponding smooth coordinate map $\varphi_i \colon B_i' \to \bH^n$. 
+    By Lemma \ref{lem:ballinward}, $\frac{\partial}{\partial x^n}$ is a smooth vector field on $B_i'$ which is inward-pointing when restricted to $\boundary M \cap B$. 
+    In particular, $\frac{\partial}{\partial x^n}$ is a smooth vector field along $B_i$. 
+    Using Lemma \ref{lem:vecfieldextension}, we can extend these to smooth vector fields $X_i \colon M \to \tanbun{M}$ with support in $B_i'$ and which agree with $\frac{\partial}{\partial x^n}$ on $B_i$. 
+    This is again inward-pointing which is easy to see using Proposition 5.42 in \cite{Lee2006} \todo{write Lemma}.
+    Now take a partition of unity subordinate to the cover $\{B_i \mid i\} \cup M \setminus \boundary M$. 
+    Then do the same thing as in the proof of Lemma \ref{lem:vecfieldextension} and get a global smooth vector field that is inward-pointing on the boundary. 
+\end{proof}
+
+\subsection{Flows and Flowouts}
+
+\begin{lem}
+    Let $U$ be an open subset of $\bH^n$ that has non-zero intersection with the boundary.
+    Let $V$ be a smooth vector field on $U$. 
+    Then there exists a smooth map $\delta_U \colon U \to \bR+$ and a smooth open embedding $\Phi_U \colon $ 
+\end{lem}
+
+\begin{lem}
+    Let $M$ be a smooth $n$-manifold with boundary.
+    Let $N$ be a smooth vector field on $M$ that is inward-pointing when restricted to the boundary. 
+    Let $(U, \varphi)$ be a boundary chart. 
+    Then there exists a smooth map $\delta_U \colon U \to \bR^+$ and a smooth open embedding $\Phi_U \colon P_U \to M$ where $P_U = \coloneq \{ (t, p) \in \bR \times U \mid 0 \leq t < \delta_U (p)\}$ ...
+\end{lem}
+
+\begin{proof}
+    Consider the pushforward $\pushfwd{\varphi}{X}$ of $X$ by $\varphi$ on $\varphi (U) \subseteq \bH^n$. 
+    Extend $\pushfwd{\varphi}{X}$ to a vector field $V$ on an open subset $U'$ of $\bR^n$ with $U' \cap \bH^n = U$ such that still $V^n (p) > 0$ for all $p \in \boundary \bH^n$ \todo{How? -> Lemma}.
+    Now let $\theta_V \colon \fD \to U'$ be the flow of $V$ as given by the Fundamental Theorem of Flows (Theorem 9.12 in \cite{Lee2006}) where $\fD \subseteq \bR \times M$ is a flow domain. 
+    Since $\varphi (U) \cap \boundary \bH^n$ is an embedded $n-1$-dimensional submanifold of $U'$ and $V$ is clearly nowhere tangent to it, we can apply the Flowout Theorem (Theorem 9.20 in \cite{Lee2006}) to get a smooth function $\delta_U' \colon \varphi (U) \cap \boundary \bH^n \to \bR^+$ such that $\restrict{\theta_V}{\fO} \colon \fO \to U$ is a smooth embedding where $\fO \coloneqq \{ (t, p) \in (\bR \times (\varphi (U) \cap \boundary \bH^n) \cap \fD) \mid 0 \le < \delta_U' (p)\}$. \todo{show $t \ge 0$}
+
+    Now define 
+\end{proof}
+
+\begin{lem}[Boundary Flowout Theorem, Theorem 9.24 and Problem 9-11 in \cite{Lee2006}]
+    Let $M$ be a smooth manifold with non-empty boundary. 
+    Let $N$ be a smooth vector field on $M$ that is inward-pointing when restricted to the boundary. 
+    Then there exists a smooth map $\delta \colon \boundary M \to \bR^+$ and a smooth embedding $\Phi_\delta \colon P_\delta \to M$ where $P_\delta \coloneqq \{(t, p) \in \bR \times \boundary M \mid 0 \leq t < \delta (p)\}$ such that $\Phi_\delta (P_\delta)$ is a neighbourhood of $\boundary M$ and for every $p \in \delta M$, $t \mapsto \Phi_\delta (t, p)$ is an integral curve of $N$ starting at $p$. 
+\end{lem}
+
+\begin{proof}
+    Cover $\boundary M$ with a countable number of boundary charts $(U, \varphi)$. 
+\end{proof}

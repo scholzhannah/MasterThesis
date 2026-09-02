@@ -56,6 +56,7 @@
 \usepackage{stackrel}                   % Symbole übereinander stapeln.
 \usepackage[dvipsnames]{xcolor}         % Gefärbter Text und so.
 \usepackage{tikz}                       % Graphen und kommutative Diagramme. Muss nach xcolor eingebunden werden.
+\usepackage{todonotes}                  % todo notes
 \usepackage{tikz-cd}                    % Kommutative Diagramme.
 \usepackage{comment}                    % Multiline comments
 
@@ -94,6 +95,10 @@
 \def\lstlanguagefiles{lstlean.tex}
 % set default language
 \lstset{language=lean, extendedchars=true}
+
+%Todo notes setting
+\todostyle{plan}{color=yellow, inline, caption={}}
+\todostyle{comment}{color=green}
 
 %to get code in footnotes write \cprotect\footnote 
 \usepackage{cprotect}
@@ -213,12 +218,13 @@
 \begin{document}
 % Titelseite
 \maketitle              % Titelseite ausgeben
-\setcounter{page}{3}    % Die Titelseite und die darauffolgende leere Seite sollen gefälligst Seite 1 und 2 sein.
+\setcounter{page}{3}    % Die Titelseite und die darauffolgende leere Seite sollen Seite 1 und 2 sein.
 \tableofcontents        % Inhaltsverzeichnis ausgeben
 
 %mathematics of CW-complexes
 \cleardoublepage 
 \input{chapter_mathematics/chapter_mathematics.tex}
+\input{chapter_lee/chapter_lee.tex}
 
 
 % Symbolverzeichnis
