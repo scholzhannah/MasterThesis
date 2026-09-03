@@ -47,6 +47,8 @@ Unfortunately, this definition doesn't exclude vectors tangent to the boundary:
 \label{fig:InwLee2}
 \end{figure}
 
+Then we found this definition by \citeauthor{Melrose1996}. 
+
 \begin{defi}[\cite{Melrose1996} Definition 1.13.10]\label{defi:InwMelrose}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if $\direcderiv{v}f (p) \ge 0$ for every non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$. 
 \end{defi}
@@ -60,6 +62,7 @@ For some manifolds this definition includes vectors tangent to the boundary:
     Thus $(0, 1)$ is inward pointing by this definition even though it is clearly tangent to the boundary. 
 \end{example}
 
+It is possible however, that he calls ``inward pointing'' what we call ``realisable''.
 To remedy this we came up with this definition: 
 
 \begin{defi}[Our idea inspired by Definition \ref{defi:InwMelrose}]\label{defi:InwMelrose2}
@@ -69,7 +72,7 @@ To remedy this we came up with this definition:
 Unfortunately, both of the above definitions do not work for manifolds with corners: 
 
 \begin{example}
-    Take $M$ to be the right upper quadrant $Q_I$ and let $p$ be $(0, 0)$. 
+    Take $M$ to be the right upper quadrant $Q_I \subset \bR^2$ and let $p$ be $(0, 0)$. 
     Let $f$ be any non-negative function in $\smoothfunc{Q_I}$ that is zero on $\boundary{\mathcal{Q_I}}$. 
     Then clearly $\direcderiv{(0, 1)}f (0, 0) =\direcderiv{(1, 0)}f (0, 0) = 0$. 
     This means that the Jacobian is zero and since $f$ is smooth and thus differentiable at $(0, 0)$, this means that $\direcderiv{v}f (0, 0) = 0$ for all vectors $v$. 
@@ -95,7 +98,7 @@ Where as mentioned above, we want a realisable vector to be one that is either i
 
 Firstly, we could only find the following way to define inward pointing vectors from realisable ones: 
 
-\begin{defi}[\cite{Amr2021}]
+\begin{defi}[Inward Pointing, \cite{Amr2021}]
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if it is in the interior of the set of realisable vectors. 
 \end{defi}
 
@@ -172,3 +175,19 @@ It is easy to show that this definition fulfils Remark \ref{rem:realcond1}.
 It also fulfils Remark \ref{rem:realcond2} but this is surprisingly hard to show for general model spaces $H$. 
 Taking a vector tangent to the boundary, it is hard to describe a method for picking a smooth curve $\gamma \colon [0, \varepsilon) \to H$ such that $\gamma (0) = p$ and $\gamma' (0) = v$. 
 
+This is considerably easier to prove for continuous curves (\cite{Rios2018}) or even for curves $\gamma \colon [0, \varepsilon) \to H$ that are just differentiable at $0$ (\cite{Rockafellar1998}). 
+Requiring only minimal conditions for $\gamma$ eases defining such functions in Lean. 
+So we arrive at the following definition of realisability based on \cite{Rockafellar1998}:
+
+\begin{defi}[Realisability]
+    Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is \emph{realisable} if and only if there is a function $\gamma \colon [0, \infty) \to M$ that is differentiable at $0$ and fulfils $\gamma (0) = p$ and $\gamma'(0) = v$.
+\end{defi}
+
+\section{Preservation under charts}
+
+Here I should write down the proof that realisability and inward pointing are properties preserved by charts.
+
+
+\section{Equivalence with tangent cone on model space}
+
+Here I should show that this is equivalent to the tangent cone for convex sets. 
