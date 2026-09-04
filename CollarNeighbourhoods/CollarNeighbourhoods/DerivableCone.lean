@@ -375,6 +375,8 @@ lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
   simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
   exact this
 
+
+-- it should probably be enough to requiere `p ∈ closure s`
 lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
     posTangentConeAt s p = closure {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} := by
   apply subset_antisymm
@@ -449,6 +451,7 @@ lemma Convex.derivable_of_smul_mem {s : Set E} (hs : Convex ℝ s) {p : E} (hp :
     intro y hy
     exact hs.add_smul_mem_icc hp hr hrv hy
 
+-- it should probably be enough to requiere `p ∈ closure s`
 lemma Convex.derivable_of_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
     {v : E} (hv : v ∈ posTangentConeAt s p) :
     derivableWithinAt ℝ s p v := by
@@ -461,6 +464,7 @@ lemma Convex.derivable_of_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p 
   obtain ⟨r, hr, hrs⟩ := hy
   exact hs.derivable_of_smul_mem hp hr hrs
 
+-- it should probably be enough to requiere `p ∈ closure s`
 lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
     {v : E} (hv : derivableWithinAt ℝ s p v) : v ∈ posTangentConeAt s p := by
   rw [hs.posTangentConeAt_eq_closure hp, ← seqClosure_eq_closure]
@@ -489,6 +493,13 @@ lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p 
 lemma Convex.derivableWithinAt_iff_mem_posTangentConeAt {s : Set E} (hs : Convex ℝ s) {p : E}
     (hp : p ∈ s) {v : E} : derivableWithinAt ℝ s p v ↔ v ∈ posTangentConeAt s p :=
   ⟨mem_posTangentCone_of_derivable hs hp, derivable_of_mem_posTangentCone hs hp⟩
+
+-- this can definitely be generalised
+lemma Convex.derivableWithinAt_of_mem_interior {s : Set E} (hs : Convex ℝ s) {p : E}
+    (hp : s ∈ 𝓝 p) {v : E} : derivableWithinAt ℝ s p v := by
+  rw [hs.derivableWithinAt_iff_mem_posTangentConeAt (mem_of_mem_nhds hp), posTangentConeAt,
+    tangentConeAt_of_mem_nhds hp]
+  exact mem_univ _
 
 -- `https://hal.science/hal-01552475v1/document` has a characterisation of the interior of the
 -- tangent cone

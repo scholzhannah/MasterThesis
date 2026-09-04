@@ -110,8 +110,8 @@ lemma mvfderiv_extChartAt_self {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] 
 
 -- **To-Do**: Zulip discussion about having `PartialHomeomorph` be public API
 
-def Manifold.PartialDiffeomorphOfMaximalAtlas {f : OpenPartialHomeomorph M H}
-    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : PartialDiffeomorph I I M H ∞ where
+def Manifold.PartialDiffeomorphOfMaximalAtlas {f : OpenPartialHomeomorph M H} {n : ℕ∞ω}
+    (hf : f ∈ IsManifold.maximalAtlas I n M) : PartialDiffeomorph I I M H n where
   toPartialEquiv := f.toPartialEquiv
   open_source := f.open_source
   open_target := f.open_target
@@ -119,43 +119,46 @@ def Manifold.PartialDiffeomorphOfMaximalAtlas {f : OpenPartialHomeomorph M H}
   contMDiffOn_invFun := contMDiffOn_symm_of_mem_maximalAtlas hf
 
 omit [IsManifold I ∞ M] in
-lemma Manifold.localDiffeomorphOn_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
-    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f f.source:= by
+lemma Manifold.localDiffeomorphOn_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H} {n : ℕ∞ω}
+    (hf : f ∈ IsManifold.maximalAtlas I n M) : IsLocalDiffeomorphOn I I n f f.source:= by
   intro x
   apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).isLocalDiffeomorphAt
   exact x.2
 
 omit [IsManifold I ∞ M] in
-lemma Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
-    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) : IsLocalDiffeomorphOn I I ∞ f.symm f.target := by
+lemma Manifold.localDiffeomorphOn_symm_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H} {n : ℕ∞ω}
+    (hf : f ∈ IsManifold.maximalAtlas I n M) : IsLocalDiffeomorphOn I I n f.symm f.target := by
   intro x
   apply (Manifold.PartialDiffeomorphOfMaximalAtlas hf).symm.isLocalDiffeomorphAt
   exact x.2
 
 omit [IsManifold I ∞ M] in
-lemma Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
-    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
+lemma Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H} {n : ℕ∞ω}
+    [NeZero n]
+    (hf : f ∈ IsManifold.maximalAtlas I n M) {p : M} (hpf : p ∈ f.source) :
     I.IsBoundaryPoint p ↔ I.IsBoundaryPoint (f p) :=
-  ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isBoundaryPoint_iff
-      (ne_of_beq_false rfl)
+  ((localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isBoundaryPoint_iff (NeZero.ne n)
 
+omit [IsManifold I ∞ M] in
 @[simp]
-lemma Manifold.isBoundaryPoint_chartAt_iff {p : M} :
+lemma Manifold.isBoundaryPoint_chartAt_iff {p : M} {n : ℕ∞ω} [NeZero n] [IsManifold I n M] :
     I.IsBoundaryPoint (chartAt H p p) ↔ I.IsBoundaryPoint p :=
-  (Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas (IsManifold.chart_mem_maximalAtlas p)
+  (Manifold.isBoundaryPoint_iff_of_mem_maximalAtlas (IsManifold.chart_mem_maximalAtlas (n := n) p)
     (mem_chart_source H p)).symm
 
 omit [IsManifold I ∞ M] in
-lemma Manifold.isInteriorPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H}
-    (hf : f ∈ IsManifold.maximalAtlas I ∞ M) {p : M} (hpf : p ∈ f.source) :
+lemma Manifold.isInteriorPoint_iff_of_mem_maximalAtlas {f : OpenPartialHomeomorph M H} {n : ℕ∞ω}
+    [NeZero n]
+    (hf : f ∈ IsManifold.maximalAtlas I n M) {p : M} (hpf : p ∈ f.source) :
     I.IsInteriorPoint p ↔ I.IsInteriorPoint (f p) :=
   ((Manifold.localDiffeomorphOn_of_mem_maximalAtlas hf) ⟨p, hpf⟩).isInteriorPoint_iff
-    (ne_of_beq_false rfl)
+    (NeZero.ne n)
 
+omit [IsManifold I ∞ M] in
 @[simp]
-lemma Manifold.isInteriorPoint_chartAt_iff {p : M} :
+lemma Manifold.isInteriorPoint_chartAt_iff {p : M} {n : ℕ∞ω} [NeZero n] [IsManifold I n M] :
     I.IsInteriorPoint (chartAt H p p) ↔ I.IsInteriorPoint p :=
-  (Manifold.isInteriorPoint_iff_of_mem_maximalAtlas (IsManifold.chart_mem_maximalAtlas p)
+  (Manifold.isInteriorPoint_iff_of_mem_maximalAtlas (IsManifold.chart_mem_maximalAtlas (n := n) p)
     (mem_chart_source H p)).symm
 
 omit [IsManifold I ∞ M] in
@@ -262,29 +265,31 @@ variable {M' : Type*} {H' : Type*} [TopologicalSpace H']
     [TopologicalSpace M'] [ChartedSpace H' M'] {E' : Type*} [NormedAddCommGroup E']
     [NormedSpace ℝ E'] {I' : ModelWithCorners ℝ E' H'} [ChartedSpace H M']
 
+--  state this as Diffeomorphism of n + 1 to n
 @[simps]
-noncomputable def PartialDiffeomorph.mfderiv (p : M) (f : PartialDiffeomorph I I' M M' ∞)
+noncomputable def PartialDiffeomorph.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) : Homeomorph (TangentSpace I p) (TangentSpace I' (f p)) where
   toFun := mfderiv% f p
   invFun := TangentSpace.ofEq I (f.leftInvOn hp) ∘ mfderiv% f.symm (f p)
   left_inv v := by
     change (mfderiv% f.symm (f p)) ((mfderiv% f.toPartialEquiv p) v) = v
-    rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (ne_of_beq_false rfl) hp) v]
+    rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (NeZero.ne n) hp) v]
     · rw [← mfderivWithin_of_isOpen f.open_source hp, mfderivWithin_congr_of_mem (f := id) ?_ hp]
       · rw [mfderivWithin_of_isOpen f.open_source hp, comp_apply, mfderiv_id]
         rfl
       exact f.leftInvOn
-    · apply f.symm.mdifferentiableAt (ne_of_beq_false rfl)
+    · apply f.symm.mdifferentiableAt (NeZero.ne n)
       exact f.map_source' hp
   right_inv v := by
     change (mfderiv% f p) ((mfderiv% f.symm (f p)) v) = v
     have : f.symm (f p) = p := f.leftInvOn hp
     have : (mfderiv% f p) ((mfderiv% f.symm (f p)) v) = mfderiv% (f ∘ f.symm) (f p) v := by
       rw [mfderiv_comp_apply (f p) ?_
-        (f.symm.mdifferentiableAt (ne_of_beq_false rfl) (f.map_source' hp)), symm_toPartialEquiv,
+        (f.symm.mdifferentiableAt (NeZero.ne n) (f.map_source' hp)), symm_toPartialEquiv,
         f.leftInvOn hp]
       rw [symm_toPartialEquiv, f.leftInvOn hp]
-      exact f.mdifferentiableAt (ne_of_beq_false rfl) hp
+      exact f.mdifferentiableAt (NeZero.ne n) hp
     rw [this]
     rw [← mfderivWithin_of_isOpen f.open_target (f.map_source' hp)]
     rw [mfderivWithin_congr_of_mem (f := id) ?_ (f.map_source' hp)]
@@ -295,22 +300,26 @@ noncomputable def PartialDiffeomorph.mfderiv (p : M) (f : PartialDiffeomorph I I
   continuous_invFun := (mfderiv% f.symm (f p)).continuous
 
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
-lemma PartialDiffeomorph.leftInverse_mfderiv_symm (p : M) (f : PartialDiffeomorph I I' M M' ∞)
+lemma PartialDiffeomorph.leftInverse_mfderiv_symm (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) : LeftInverse (mfderiv% f.symm (f p)) (mfderiv% f p) :=
   (f.mfderiv p hp).left_inv
 
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
-lemma PartialDiffeomorph.rightInverse_mfderiv_symm (p : M) (f : PartialDiffeomorph I I' M M' ∞)
+lemma PartialDiffeomorph.rightInverse_mfderiv_symm (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) : RightInverse (mfderiv% f.symm (f p)) (mfderiv% f p) :=
   (f.mfderiv p hp).right_inv
 
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
-lemma PartialDiffeomorph.isHomeomorph_mfderiv (p : M) (f : PartialDiffeomorph I I' M M' ∞)
+lemma PartialDiffeomorph.isHomeomorph_mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) : IsHomeomorph (mfderiv% f p) :=
   (mfderiv p f hp).isHomeomorph
 
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
-lemma PartialDiffeomorph.bijective_mfderiv (p : M) (f : PartialDiffeomorph I I' M M' ∞)
+lemma PartialDiffeomorph.bijective_mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) : Bijective (mfderiv% f p) :=
   (mfderiv p f hp).toEquiv.bijective
 
@@ -339,13 +348,13 @@ omit [IsManifold I ∞ M] [ChartedSpace H M'] in
 lemma bijective_mvfderiv_modelWithCorners (p : H) : Bijective (d% I p) :=
   (mvfderivModelWithCorners I p).toEquiv.bijective
 
-lemma isLocalDiffeomorphAt_iff {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type u_3} [NormedAddCommGroup F]
-    [NormedSpace 𝕜 F] {H₁ : Type u_5}
-    [TopologicalSpace H₁] {H₂ : Type u_6} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
-    (J : ModelWithCorners 𝕜 F H₂) {M : Type u_8} [TopologicalSpace M] [ChartedSpace H₁ M]
-    {N : Type u_9}
-    [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
+-- there is a PR making this exposed
+lemma isLocalDiffeomorphAt_iff {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {H₁ : Type*}
+    [TopologicalSpace H₁] {H₂ : Type*} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
+    (J : ModelWithCorners 𝕜 F H₂) {M : Type*} [TopologicalSpace M] [ChartedSpace H₁ M]
+    {N : Type*} [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
     IsLocalDiffeomorphAt I J n f x ↔
       ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
  sorry
