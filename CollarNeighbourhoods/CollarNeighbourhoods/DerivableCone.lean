@@ -504,6 +504,34 @@ lemma Convex.derivableWithinAt_of_mem_interior {s : Set E} (hs : Convex ℝ s) {
 -- `https://hal.science/hal-01552475v1/document` has a characterisation of the interior of the
 -- tangent cone
 
+example {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
+    interior {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} =
+      {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s} := by
+  let f v := fun (r : {r // r > 0}) ↦ p + r.1 • v
+  have hf v : Continuous (f v) := by fun_prop
+  have : {v | ∃ r, ∃ (_ : r > 0), p + r • v ∈ interior s} =
+      {v | ((fun (r : {r // r > 0}) ↦ p + r.1 • v) ⁻¹' (interior s)).Nonempty } := by
+    simp [Set.Nonempty]
+
+  sorry
+
+
+lemma Convex.subset_interior_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
+    {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s} ⊆ interior (posTangentConeAt s p) := by
+  have : IsOpen ({v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s}) := by
+    rw [isOpen_iff]
+    intro x ⟨r, hr, hx⟩
+    obtain ⟨ε, hε, hεs⟩ := (isOpen_iff.1 (isOpen_interior (s := s) )) (p + r • x) hx
+    use ε / r, _root_.div_pos hε hr
+    intro v hv
+    use r, hr
+    apply hεs
+    simpa [dist_smul₀, abs_of_pos hr, lt_div_iff₀ hr, mul_comm] using hv
+  apply this.subset_interior_closure.trans
+  rw [hs.posTangentConeAt_eq_closure hp]
+  gcongr
+  exact interior_subset
+
 lemma posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : p.ofLp 0 = 0) : posTangentConeAt {x | 0 ≤ x.ofLp 0} p = {v | 0 ≤ v.ofLp 0} := by
   rw [EuclideanHalfSpace.convex.posTangentConeAt_eq_closure (by exact hp.ge)]

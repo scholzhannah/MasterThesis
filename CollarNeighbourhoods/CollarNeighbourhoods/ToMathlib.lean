@@ -235,13 +235,22 @@ theorem ModelWithCorners.mfderivWithin_symm {𝕜 : Type*} [NontriviallyNormedFi
   apply (hasMFDerivWithinAt_symm I hx).mfderivWithin
   exact I.uniqueMDiffOn x hx
 
-theorem ModelWithCorners.mfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+theorem ModelWithCorners.mfderivWithin_symm' {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
+    (I : ModelWithCorners 𝕜 E H) :
+    (fun x ↦ mfderivWithin 𝓘(𝕜, E) I I.symm (range I) (I x)) =
+      fun x ↦ (ContinuousLinearMap.id 𝕜 (TangentSpace (modelWithCornersSelf 𝕜 E) (I x))) := by
+  funext x
+  apply I.mfderivWithin_symm
+  exact mem_range_self x
+
+theorem ModelWithCorners.mfderiv_I {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
     [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
     (I : ModelWithCorners 𝕜 E H) {x : H} :
     mfderiv I 𝓘(𝕜, E) I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
    I.hasMFDerivAt.mfderiv
 
-theorem ModelWithCorners.mvfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+theorem ModelWithCorners.mvfderiv_I {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
     [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
     (I : ModelWithCorners 𝕜 E H) {x : H} :
     mvfderiv I I x = ContinuousLinearMap.id 𝕜 (TangentSpace I x) :=
@@ -250,7 +259,7 @@ theorem ModelWithCorners.mvfderiv {𝕜 : Type*} [NontriviallyNormedField 𝕜] 
 omit [NormedSpace ℝ E] in
 lemma Topology.IsInducing.mvfderiv [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
     IsInducing (d% I p) := by
-  rw [I.mvfderiv]
+  rw [I.mvfderiv_I]
   apply IsHomeomorph.isInducing
   exact IsHomeomorph.id
 
@@ -264,6 +273,17 @@ noncomputable def TangentSpace.ofEq (I : ModelWithCorners ℝ E H) {p q : M} (h 
 variable {M' : Type*} {H' : Type*} [TopologicalSpace H']
     [TopologicalSpace M'] [ChartedSpace H' M'] {E' : Type*} [NormedAddCommGroup E']
     [NormedSpace ℝ E'] {I' : ModelWithCorners ℝ E' H'} [ChartedSpace H M']
+
+-- there is a PR making this exposed
+lemma isLocalDiffeomorphAt_iff {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace 𝕜 F] {H₁ : Type*}
+    [TopologicalSpace H₁] {H₂ : Type*} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
+    (J : ModelWithCorners 𝕜 F H₂) {M : Type*} [TopologicalSpace M] [ChartedSpace H₁ M]
+    {N : Type*} [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
+    IsLocalDiffeomorphAt I J n f x ↔
+      ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
+ sorry
 
 --  state this as Diffeomorphism of n + 1 to n
 @[simps]
@@ -299,6 +319,15 @@ noncomputable def PartialDiffeomorph.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [
   continuous_toFun := (mfderiv% f p).continuous
   continuous_invFun := (mfderiv% f.symm (f p)).continuous
 
+noncomputable def IsLocalDiffeomorphAt.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : M → M') (hf : IsLocalDiffeomorphAt I I' n f p) :
+    Homeomorph (TangentSpace I p) (TangentSpace I' (f p)) :=
+  letI g := ((isLocalDiffeomorphAt_iff I I' n f p).1 hf).choose
+  letI hg := ((isLocalDiffeomorphAt_iff I I' n f p).1 hf).choose_spec
+  PartialDiffeomorph.mfderiv p g hg.1
+
+-- write lemmas about this...
+
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
 lemma PartialDiffeomorph.leftInverse_mfderiv_symm (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
     (f : PartialDiffeomorph I I' M M' n)
@@ -328,15 +357,42 @@ variable (I) in
 noncomputable def mvfderivModelWithCorners (p : H) :
     Homeomorph (TangentSpace I p) E where
   toFun := d% I p
-  invFun := mfderiv[range I] I.symm (I p) ∘ (NormedSpace.fromTangentSpace (𝕜 := ℝ) <| I p)
+  invFun :=   tangentSpaceCast I (I.symm (I p)) p ∘ mfderiv[range I] I.symm (I p) ∘
+    (NormedSpace.fromTangentSpace (𝕜 := ℝ) <| I p)
   left_inv v := by
-    rw [I.mfderivWithin_symm (mem_range_self p), I.mvfderiv]
+    rw [I.mfderivWithin_symm (mem_range_self p), I.mvfderiv_I]
     rfl
   right_inv v := by
-    rw [I.mfderivWithin_symm (mem_range_self p), I.mvfderiv]
+    rw [I.mfderivWithin_symm (mem_range_self p), I.mvfderiv_I]
     rfl
   continuous_toFun := (mfderiv% I p).continuous
   continuous_invFun := (mfderiv[range I] I.symm (I p)).continuous
+
+/-
+example{n : ℕ∞ω} [NeZero n] [IsManifold I n M] (p : H) : CMDiff n (d% I p) := sorry
+
+
+instance (p : H) : NormedAddCommGroup (TangentSpace I p) := sorry
+instance (p : H) : NormedSpace ℝ (TangentSpace I p) := sorry
+
+variable (I) in
+@[simps]
+noncomputable def mvfderivModelWithCorners' {n : ℕ∞ω} [NeZero n] [IsManifold I n M] (p : H) :
+    Diffeomorph 𝓘(ℝ, TangentSpace I p) 𝓘(ℝ, E) (TangentSpace I p) E n where
+  toFun := d% I p
+  invFun :=   tangentSpaceCast I (I.symm (I p)) p ∘ mfderiv[range I] I.symm (I p) ∘
+    (NormedSpace.fromTangentSpace (𝕜 := ℝ) <| I p)
+  left_inv v := by
+    rw [I.mfderivWithin_symm (mem_range_self p), I.mvfderiv_I]
+    rfl
+  right_inv v := by
+    rw [I.mfderivWithin_symm (mem_range_self p), I.mvfderiv_I]
+    rfl
+  continuous_toFun := (mfderiv% I p).continuous
+  continuous_invFun := (mfderiv[range I] I.symm (I p)).continuous-/
+
+lemma coe_mvfderiv_modelWithCorners {p : H} :
+    (d% I p : TangentSpace I p → E) = mvfderivModelWithCorners I p := rfl
 
 variable (I) in
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
@@ -347,17 +403,6 @@ variable (I) in
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
 lemma bijective_mvfderiv_modelWithCorners (p : H) : Bijective (d% I p) :=
   (mvfderivModelWithCorners I p).toEquiv.bijective
-
--- there is a PR making this exposed
-lemma isLocalDiffeomorphAt_iff {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {F : Type*} [NormedAddCommGroup F]
-    [NormedSpace 𝕜 F] {H₁ : Type*}
-    [TopologicalSpace H₁] {H₂ : Type*} [TopologicalSpace H₂] (I : ModelWithCorners 𝕜 E H₁)
-    (J : ModelWithCorners 𝕜 F H₂) {M : Type*} [TopologicalSpace M] [ChartedSpace H₁ M]
-    {N : Type*} [TopologicalSpace N] [ChartedSpace H₂ N] (n : WithTop ℕ∞) (f : M → N) (x : M) :
-    IsLocalDiffeomorphAt I J n f x ↔
-      ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
- sorry
 
 theorem closure_iInter_subset {X : Type*} [TopologicalSpace X] {ι : Sort*} (s : ι → Set X) :
      closure (⋂ i, s i) ⊆ ⋂ i, closure (s i) :=

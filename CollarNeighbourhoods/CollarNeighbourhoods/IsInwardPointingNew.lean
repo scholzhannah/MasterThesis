@@ -169,7 +169,7 @@ lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
     rw [mfderivWithin_comp_of_preimage_mem_nhdsWithin _ hI hγ (I.target_eq ▸ hγI) h,
       ContinuousLinearMap.comp_apply]
     have : Injective (mvfderiv I I p) := by
-      rw [I.mvfderiv]
+      rw [I.mvfderiv_I]
       exact injective_id
     apply this
     rw [← hγv, ← comp_apply (f := mvfderiv I I p) (g := (mfderivWithin _ _ I.symm (range I) (γ 0)))]
