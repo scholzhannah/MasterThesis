@@ -9,6 +9,7 @@ public import CollarNeighbourhoods.IsInwardPointingNew
 public import Mathlib.Geometry.Convex.Star
 public import Mathlib.Geometry.Manifold.VectorBundle.ContMDiffSection
 public import Mathlib.Geometry.Manifold.VectorField.Pullback
+public import Mathlib.Geometry.Manifold.PartitionOfUnity
 
 /-! Header-/
 
@@ -106,11 +107,8 @@ variable (M I) in
 noncomputable def InwardPointingVecWithinAt (p : M) : (q : M) → TangentSpace I q :=
     VectorField.mpullbackWithin I I (chartAt H p) (InwardPointingVec E I) (chartAt H p).source
 
-#check InwardPointingVecWithinAt M I
+variable [CompleteSpace E] -- **Question**: is this assumption okay?
 
-variable [CompleteSpace E]
-
-set_option backward.isDefEq.respectTransparency false in
 lemma contMDiffOn_inwardPointingWithinVecAt [IsManifold I (n + 1) M] (p : M) :
     letI := IsManifold_one_of_neZero M I (n := n)
     CMDiff[(chartAt H p).source] n (T% (InwardPointingVecWithinAt M I p)) := by
@@ -120,14 +118,45 @@ lemma contMDiffOn_inwardPointingWithinVecAt [IsManifold I (n + 1) M] (p : M) :
     exact (chartAt H p).source_preimage_target
   rw [this]
   apply ContMDiffOn.mpullbackWithin_vectorField_inter (m := n) (n := n + 1)
-  · apply ContMDiff.contMDiffOn
-    apply contMDiff_inwardPointVec.of_le
-    exact ENat.LEInfty.out
+  · exact (contMDiff_inwardPointVec.of_le ENat.LEInfty.out).contMDiffOn
   · exact contMDiffOn_chart
   · intro x ⟨hx, _⟩
     rw [mfderivWithin_of_isOpen (chartAt H p).open_source hx]
-    -- here I need to generalize `PartialDiffeomorph.mfderiv `
-
-    sorry
+    use chartAtMFderiv n p hx
+    exact coe_chartAtMFderiv p hx
   · exact (chartAt H p).open_source.uniqueMDiffOn
   · norm_cast
+
+lemma contMDiffOn_inwardPointingWithinVecAt_infty [IsManifold I ∞ M] (p : M) :
+    CMDiff[(chartAt H p).source] ∞ (T% (InwardPointingVecWithinAt M I p)) := by
+  have : IsManifold I (∞ + 1) M := by
+    rw [ENat.coe_top_add_one]
+    infer_instance
+  have : NeZero (⊤ :  ℕ∞) := by
+    constructor
+    exact ENat.top_ne_zero
+  exact contMDiffOn_inwardPointingWithinVecAt _
+
+variable [FiniteDimensional ℝ E] [IsManifold I ∞ M] [T2Space M] [SigmaCompactSpace M]
+
+-- I need to take a partition of unity that is positive on the sets
+variable (M I) in
+noncomputable def SmoothInwardPointingVec (p : M) : TangentSpace I p :=
+  letI f := (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose
+  ∑ᶠ (i : M), (f i) p • (InwardPointingVecWithinAt M I) i p
+
+-- I should probably write a general lemma that one can combine vector field in this way
+
+lemma contMDiff_smoothInwardPointingVec : CMDiff ∞ (T% (SmoothInwardPointingVec M I)) := by
+  let f := (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose
+  have hf : f.IsSubordinate fun x ↦ (chartAt H x).source :=
+    (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose_spec
+  apply ContMDiff.finsum_section_of_locallyFinite (f.locallyFinite.smul_left _)
+  intro i
+  exact (f i).contMDiff.contMDiffOn.smul_section_of_tsupport (chartAt H i).open_source (hf i)
+    (contMDiffOn_inwardPointingWithinVecAt_infty i)
+
+lemma isInwardPointing_smoothInwardPointingVec (p : M) :
+    IsInwardPointingMinimal (SmoothInwardPointingVec M I p) := by
+
+  sorry

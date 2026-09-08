@@ -20,6 +20,7 @@ public import Mathlib.Geometry.Convex.Cone.Basic
 public import Mathlib.Analysis.Calculus.TangentCone.Seq
 public import CollarNeighbourhoods.ToMathlib
 public import Mathlib.Geometry.Manifold.Instances.Real
+public import Mathlib.Analysis.Convex.Cone.Closure
 
 
 /-! Header
@@ -575,3 +576,48 @@ lemma interior_posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : Eucl
     interior (posTangentConeAt {x | ∀ i, 0 ≤ x.ofLp i} p) = {v | ∀ i, 0 < v.ofLp i} := by
   rw [posTangentConeAt_euclideanQuadrant hp]
   exact interior_euclideanQuadrant n 2 0
+
+@[simps]
+def ConvexCone.preTangentCone {s : Set E} (hs : Convex ℝ s) (p : E) :
+    ConvexCone ℝ E where
+  carrier := {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s}
+  smul_mem' c hc v hv := by
+    obtain ⟨r, hr, hrs⟩ := hv
+    use r / c, div_pos hr hc
+    rw [smul_smul, div_mul_cancel₀ r hc.ne.symm]
+    exact hrs
+  add_mem' v hv w hw := by
+    obtain ⟨r, hr, hrs⟩ := hv
+    obtain ⟨t, ht, hts⟩ := hw
+    use (r * t) / (r + t)
+    refine ⟨?_, ?_⟩
+    · field_simp
+      simp [mul_pos hr ht]
+    · rw [smul_add]
+      nth_rw 1 [mul_div_assoc, mul_comm r, mul_smul]
+      rw [mul_div_right_comm, mul_smul, ← one_smul ℝ p, ← div_self (add_pos hr ht).ne.symm,
+        add_div, add_comm (r / (r + t)) (t / (r + t)), add_smul, add_add_add_comm,
+        ← smul_add, ← smul_add]
+      apply hs hrs hts
+      all_goals (field_simp; simp [ht.le, hr.le, add_comm])
+
+def ConvexCone.tangentCone {s : Set E} (hs : Convex ℝ s) (p : E) :
+    ConvexCone ℝ E :=
+  (ConvexCone.preTangentCone hs p).closure
+
+lemma ConvexCone.tangentCone_eq {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
+    ConvexCone.tangentCone hs p  = posTangentConeAt s p := by
+  unfold tangentCone
+  rw [coe_closure, preTangentCone_carrier hs p]
+  exact (hs.posTangentConeAt_eq_closure hp).symm
+
+lemma smul_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) (r : ℝ)
+    (hr : 0 < r) (v : E) (hv : v ∈ posTangentConeAt s p) : r • v ∈ posTangentConeAt s p := by
+  rw [← ConvexCone.tangentCone_eq hs hp] at hv ⊢
+  exact (ConvexCone.tangentCone hs p).smul_mem hr hv
+
+lemma add_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    (v : E) (hv : v ∈ posTangentConeAt s p) (w : E) (hw : w ∈ posTangentConeAt s p) :
+    v + w ∈ posTangentConeAt s p := by
+  rw [← ConvexCone.tangentCone_eq hs hp] at hv hw ⊢
+  exact (ConvexCone.tangentCone hs p).add_mem hv hw

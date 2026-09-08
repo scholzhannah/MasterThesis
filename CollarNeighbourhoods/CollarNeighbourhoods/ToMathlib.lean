@@ -17,6 +17,7 @@ public import Mathlib.Geometry.Manifold.Immersion
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
+public import Mathlib.Analysis.Calculus.TangentCone.Seq
 
 /-! Header-/
 
@@ -58,7 +59,6 @@ lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfS
 lemma modelWithCornersEuclideanHalfSpace_target (n : ℕ) [NeZero n] :
     (𝓡∂ n).target = { y | 0 ≤ y 0 } := by
   rw [(𝓡∂ n).target_eq, range_modelWithCornersEuclideanHalfSpace]
-
 
 lemma ModelWithCorners.IsBoundaryPoint.eq_zero_of_modelWithCornersEuclideanHalfSpace
     {M : Type*}
@@ -285,13 +285,14 @@ lemma isLocalDiffeomorphAt_iff {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E 
       ∃ Φ : PartialDiffeomorph I J M N n, x ∈ Φ.source ∧ EqOn f Φ Φ.source := by
  sorry
 
---  state this as Diffeomorphism of n + 1 to n
 @[simps]
 noncomputable def PartialDiffeomorph.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
     (f : PartialDiffeomorph I I' M M' n)
-    (hp : p ∈ f.source) : Homeomorph (TangentSpace I p) (TangentSpace I' (f p)) where
+    (hp : p ∈ f.source) : (TangentSpace I p) ≃L[ℝ] (TangentSpace I' (f p)) where
   toFun := mfderiv% f p
-  invFun := TangentSpace.ofEq I (f.leftInvOn hp) ∘ mfderiv% f.symm (f p)
+  map_add' := (mfderiv% f p).map_add
+  map_smul' := (mfderiv% f p).map_smul
+  invFun := tangentSpaceCast I (f.symm (f p)) p ∘ mfderiv% f.symm (f p)
   left_inv v := by
     change (mfderiv% f.symm (f p)) ((mfderiv% f.toPartialEquiv p) v) = v
     rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (NeZero.ne n) hp) v]
@@ -319,14 +320,37 @@ noncomputable def PartialDiffeomorph.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [
   continuous_toFun := (mfderiv% f p).continuous
   continuous_invFun := (mfderiv% f.symm (f p)).continuous
 
-noncomputable def IsLocalDiffeomorphAt.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
-    (f : M → M') (hf : IsLocalDiffeomorphAt I I' n f p) :
-    Homeomorph (TangentSpace I p) (TangentSpace I' (f p)) :=
+noncomputable def IsLocalDiffeomorphAt.mfderiv {p : M} {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    {f : M → M'} (hf : IsLocalDiffeomorphAt I I' n f p) :
+    (TangentSpace I p) ≃L[ℝ] (TangentSpace I' (f p)) :=
   letI g := ((isLocalDiffeomorphAt_iff I I' n f p).1 hf).choose
   letI hg := ((isLocalDiffeomorphAt_iff I I' n f p).1 hf).choose_spec
   PartialDiffeomorph.mfderiv p g hg.1
 
--- write lemmas about this...
+omit [IsManifold I ∞ M] [ChartedSpace H M'] in
+lemma IsLocalDiffeomeorphAt.mfderiv_eq {p : M} {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    {f : M → M'} (hf : IsLocalDiffeomorphAt I I' n f p) :
+    (hf.mfderiv : TangentSpace I p → TangentSpace I' (f p)) = mfderiv% f p := by
+  let g := ((isLocalDiffeomorphAt_iff I I' n f p).1 hf).choose
+  let hg := ((isLocalDiffeomorphAt_iff I I' n f p).1 hf).choose_spec
+  suffices mfderiv% g p = tangentSpaceCast I' (f p) (g p) ∘ mfderiv% f p from
+    hg.2 hg.1 ▸ this
+  rw [← mfderivWithin_of_isOpen g.open_source hg.1,
+    mfderivWithin_congr (f := f) hg.2.symm (hg.2.symm hg.1),
+    mfderivWithin_of_isOpen g.open_source hg.1]
+  rfl
+
+noncomputable def chartAtMFderiv (n : ℕ∞ω) [NeZero n] [IsManifold I n M] (p : M) {x : M}
+    (hx : x ∈ (chartAt H p).source) :
+    (TangentSpace I x) ≃L[ℝ] (TangentSpace I (chartAt H p x)) :=
+  (Manifold.PartialDiffeomorphOfMaximalAtlas
+    (IsManifold.chart_mem_maximalAtlas (n := n) p)).mfderiv x hx
+
+omit [IsManifold I ∞ M] in
+lemma coe_chartAtMFderiv (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M] {x : M}
+    (hx : x ∈ (chartAt H p).source) :
+    (chartAtMFderiv n p hx).toContinuousLinearMap = mfderiv% (chartAt H p) x :=
+  rfl
 
 omit [IsManifold I ∞ M] [ChartedSpace H M'] in
 lemma PartialDiffeomorph.leftInverse_mfderiv_symm (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]

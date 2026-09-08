@@ -82,9 +82,9 @@ lemma PartialDiffeomorph.isRealizable_apply {M' : Type*} [TopologicalSpace M'] [
   exact uniqueDiffWithinAt_Ici 0
 
 omit [IsManifold I n M] in
-lemma TangentSpace.ofEq_isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    {p q : M} (v : TangentSpace I p) (h : p = q) :
-    IsRealizableMinimal v ↔ IsRealizableMinimal (TangentSpace.ofEq I h v) := by
+lemma TangentSpace.tangentSpaceCast_isRealizable_iff {M' : Type*} [TopologicalSpace M']
+    [ChartedSpace H M'] {p q : M} (v : TangentSpace I p) (h : p = q) :
+    IsRealizableMinimal v ↔ IsRealizableMinimal (tangentSpaceCast I p q v) := by
   subst p
   rfl
 
@@ -230,6 +230,18 @@ lemma isRealizable_of_isInteriorPoint {p : M} (hp : I.IsInteriorPoint p) {v : Ta
     tangentConeAt_of_mem_nhds (range_mem_nhds_isInteriorPoint hp)]
   exact mem_univ _
 
+include n in
+def ConvexConeIsRealizable {p : M} : ConvexCone ℝ (TangentSpace I p) where
+  carrier := {v | IsRealizableMinimal v}
+  smul_mem' c hc v hv := by
+    rw [mem_ofPred_eq, isRealizable_iff_mem_posTangentConeAt_extChartAt (n := n)] at hv ⊢
+    rw [ContinuousLinearMap.map_smul]
+    exact smul_mem_posTangentCone I.convex_range (mem_range_self _ ) _ hc _ hv
+  add_mem' v hv w hw := by
+    rw [mem_ofPred_eq, isRealizable_iff_mem_posTangentConeAt_extChartAt (n := n)] at hv hw ⊢
+    rw [ContinuousLinearMap.map_add]
+    apply add_mem_posTangentCone I.convex_range (mem_range_self _ ) _ hv _ hw
+
 lemma isRealizable_iff_euclideanHalfSpace {m : ℕ} [NeZero m] {M : Type*} [TopologicalSpace M]
     [ChartedSpace (EuclideanHalfSpace m) M] [IsManifold (𝓡∂ m) n M] {p : M}
     (hp : (𝓡∂ m).IsBoundaryPoint p) {v : TangentSpace (𝓡∂ m) p} :
@@ -259,7 +271,9 @@ lemma PartialDiffeomorph.interior_isRealizable_eq {M' : Type*} [TopologicalSpace
   change IsRealizableMinimal ((mfderiv% f.symm (f p)) w) ↔
     IsRealizableMinimal ((mfderiv p f hp).symm w)
   rw [f.mfderiv_symm_apply p hp w,
-    comp_apply, ← TangentSpace.ofEq_isRealizable_iff _ (f.leftInvOn hp) (M' := M')]
+    comp_apply]
+  change _ ↔ IsRealizableMinimal ((tangentSpaceCast I (f.toPartialEquiv.symm _) p) _)
+  rw [← TangentSpace.tangentSpaceCast_isRealizable_iff _ (f.leftInvOn hp) (M' := M)]
 
 lemma PartialDiffeomorph.isInwardPointing_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
     (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' n)
@@ -329,6 +343,13 @@ lemma isInwardPointing_of_isInteriorPoint {p : M} (hp : I.IsInteriorPoint p)
   rw [isInwardPointing_iff_extChartAt_mem_interior_posTangentConeAt (n := n), posTangentConeAt,
     tangentConeAt_of_mem_nhds (range_mem_nhds_isInteriorPoint hp), interior_univ]
   exact mem_univ _
+
+def ConvexConeIsInwardPointing {p : M} : ConvexCone ℝ (TangentSpace I p) where
+  carrier := IsInwardPointingMinimal
+  smul_mem' v := by
+
+    sorry
+  add_mem' := sorry
 
 lemma isInwardPointing_iff_euclideanHalfSpace {m : ℕ} [NeZero m] {M : Type*} [TopologicalSpace M]
     [ChartedSpace (EuclideanHalfSpace m) M] [IsManifold (𝓡∂ m) n M] {p : M}
