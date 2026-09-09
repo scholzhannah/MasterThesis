@@ -107,9 +107,21 @@ variable (M I) in
 noncomputable def InwardPointingVecWithinAt (p : M) : (q : M) → TangentSpace I q :=
     VectorField.mpullbackWithin I I (chartAt H p) (InwardPointingVec E I) (chartAt H p).source
 
-variable [CompleteSpace E] -- **Question**: is this assumption okay?
+include n in
+lemma IsInwardPointing_inwardPointingVecWithinAt (p : M) (q : M) (hq : q ∈ (chartAt H p).source) :
+    IsInwardPointingMinimal (InwardPointingVecWithinAt M I p q) := by
+  unfold InwardPointingVecWithinAt VectorField.mpullbackWithin
+  rw [mfderiv_chart_inverse_eq (n := n) p q hq]
+  rw [isInwardPointing_iff_chartAt' hq (n := n)]
+  rw [← coe_chartAtMFderiv (n := n) p hq]
+  suffices IsInwardPointingMinimal (InwardPointingVec E I ((chartAt H p) q)) by
+    convert this
+    exact (chartAtMFderiv n p hq).apply_symm_apply (c := InwardPointingVec E I ((chartAt H p) q))
+  exact IsInwardPointing_inwardPointingVec (n := n) _
 
-lemma contMDiffOn_inwardPointingWithinVecAt [IsManifold I (n + 1) M] (p : M) :
+-- **Question**: is this assumption okay?
+
+lemma contMDiffOn_inwardPointingWithinVecAt [CompleteSpace E] [IsManifold I (n + 1) M] (p : M) :
     letI := IsManifold_one_of_neZero M I (n := n)
     CMDiff[(chartAt H p).source] n (T% (InwardPointingVecWithinAt M I p)) := by
   let := IsManifold_one_of_neZero M I (n := n)
@@ -127,7 +139,7 @@ lemma contMDiffOn_inwardPointingWithinVecAt [IsManifold I (n + 1) M] (p : M) :
   · exact (chartAt H p).open_source.uniqueMDiffOn
   · norm_cast
 
-lemma contMDiffOn_inwardPointingWithinVecAt_infty [IsManifold I ∞ M] (p : M) :
+lemma contMDiffOn_inwardPointingWithinVecAt_infty [CompleteSpace E] [IsManifold I ∞ M] (p : M) :
     CMDiff[(chartAt H p).source] ∞ (T% (InwardPointingVecWithinAt M I p)) := by
   have : IsManifold I (∞ + 1) M := by
     rw [ENat.coe_top_add_one]
@@ -137,6 +149,7 @@ lemma contMDiffOn_inwardPointingWithinVecAt_infty [IsManifold I ∞ M] (p : M) :
     exact ENat.top_ne_zero
   exact contMDiffOn_inwardPointingWithinVecAt _
 
+-- **Question** : are these assumptions okay?
 variable [FiniteDimensional ℝ E] [IsManifold I ∞ M] [T2Space M] [SigmaCompactSpace M]
 
 -- I need to take a partition of unity that is positive on the sets
@@ -156,7 +169,16 @@ lemma contMDiff_smoothInwardPointingVec : CMDiff ∞ (T% (SmoothInwardPointingVe
   exact (f i).contMDiff.contMDiffOn.smul_section_of_tsupport (chartAt H i).open_source (hf i)
     (contMDiffOn_inwardPointingWithinVecAt_infty i)
 
+include n in
 lemma isInwardPointing_smoothInwardPointingVec (p : M) :
     IsInwardPointingMinimal (SmoothInwardPointingVec M I p) := by
-
-  sorry
+  let f := (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose
+  let hf : f.IsSubordinate fun x ↦ (chartAt H x).source :=
+    (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose_spec
+  unfold SmoothInwardPointingVec
+  apply SmoothPartitionOfUnity.finsum_smul_mem_convex _ (mem_univ _) ?_
+    (convex_isInwardPointing (n := n))
+  intro i (hi : f i p ≠ 0)
+  apply IsInwardPointing_inwardPointingVecWithinAt (n := n)
+  contrapose hi
+  exact image_eq_zero_of_notMem_tsupport (notMem_subset (hf i) hi)

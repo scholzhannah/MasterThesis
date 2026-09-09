@@ -320,6 +320,19 @@ noncomputable def PartialDiffeomorph.mfderiv (p : M) {n : ℕ∞ω} [NeZero n] [
   continuous_toFun := (mfderiv% f p).continuous
   continuous_invFun := (mfderiv% f.symm (f p)).continuous
 
+omit [IsManifold I ∞ M] [ChartedSpace H M'] in
+lemma PartialDiffeomorph.mfderiv_eq (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
+    (hp : p ∈ f.source) : f.mfderiv p hp = mfderiv% f p := by
+  rfl
+
+omit [IsManifold I ∞ M] [ChartedSpace H M'] in
+lemma PartialDiffeomorph.mfderiv_symm_eq (p : M) {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
+    (f : PartialDiffeomorph I I' M M' n)
+    (hp : p ∈ f.source) : (f.mfderiv p hp).symm =
+      tangentSpaceCast I (f.symm (f p)) p ∘ mfderiv% f.symm (f p) := by
+  rfl
+
 noncomputable def IsLocalDiffeomorphAt.mfderiv {p : M} {n : ℕ∞ω} [NeZero n] [IsManifold I n M]
     {f : M → M'} (hf : IsLocalDiffeomorphAt I I' n f p) :
     (TangentSpace I p) ≃L[ℝ] (TangentSpace I' (f p)) :=
@@ -445,3 +458,65 @@ scoped[Manifold]
   notation3 "𝓡∠ " n =>
     (modelWithCornersEuclideanQuadrant n :
       ModelWithCorners ℝ (EuclideanSpace ℝ (Fin n)) (EuclideanQuadrant n))
+
+theorem map_mem_interior {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {f : X → Y}
+    {s : Set X} {x : X} {t : Set Y} (hf : IsOpenMap f) (hx : x ∈ interior s)
+    (ht : Set.MapsTo f s t) : f x ∈ interior t :=
+  hf.mapsTo_interior ht hx
+
+theorem map_mem_interior₂ {X Y Z : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    [TopologicalSpace Z] {f : X → Y → Z} {x : X} {y : Y} {s : Set X} {t : Set Y} {u : Set Z}
+    (hf : IsOpenMap (Function.uncurry f)) (hx : x ∈ interior s) (hy : y ∈ interior t)
+    (h : ∀ a ∈ s, ∀ b ∈ t, f a b ∈ u) :
+    f x y ∈ interior u :=
+  have H₁ : (x, y) ∈ interior (s ×ˢ t) := by simpa only [interior_prod_eq] using mk_mem_prod hx hy
+  have H₂ : MapsTo (uncurry f) (s ×ˢ t) u := forall_prod_set.2 h
+  hf.mapsTo_interior H₂ H₁
+
+#check TopologicalSpace.IsTopologicalBasis.isOpenMap_iff
+#check TopologicalSpace.IsTopologicalBasis.prod
+
+open TopologicalSpace
+
+lemma TopologicalSpace.isTopologicalBasis_prod_open {α β : Type*} [t : TopologicalSpace α]
+    [TopologicalSpace β] :
+    IsTopologicalBasis
+      (image2 (fun x1 x2 ↦ x1 ×ˢ x2) {U : Set α | IsOpen U} {U : Set β | IsOpen U}) :=
+  isTopologicalBasis_opens.prod isTopologicalBasis_opens
+
+lemma isOpenMap_add {𝕜 : Type*} [Field 𝕜] [PartialOrder 𝕜] {E : Type*}
+    [AddCommGroup E] [TopologicalSpace E] [ContinuousConstVAdd E E] :
+      IsOpenMap fun (p : E × E) ↦ p.1 + p.2 := by
+  rw [isTopologicalBasis_prod_open.isOpenMap_iff]
+  simp only [mem_image2, mem_ofPred_eq, forall_exists_index, and_imp]
+  intro s U hU V hV rfl
+  rw [add_image_prod]
+  exact hV.add_left
+
+@[simps]
+noncomputable def ConvexCone.interior {𝕜 : Type*} [Field 𝕜] [PartialOrder 𝕜] {E : Type*}
+    [AddCommGroup E] [TopologicalSpace E] [MulAction 𝕜 E] [ContinuousConstSMul 𝕜 E]
+    [ContinuousConstVAdd E E] (K : ConvexCone 𝕜 E) : ConvexCone 𝕜 E where
+  carrier := _root_.interior K
+  smul_mem' _ hc _ hv :=
+    map_mem_interior (isOpenMap_smul₀ hc.ne.symm) hv fun _ hx ↦ K.smul_mem hc hx
+  add_mem' _ hv _ hw :=
+    map_mem_interior₂ (isOpenMap_add (𝕜 := 𝕜)) hv hw fun _ ha _ hb ↦ K.add_mem ha hb
+
+lemma mfderiv_chart_inverse_eq {M : Type*} {H : Type*} [TopologicalSpace H]
+    [TopologicalSpace M] [ChartedSpace H M] (n : ℕ∞ω) [NeZero n] {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E] {I : ModelWithCorners ℝ E H}
+    [IsManifold (H := H) I n M] (p q : M) (hq : q ∈ (chartAt H p).source) :
+    (mfderiv[(chartAt H p).source] (chartAt H p) q).inverse =
+      (chartAtMFderiv n p hq).symm.toContinuousLinearMap := by
+  rw [mfderivWithin_of_mem_nhds ((chartAt H p).open_source.mem_nhds hq),
+    ← coe_chartAtMFderiv p hq (n := n)]
+  exact ContinuousLinearMap.inverse_equiv _
+
+instance {p : M} : NormedAddCommGroup (TangentSpace I p) := by
+  unfold TangentSpace
+  infer_instance
+
+instance (p : M) :  NormedSpace ℝ (TangentSpace I p) := by
+  unfold TangentSpace
+  infer_instance

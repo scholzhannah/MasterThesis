@@ -230,8 +230,8 @@ lemma isRealizable_of_isInteriorPoint {p : M} (hp : I.IsInteriorPoint p) {v : Ta
     tangentConeAt_of_mem_nhds (range_mem_nhds_isInteriorPoint hp)]
   exact mem_univ _
 
-include n in
-def ConvexConeIsRealizable {p : M} : ConvexCone ℝ (TangentSpace I p) where
+variable (n) in
+def ConvexConeIsRealizable (p : M) : ConvexCone ℝ (TangentSpace I p) where
   carrier := {v | IsRealizableMinimal v}
   smul_mem' c hc v hv := by
     rw [mem_ofPred_eq, isRealizable_iff_mem_posTangentConeAt_extChartAt (n := n)] at hv ⊢
@@ -304,6 +304,13 @@ lemma isInwardPointing_iff_chartAt {p : M} (v : TangentSpace I p) :
   isInwardPointing_iff_of_mem_maximalAtlas _ _ (mem_chart_source H p)
     (IsManifold.chart_mem_maximalAtlas (n := n) p)
 
+include n in
+lemma isInwardPointing_iff_chartAt' {p : M} {q : M}
+    (hq : q ∈ (chartAt H p).source) (v : TangentSpace I q) :
+    IsInwardPointingMinimal v ↔ IsInwardPointingMinimal (mfderiv% (chartAt H p) q v) :=
+  isInwardPointing_iff_of_mem_maximalAtlas _ _ hq
+    (IsManifold.chart_mem_maximalAtlas (n := n) p)
+
 lemma interior_posTangentConeAt_eq {p : H} :
     interior (posTangentConeAt (range I) (I p)) =
       d% I p '' interior {v | IsRealizableMinimal v} := by
@@ -344,12 +351,21 @@ lemma isInwardPointing_of_isInteriorPoint {p : M} (hp : I.IsInteriorPoint p)
     tangentConeAt_of_mem_nhds (range_mem_nhds_isInteriorPoint hp), interior_univ]
   exact mem_univ _
 
-def ConvexConeIsInwardPointing {p : M} : ConvexCone ℝ (TangentSpace I p) where
-  carrier := IsInwardPointingMinimal
-  smul_mem' v := by
+variable (I n) in
+noncomputable def ConvexConeIsInwardPointing (p : M) : ConvexCone ℝ (TangentSpace I p) :=
+    (ConvexConeIsRealizable n p).interior
 
-    sorry
-  add_mem' := sorry
+lemma ConvexConeIsInwardPointing_carrier_eq {p : M} :
+    (ConvexConeIsInwardPointing I n p : Set (TangentSpace I p)) =
+      {v | IsInwardPointingMinimal (E := E) v} := by
+  rw [ConvexConeIsInwardPointing, ConvexCone.interior_carrier]
+  rfl
+
+include n in
+lemma convex_isInwardPointing {p : M} :
+    Convex ℝ {v : TangentSpace I p | IsInwardPointingMinimal v} := by
+  rw [← ConvexConeIsInwardPointing_carrier_eq (n := n)]
+  exact (ConvexConeIsInwardPointing I n p).convex
 
 lemma isInwardPointing_iff_euclideanHalfSpace {m : ℕ} [NeZero m] {M : Type*} [TopologicalSpace M]
     [ChartedSpace (EuclideanHalfSpace m) M] [IsManifold (𝓡∂ m) n M] {p : M}
