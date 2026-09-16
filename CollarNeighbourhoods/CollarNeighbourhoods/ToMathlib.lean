@@ -86,20 +86,6 @@ lemma modelWithCornersEuclideanHalfSpace_interior_eq :
   simp_rw [← modelWithCornersEuclideanHalfSpace_isInteriorPoint_iff]
   rfl
 
--- **PR by Michael**
-lemma mvfderiv_eq_fderiv {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {E' : Type u_3} [NormedAddCommGroup E']
-    [NormedSpace 𝕜 E'] {f : E → E'} {x : E} :
-    d% f x = fderiv 𝕜 f x :=
-  mfderiv_eq_fderiv
-
--- **PR by Michael**
-theorem mvfderivWithin_eq_fderivWithin {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {E' : Type u_3} [NormedAddCommGroup E']
-    [NormedSpace 𝕜 E'] {f : E → E'} {s : Set E} {x : E} :
-    d[s] f x = fderivWithin 𝕜 f s x :=
-  mfderivWithin_eq_fderivWithin
-
 /-- The manifold derivative of `extChartAt` at the basepoint is the identity. -/
 lemma mvfderiv_extChartAt_self {𝕜 : Type u_1} [NontriviallyNormedField 𝕜] {E : Type u_2}
   [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type u_3} [TopologicalSpace H]
@@ -266,9 +252,6 @@ lemma Topology.IsInducing.mvfderiv [NormedSpace 𝕜 E] {I : ModelWithCorners �
 noncomputable instance [NormedSpace 𝕜 E] {I : ModelWithCorners 𝕜 E H} {p : H} :
     PseudoMetricSpace (TangentSpace I p) :=
   Topology.IsInducing.comapPseudoMetricSpace Topology.IsInducing.mvfderiv
-
-noncomputable def TangentSpace.ofEq (I : ModelWithCorners ℝ E H) {p q : M} (h : p = q) :
-    TangentSpace I p ≃ₜ TangentSpace I q := Homeomorph.refl (TangentSpace I p)
 
 variable {M' : Type*} {H' : Type*} [TopologicalSpace H']
     [TopologicalSpace M'] [ChartedSpace H' M'] {E' : Type*} [NormedAddCommGroup E']
@@ -472,9 +455,6 @@ theorem map_mem_interior₂ {X Y Z : Type*} [TopologicalSpace X] [TopologicalSpa
   have H₁ : (x, y) ∈ interior (s ×ˢ t) := by simpa only [interior_prod_eq] using mk_mem_prod hx hy
   have H₂ : MapsTo (uncurry f) (s ×ˢ t) u := forall_prod_set.2 h
   hf.mapsTo_interior H₂ H₁
-
-#check TopologicalSpace.IsTopologicalBasis.isOpenMap_iff
-#check TopologicalSpace.IsTopologicalBasis.prod
 
 open TopologicalSpace
 

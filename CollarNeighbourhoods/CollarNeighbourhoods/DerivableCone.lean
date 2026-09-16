@@ -502,6 +502,10 @@ lemma Convex.derivableWithinAt_of_mem_interior {s : Set E} (hs : Convex ℝ s) {
     tangentConeAt_of_mem_nhds hp]
   exact mem_univ _
 
+def inwardPointing (𝕜 : Type*) {E : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
+    [NormedSpace 𝕜 E] [LinearOrder 𝕜] (s : Set E) (p v : E) : Prop :=
+  v ∈ interior {w | derivableWithinAt 𝕜 s p w}
+
 -- `https://hal.science/hal-01552475v1/document` has a characterisation of the interior of the
 -- tangent cone
 
