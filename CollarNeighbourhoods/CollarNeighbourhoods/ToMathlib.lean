@@ -18,6 +18,7 @@ public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
 public import Mathlib.Analysis.Calculus.TangentCone.Seq
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 /-! Header-/
 
@@ -500,3 +501,15 @@ instance {p : M} : NormedAddCommGroup (TangentSpace I p) := by
 instance (p : M) :  NormedSpace ℝ (TangentSpace I p) := by
   unfold TangentSpace
   infer_instance
+
+open MeasureTheory
+
+lemma ConvexCone.integral_mem_of_IsClosed {α E : Type*} [MeasureSpace α]
+    [NormedAddCommGroup E] [TopologicalSpace E] [NormedSpace ℝ E]
+    [ContinuousConstVAdd E E] (K : ConvexCone ℝ E) (hK : IsClosed (K : Set E)) (f : α → E)
+    (hf : ∀ a, f a ∈ K) :
+    ∫ (a : α), f a ∂volume ∈ K := by
+  -- we probably need to do this in steps
+  -- first step functions and so on
+  -- express the integral as a limit of elements of the cone
+  sorry
