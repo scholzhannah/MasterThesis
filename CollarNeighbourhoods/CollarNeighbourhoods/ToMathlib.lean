@@ -19,6 +19,7 @@ public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 public import Mathlib.Geometry.Convex.Cone.Basic
 public import Mathlib.Analysis.Calculus.TangentCone.Seq
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Mathlib.MeasureTheory.Integral.Bochner.Set
 
 /-! Header-/
 
@@ -504,12 +505,46 @@ instance (p : M) :  NormedSpace ℝ (TangentSpace I p) := by
 
 open MeasureTheory
 
+
+-- this might be true but I think I don't need it
 lemma ConvexCone.integral_mem_of_IsClosed {α E : Type*} [MeasureSpace α]
-    [NormedAddCommGroup E] [TopologicalSpace E] [NormedSpace ℝ E]
-    [ContinuousConstVAdd E E] (K : ConvexCone ℝ E) (hK : IsClosed (K : Set E)) (f : α → E)
-    (hf : ∀ a, f a ∈ K) :
-    ∫ (a : α), f a ∂volume ∈ K := by
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [ContinuousConstVAdd E E] (K : ConvexCone ℝ E) (hK : IsClosed (K : Set E)) (hK₀ : 0 ∈ K)
+    (f : α → E) (hfK : ∀ a, f a ∈ K) (hf : Integrable f volume) :
+    ∫ (a : α), f a ∈ K := by
+  refine hf.induction (μ := volume)
+    (fun f ↦ (∀ (a : α), f a ∈ K) → ∫ (a : α), f a ∈ K) ?_ ?_ ?_ ?_ hfK
+  · intro c s hs hs' hcK
+    rw [MeasureTheory.integral_indicator_const c hs]
+    by_cases hs₀ : volume s = 0
+    · simp [Measure.real, hs₀, hK₀]
+    · refine K.smul_mem (ENNReal.ofReal_ne_zero_iff.mp (ofReal_measureReal hs'.ne ▸ hs₀)) ?_
+      obtain ⟨x, hx⟩ := nonempty_of_measure_ne_zero hs₀
+      exact indicator_of_mem hx (fun y ↦ c) ▸ hcK x
+  · intro h g hhg hh hg hhK hgK hhgK
+    rw [integral_add' hh hg]
+    have : ∀ a, h a ∈ K ∧ g a ∈ K := by
+      intro a
+      wlog ha : a ∈ support h
+      · by_cases hag : a ∈ support g
+        · exact (this K hK hK₀ f hfK hf hhg.symm hg hh hgK hhK (add_comm h g ▸ hhgK) a hag).symm
+        rw [notMem_support.1 ha, notMem_support.1 hag]
+        exact ⟨hK₀, hK₀⟩
+      refine ⟨?_, notMem_support.1 (hhg.notMem_of_mem_left ha) ▸ hK₀⟩
+      specialize hhgK a
+      simpa [notMem_support.1 (hhg.notMem_of_mem_left ha)] using hhgK
+    exact K.add_mem (hhK fun a ↦ (this a).1) (hgK fun a ↦ (this a).2)
+  · rw [← isSeqClosed_iff_isClosed]
+    intro g g' hg hgg' hg'
+
+    rw [Uniform.tendsto_nhds_left] at hgg'
+    sorry
+    /-apply isClosed_imp
+    ·
+
+      sorry
+    exact hK.preimage continuous_integral-/
+  · sorry
   -- we probably need to do this in steps
   -- first step functions and so on
   -- express the integral as a limit of elements of the cone
-  sorry

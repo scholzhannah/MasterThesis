@@ -152,6 +152,8 @@ lemma contMDiffOn_inwardPointingWithinVecAt_infty [CompleteSpace E] [IsManifold 
 -- **Question** : are these assumptions okay?
 variable [FiniteDimensional ℝ E] [IsManifold I ∞ M] [T2Space M] [SigmaCompactSpace M]
 
+-- generalize to other manifolds that admit a partition of unity e.g. Hilbert Manifolds
+
 -- I need to take a partition of unity that is positive on the sets
 variable (M I) in
 noncomputable def SmoothInwardPointingVec (p : M) : TangentSpace I p :=
