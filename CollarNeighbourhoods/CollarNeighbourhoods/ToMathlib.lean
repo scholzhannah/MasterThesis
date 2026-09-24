@@ -215,6 +215,29 @@ theorem Convex.add_smul_mem_icc {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜
   apply hs.add_smul_mem hx hy
   refine ⟨div_nonneg ht.1 hr.le, (div_le_one hr).mpr ht.2⟩
 
+theorem Convex.add_smul_mem_interior_icc {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜]
+    [PosMulReflectLT 𝕜] [AddCommGroup E]
+    [Module 𝕜 E] [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousConstSMul 𝕜 E]
+    {s : Set E} [AddRightMono 𝕜] (hs : Convex 𝕜 s)
+    {x y : E} (hx : x ∈ s) {r : 𝕜}
+    (hr : 0 < r)
+    (hy : x + r • y ∈ interior s) {t : 𝕜} (ht : t ∈ Set.Ioc 0 r) : x + t • y ∈ interior s := by
+  rw [← div_mul_cancel₀ t hr.ne.symm, mul_smul]
+  apply hs.add_smul_mem_interior hx hy
+  refine ⟨div_pos ht.1 hr, (div_le_one hr).mpr ht.2⟩
+
+example {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜]
+    [PosMulReflectLT 𝕜] [AddCommGroup E]
+    [Module 𝕜 E] [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousConstSMul 𝕜 E]
+    {s : Set E} [AddRightMono 𝕜] (hs : Convex 𝕜 s)
+    {x y : E} (hx : x ∈ closure s) {r : 𝕜}
+    (hr : 0 < r)
+    (hy : x + r • y ∈ s) {t : 𝕜} (ht : t ∈ Set.Ioc 0 r) : x + t • y ∈ s := by
+
+  rw [← div_mul_cancel₀ t hr.ne.symm, mul_smul]
+  apply
+  sorry
+
 theorem ModelWithCorners.mfderivWithin_symm {𝕜 : Type*} [NontriviallyNormedField 𝕜]
     {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
     (I : ModelWithCorners 𝕜 E H) {x : E} (hx : x ∈ Set.range ↑I) :
@@ -484,6 +507,18 @@ noncomputable def ConvexCone.interior {𝕜 : Type*} [Field 𝕜] [PartialOrder 
     map_mem_interior (isOpenMap_smul₀ hc.ne.symm) hv fun _ hx ↦ K.smul_mem hc hx
   add_mem' _ hv _ hw :=
     map_mem_interior₂ (isOpenMap_add (𝕜 := 𝕜)) hv hw fun _ ha _ hb ↦ K.add_mem ha hb
+
+noncomputable def ConvexCone.ofConvexSmul (R M : Type*) [Field R] [PartialOrder R]
+    [IsStrictOrderedRing R] [PosMulReflectLT R]
+    [NeZero (1 : R)]
+    [AddCommMonoid M] [DistribMulAction R M] [DenselyOrdered R] (s : Set M) (hs : Convex R s)
+    (h : ∀ (c : R) (_ : c > 0), ∀ ⦃x : M⦄, x ∈ s → c • x ∈ s) : ConvexCone R M where
+  carrier := s
+  smul_mem' := h
+  add_mem' x hx y hy := by
+    rw [← one_smul R (x + y), ← mul_div_cancel₀ 1 (zero_lt_two).ne.symm, mul_smul, smul_add]
+    apply h _ zero_lt_two
+    exact hs hx hy (half_pos zero_lt_one).le (half_pos zero_lt_one).le  (add_halves 1)
 
 lemma mfderiv_chart_inverse_eq {M : Type*} {H : Type*} [TopologicalSpace H]
     [TopologicalSpace M] [ChartedSpace H M] (n : ℕ∞ω) [NeZero n] {E : Type*}

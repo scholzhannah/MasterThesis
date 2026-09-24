@@ -376,10 +376,69 @@ lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
   simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
   exact this
 
+@[simps!]
+def feasibleCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) : ConvexCone ℝ E :=
+  ConvexCone.ofConvexSmul ℝ E {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s}
+    (by
+      intro x ⟨r1, hr1, hrx1⟩ y ⟨r2, hr2, hry2⟩ a b ha hb hab
+      let r := r1 ⊓ r2
+      have hr : 0 < r := lt_min hr1 hr2
+      have hrx : p + r • x ∈ s :=
+        hs.add_smul_mem_icc hp hr1 hrx1 ⟨hr.le, min_le_left _ _⟩
+      have hry : p + r • y ∈ s :=
+        hs.add_smul_mem_icc hp hr2 hry2 ⟨hr.le, min_le_right _ _⟩
+      use r, hr
+      rw [← one_smul ℝ p, ← hab, smul_add, smul_algebra_smul_comm, smul_algebra_smul_comm b r y,
+        add_smul, add_add_add_comm, ← smul_add, ← smul_add]
+      exact hs hrx hry ha hb hab)
+    (by
+      intro c hc x ⟨r, hr, hrs⟩
+      use r • c⁻¹, by simp [hr, hc]
+      rw [smul_smul, smul_eq_mul, inv_mul_cancel_right₀ hc.ne.symm r]
+      exact hrs)
+
+@[simps!]
+def feasibleInteriorCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) : ConvexCone ℝ E :=
+  ConvexCone.ofConvexSmul ℝ E {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s}
+    (by
+      intro x ⟨r1, hr1, hrx1⟩ y ⟨r2, hr2, hry2⟩ a b ha hb hab
+      let r := r1 ⊓ r2
+      have hr : 0 < r := lt_min hr1 hr2
+      have hrx : p + r • x ∈ interior s :=
+        hs.add_smul_mem_interior_icc hp hr1 hrx1 ⟨hr, min_le_left _ _⟩
+      have hry : p + r • y ∈ interior s :=
+        hs.add_smul_mem_interior_icc hp hr2 hry2 ⟨hr, min_le_right _ _⟩
+      use r, hr
+      rw [← one_smul ℝ p, ← hab, smul_add, smul_algebra_smul_comm, smul_algebra_smul_comm b r y,
+        add_smul, add_add_add_comm, ← smul_add, ← smul_add]
+      exact hs.interior hrx hry ha hb hab)
+    (by
+      intro c hc x ⟨r, hr, hrs⟩
+      use r • c⁻¹, by simp [hr, hc]
+      rw [smul_smul, smul_eq_mul, inv_mul_cancel_right₀ hc.ne.symm r]
+      exact hrs)
+
+lemma Convex.isOpen_feasibleInteriorCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) :
+    IsOpen (feasibleInteriorCone hs hp : Set E) := by
+  rw [isOpen_iff]
+  intro y ⟨r, hr, hry⟩
+  obtain ⟨ε, hε, hεs⟩ := (isOpen_iff.1 isOpen_interior) _ hry
+  use r⁻¹ * ε, by simp [hε, hr]
+  intro x hx
+  use r, hr
+  apply hεs
+  simpa [dist_smul₀, abs_of_pos hr, ← lt_inv_mul_iff₀ hr]
+
+lemma Convex.nonempty_feasibleInteriorCone {s : Set E} {p : E} (hs : Convex ℝ s)
+    (hs' : (interior s).Nonempty) (hp : p ∈ s) :
+    (feasibleInteriorCone hs hp : Set E).Nonempty := by
+  obtain ⟨x, hx⟩ := hs'
+  use x - p, 1, zero_lt_one
+  simpa
 
 -- it should probably be enough to requiere `p ∈ closure s`
 lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
-    posTangentConeAt s p = closure {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} := by
+    posTangentConeAt s p = closure (feasibleCone hs hp) := by
   apply subset_antisymm
   · intro v hv
     obtain ⟨c, d, hd, hdp, hcd⟩ := mem_tangentConeAt_iff_exists_seq.1 hv
@@ -398,9 +457,9 @@ lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E}
       exact lt_of_le_of_ne (c (n + N)).coe_nonneg hcn.symm
     · rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ c n • d n)]
       exact hcd
-  · rw [← seqClosure_eq_closure]
+  · rw [← seqClosure_eq_closure, feasibleCone_carrier hs hp]
     intro v ⟨e, he, hev⟩
-    simp only [gt_iff_lt, exists_prop, mem_ofPred_eq] at he
+    simp only [mem_ofPred_eq] at he
     have he' : ∀ n, ∃ (r : ℝ), 0 < r ∧ p + r • e n ∈ s ∧ ‖r • e n‖ ≤ 1 / (n + 1) := by
       intro n
       obtain ⟨r , hr, hrp⟩ := he n
@@ -515,33 +574,70 @@ lemma inwardPointing.derivableWithinAt {𝕜 : Type*} {E : Type*} [NontriviallyN
 -- `https://hal.science/hal-01552475v1/document` has a characterisation of the interior of the
 -- tangent cone
 
-example {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
-    interior {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} =
-      {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s} := by
-  let f v := fun (r : {r // r > 0}) ↦ p + r.1 • v
-  have hf v : Continuous (f v) := by fun_prop
-  have : {v | ∃ r, ∃ (_ : r > 0), p + r • v ∈ interior s} =
-      {v | ((fun (r : {r // r > 0}) ↦ p + r.1 • v) ⁻¹' (interior s)).Nonempty } := by
-    simp [Set.Nonempty]
+lemma subset_closure_mem_interior {s : Set E} (hs : Convex ℝ s)
+    (hs' : (interior s).Nonempty) {p : E} :
+    {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} ⊆
+      closure {v : E | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s} := by
+  intro v ⟨r, hr, hrs⟩
+  rw [Metric.mem_closure_iff]
+  intro ε hε
+  have : p + r • v ∈ closure (interior s) := by
+    rw [hs.closure_interior_eq_closure_of_nonempty_interior hs']
+    exact subset_closure hrs
+  rw [Metric.mem_closure_iff] at this
+  obtain ⟨w, hw, hwv⟩ := this (r * ε) (mul_pos hr hε)
+  use r⁻¹ • (w - p)
+  constructor
+  · use r, hr
+    rw [smul_inv_smul₀ hr.ne.symm, add_sub_cancel]
+    exact hw
+  · rw [← inv_smul_smul₀ hr.ne.symm v, dist_smul₀, Real.norm_of_nonneg (by simp [hr.le]),
+      inv_mul_lt_iff₀ hr, dist_sub_eq_dist_add_right, add_comm]
+    exact hwv
 
-  sorry
+lemma closure_feasibleCone_eq_closure_feasibleInteriorCone {s : Set E} (hs : Convex ℝ s)
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) :
+    closure (feasibleCone hs hp) =
+      closure (feasibleInteriorCone hs hp : Set E) := by
+  apply subset_antisymm
+  · refine closure_minimal ?_ isClosed_closure
+    intro v ⟨r, hr, hrs⟩
+    rw [Metric.mem_closure_iff]
+    intro ε hε
+    have : p + r • v ∈ closure (interior s) := by
+      rw [hs.closure_interior_eq_closure_of_nonempty_interior hs']
+      exact subset_closure hrs
+    rw [Metric.mem_closure_iff] at this
+    obtain ⟨w, hw, hwv⟩ := this (r * ε) (mul_pos hr hε)
+    use r⁻¹ • (w - p)
+    constructor
+    · use r, hr
+      rw [smul_inv_smul₀ hr.ne.symm, add_sub_cancel]
+      exact hw
+    · rw [← inv_smul_smul₀ hr.ne.symm v, dist_smul₀, Real.norm_of_nonneg (by simp [hr.le]),
+        inv_mul_lt_iff₀ hr, dist_sub_eq_dist_add_right, add_comm]
+      exact hwv
+  · apply closure_mono
+    rw [feasibleInteriorCone_carrier, feasibleCone_carrier hs hp]
+    grw [interior_subset]
 
+lemma Convex.interior_posTangentCone_eq_feasibleInteriorCone {s : Set E} (hs : Convex ℝ s)
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) :
+    interior (posTangentConeAt s p) =
+      feasibleInteriorCone hs hp := by
+  rw [hs.posTangentConeAt_eq_closure hp,
+    closure_feasibleCone_eq_closure_feasibleInteriorCone hs hs',
+    (feasibleInteriorCone hs hp).convex.interior_closure_eq_interior_of_nonempty_interior
+    ((hs.isOpen_feasibleInteriorCone hp).interior_eq.symm ▸
+    (hs.nonempty_feasibleInteriorCone hs' hp)),
+    (hs.isOpen_feasibleInteriorCone hp).interior_eq, feasibleInteriorCone_carrier hs hp]
 
-lemma Convex.subset_interior_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
-    {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s} ⊆ interior (posTangentConeAt s p) := by
-  have : IsOpen ({v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ interior s}) := by
-    rw [isOpen_iff]
-    intro x ⟨r, hr, hx⟩
-    obtain ⟨ε, hε, hεs⟩ := (isOpen_iff.1 (isOpen_interior (s := s) )) (p + r • x) hx
-    use ε / r, _root_.div_pos hε hr
-    intro v hv
-    use r, hr
-    apply hεs
-    simpa [dist_smul₀, abs_of_pos hr, lt_div_iff₀ hr, mul_comm] using hv
-  apply this.subset_interior_closure.trans
-  rw [hs.posTangentConeAt_eq_closure hp]
-  gcongr
-  exact interior_subset
+lemma inwardPointing_iff_exist {s : Set E} (hs : Convex ℝ s)
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) (v : E) :
+    inwardPointing ℝ s p v ↔ ∃ r > (0 : ℝ), p + r • v ∈ interior s := by
+  simp_rw [inwardPointing, hs.derivableWithinAt_iff_mem_posTangentConeAt hp, ofPred_mem_eq,
+    hs.interior_posTangentCone_eq_feasibleInteriorCone hs' hp, feasibleInteriorCone_carrier hs hp]
+  rfl
 
 lemma posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : p.ofLp 0 = 0) : posTangentConeAt {x | 0 ≤ x.ofLp 0} p = {v | 0 ≤ v.ofLp 0} := by
