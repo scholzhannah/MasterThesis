@@ -5,21 +5,10 @@ Authors: Hannah Scholz
 -/
 module
 
-public import Mathlib.Analysis.Calculus.VectorField
-public import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
-public import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
-public import Mathlib.Geometry.Manifold.VectorBundle.MDifferentiable
-public import Mathlib.Geometry.Manifold.Notation
-public import Mathlib.Geometry.Manifold.IsManifold.InteriorBoundary
 public import Mathlib.Geometry.Manifold.Instances.Real
-public import Mathlib.Geometry.Manifold.Instances.Icc
-public import Mathlib.Geometry.Manifold.Immersion
-public import Mathlib.Analysis.Calculus.LocalExtr.Basic
-public import Mathlib.Analysis.Calculus.LineDeriv.Basic
-public import Mathlib.Geometry.Convex.Cone.Basic
-public import Mathlib.Analysis.Calculus.TangentCone.Seq
-public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
+public import Mathlib.Geometry.Convex.Cone.Basic
 
 /-! Header-/
 
@@ -226,17 +215,12 @@ theorem Convex.add_smul_mem_interior_icc {𝕜 E : Type*} [Field 𝕜] [PartialO
   apply hs.add_smul_mem_interior hx hy
   refine ⟨div_pos ht.1 hr, (div_le_one hr).mpr ht.2⟩
 
-example {𝕜 E : Type*} [Field 𝕜] [PartialOrder 𝕜]
-    [PosMulReflectLT 𝕜] [AddCommGroup E]
-    [Module 𝕜 E] [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousConstSMul 𝕜 E]
-    {s : Set E} [AddRightMono 𝕜] (hs : Convex 𝕜 s)
-    {x y : E} (hx : x ∈ closure s) {r : 𝕜}
-    (hr : 0 < r)
-    (hy : x + r • y ∈ s) {t : 𝕜} (ht : t ∈ Set.Ioc 0 r) : x + t • y ∈ s := by
-
-  rw [← div_mul_cancel₀ t hr.ne.symm, mul_smul]
-  apply
-  sorry
+theorem NormedSpace.isVonNBounded_closedBall' (𝕜 : Type*) (E : Type*) [NormedField 𝕜]
+    [SeminormedAddCommGroup E] [NormedSpace 𝕜 E] (x : E) (r : ℝ) :
+    Bornology.IsVonNBounded 𝕜 (Metric.closedBall x r) := by
+  apply (isVonNBounded_closedBall _ _ _).subset (s₂ := Metric.closedBall 0 (‖x‖ + r))
+  apply Metric.closedBall_subset_closedBall'
+  simp [add_comm]
 
 theorem ModelWithCorners.mfderivWithin_symm {𝕜 : Type*} [NontriviallyNormedField 𝕜]
     {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H]
@@ -538,9 +522,27 @@ instance (p : M) :  NormedSpace ℝ (TangentSpace I p) := by
   unfold TangentSpace
   infer_instance
 
+lemma mem_segment_iff_exists_icc (𝕜 : Type*) {E : Type*} [Field 𝕜] [LinearOrder 𝕜]
+    [IsStrictOrderedRing 𝕜] [AddCommGroup E] [Module 𝕜 E]
+    (x y z : E) : z ∈ segment 𝕜 x y ↔ ∃ i ∈ Icc (0 : 𝕜) 1, z = x + i • (y - x) := by
+  refine ⟨fun ⟨a, b, ha, hb, hab, habx⟩ ↦ ?_, fun ⟨i, hi1, hi2⟩ ↦ ?_⟩
+  · use b
+    refine ⟨⟨hb, ?_⟩, ?_⟩
+    · rw [← hab]
+      exact (le_add_iff_nonneg_left b).mpr ha
+    · rw [← habx, smul_sub, add_sub, eq_sub_iff_add_eq, add_right_comm, ← add_smul, hab, one_smul]
+  · use ((1 : 𝕜) - i), i
+    refine ⟨sub_nonneg.2 hi1.2, hi1.1, sub_add_cancel 1 i, ?_⟩
+    rw [sub_smul, one_smul, add_comm_sub, ← smul_sub, hi2]
+
+lemma add_mem_segment_iff_exists_icc (𝕜 : Type*) {E : Type*} [Field 𝕜] [LinearOrder 𝕜]
+    [IsStrictOrderedRing 𝕜] [AddCommGroup E] [Module 𝕜 E]
+    (x y z : E) : x + z ∈ segment 𝕜 x y ↔ ∃ i ∈ Icc (0 : 𝕜) 1, z = i • (y - x) := by
+  simp_rw [mem_segment_iff_exists_icc, add_left_cancel_iff]
+
 open MeasureTheory
 
-
+/-
 -- this might be true but I think I don't need it
 lemma ConvexCone.integral_mem_of_IsClosed {α E : Type*} [MeasureSpace α]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -582,4 +584,4 @@ lemma ConvexCone.integral_mem_of_IsClosed {α E : Type*} [MeasureSpace α]
   · sorry
   -- we probably need to do this in steps
   -- first step functions and so on
-  -- express the integral as a limit of elements of the cone
+  -- express the integral as a limit of elements of the cone-/

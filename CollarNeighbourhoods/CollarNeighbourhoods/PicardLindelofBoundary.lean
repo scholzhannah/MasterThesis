@@ -802,6 +802,28 @@ lemma of_contDiffAt_one (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) (hs₃ : (in
   · intro v hv hva
     exact has₃ _ hv (le_trans hva (le_trans (half_le_self ha.le) (min_le_right _ _)))
 
+lemma of_contDiffAt_one_coneNhdsWithin (hs₁ : Convex ℝ s)
+    (hs₃ : (interior s).Nonempty)
+    {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ s \ interior s) (hfx₀ : inwardPointing ℝ s x₀ (f x₀))
+    (hf : ContDiffWithinAt ℝ 1 f s x₀) :
+    ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
+      (fun _ ↦ f) (coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) t₀ (t₀ + ε) x₀ a r L K :=
+  of_contDiffAt_one (convex_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
+    (isClosed_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) (nonempty_interior_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
+    (mem_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) (isInwardPointing_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
+    (hf.mono (coneNhdWithin_subset hs₁ hs₃ hx₀.1 hfx₀))
+    (exists_mem_coneNhdsWithin_of_le hs₁ hs₃ hx₀ hfx₀)
+
+lemma exists_subset_of_contDiffAt_one (hs₁ : Convex ℝ s)
+    (hs₃ : (interior s).Nonempty)
+    {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ s) (hfx₀ : inwardPointing ℝ s x₀ (f x₀))
+    (hf : ContDiffWithinAt ℝ 1 f s x₀) :
+    ∃ t, ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
+      (fun _ ↦ f) t t₀ (t₀ + ε) x₀ a r L K := by
+  by_cases hx₀' : x₀ ∈ interior s
+  · sorry
+  sorry
+
 end
 
 /-! ## Existence of solutions to ODEs -/
@@ -824,5 +846,14 @@ theorem exists_eq_forall_mem_Icc_eq_picard
   · rw [FunSpace.compProj_apply, FunSpace.next_apply, hα, projIcc_of_mem _ ht]
   · rw [FunSpace.compProj_apply]
     exact (FunSpace.next h hf α).range_subset (mem_range_self _)
+
+include h in
+theorem exists_eq_forall_mem_Icc_eq_picard_of_subset {s' : Set E} (hx₀ : x₀ ∈ s') (hs : s' ⊆ s)
+    (hf : IsPicardLindelofWithin f s' tmin tmax x₀ a r L K) :
+    ∃ α : ℝ → E, α tmin = x₀ ∧ ∀ t ∈ Icc tmin tmax, α t = ODE.picard f tmin x₀ α t ∧ α t ∈ s := by
+  obtain ⟨α, hαx, hαfs⟩ := exists_eq_forall_mem_Icc_eq_picard (hx₀ := hx₀) (h := h) hf
+  use α, hαx
+  intro t ht
+  exact ⟨(hαfs t ht).1, hs (hαfs t ht).2⟩
 
 end IsPicardLindelofWithin
