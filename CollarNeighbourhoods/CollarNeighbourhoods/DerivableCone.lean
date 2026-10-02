@@ -624,6 +624,19 @@ lemma inwardPointing_iff_exist {s : Set E} (hs : Convex ℝ s)
     hs.interior_posTangentCone_eq_feasibleInteriorCone hs' hp, feasibleInteriorCone_carrier hs hp]
   rfl
 
+lemma inwardPointing_of_mem_interior {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ interior s)
+    (v : E) : inwardPointing ℝ s p v := by
+  rw [inwardPointing_iff_exist hs ⟨p, hp⟩ (interior_subset hp) v]
+  by_cases hv : v = 0
+  · use 1, zero_lt_one
+    simp [hv, hp]
+  obtain ⟨δ, hδ, hδs⟩ := isOpen_iff.1 isOpen_interior p hp
+  use δ / 2 * ‖v‖⁻¹, mul_pos (half_pos hδ) (inv_pos.2 (norm_pos_iff.mpr hv))
+  apply hδs
+  simp [mul_smul, norm_smul_of_nonneg (half_pos hδ).le,
+    norm_smul_of_nonneg (inv_pos.2 (norm_pos_iff.mpr hv)).le v,
+    inv_mul_cancel₀ (norm_ne_zero_iff.mpr hv), hδ]
+
 -- one should definitely be able to generalize this to non convex sets
 lemma norm_pos_of_mem_frontier_of_inwardPointing {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s \ (interior s)) {v : E}

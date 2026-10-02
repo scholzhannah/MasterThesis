@@ -812,17 +812,39 @@ lemma of_contDiffAt_one_coneNhdsWithin (hs₁ : Convex ℝ s)
     (isClosed_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) (nonempty_interior_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
     (mem_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) (isInwardPointing_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
     (hf.mono (coneNhdWithin_subset hs₁ hs₃ hx₀.1 hfx₀))
-    (exists_mem_coneNhdsWithin_of_le hs₁ hs₃ hx₀ hfx₀)
+    (exists_mem_coneNhdsWithin_of_le_of_not_mem_interior hs₁ hs₃ hx₀ hfx₀)
+
+lemma of_contDiffAt_one_of_mem_interior {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ interior s)
+    (hf : ContDiffWithinAt ℝ 1 f s x₀) :
+    ∃ t, t ⊆ s ∧ x₀ ∈ t ∧
+        ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
+      (fun _ ↦ f) t t₀ (t₀ + ε) x₀ a r L K := by
+  obtain ⟨δ, hδ, hδs⟩ := isOpen_iff.1 isOpen_interior x₀ hx₀
+  use closedBall x₀ (δ / 2),
+    ((closedBall_subset_ball (half_lt_self hδ)).trans hδs).trans interior_subset,
+    mem_closedBall_self (half_pos hδ).le
+  apply of_contDiffAt_one (convex_closedBall x₀ (δ / 2)) isClosed_closedBall
+    (interior_closedBall x₀ (half_pos hδ).ne' ▸ nonempty_ball.mpr (half_pos hδ))
+    (mem_closedBall_self (half_pos hδ).le)
+    (inwardPointing_of_mem_interior (convex_closedBall _ _)
+      (interior_closedBall x₀ (half_pos hδ).ne' ▸  mem_ball_self (half_pos hδ)) (f x₀))
+    (hf.mono (((closedBall_subset_ball (half_lt_self hδ)).trans hδs).trans interior_subset))
+  use δ / 2, half_pos hδ
+  intro v _ hv
+  simpa
 
 lemma exists_subset_of_contDiffAt_one (hs₁ : Convex ℝ s)
     (hs₃ : (interior s).Nonempty)
     {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ s) (hfx₀ : inwardPointing ℝ s x₀ (f x₀))
     (hf : ContDiffWithinAt ℝ 1 f s x₀) :
-    ∃ t, ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
+    ∃ t, t ⊆ s ∧ x₀ ∈ t ∧
+      ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
       (fun _ ↦ f) t t₀ (t₀ + ε) x₀ a r L K := by
   by_cases hx₀' : x₀ ∈ interior s
-  · sorry
-  sorry
+  · exact of_contDiffAt_one_of_mem_interior hx₀' hf
+  · use (coneNhdWithin hs₁ hs₃ hx₀ hfx₀), coneNhdWithin_subset hs₁ hs₃ hx₀ hfx₀,
+      mem_coneNhdWithin hs₁ hs₃ hx₀ hfx₀
+    exact of_contDiffAt_one_coneNhdsWithin hs₁ hs₃ ⟨hx₀, hx₀'⟩ hfx₀ hf
 
 end
 

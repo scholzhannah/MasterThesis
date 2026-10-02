@@ -70,6 +70,18 @@ theorem exists_eq_forall_mem_Icc_hasDerivWithinAt
   · rw [FunSpace.compProj_apply h]
     exact α.range_subset (mem_range_self _)
 
+include h in
+/-- **Picard-Lindelöf (Cauchy-Lipschitz) theorem**, differential form. This version shows the
+existence of a local solution. -/
+theorem exists_eq_forall_mem_Icc_hasDerivWithinAt_of_subset {t : Set E} (hts : t ⊆ s)
+    (hx₀ : x₀ ∈ t)
+    (hf : IsPicardLindelofWithin f t tmin tmax x₀ a r L K) :
+    ∃ α : ℝ → E, α tmin = x₀ ∧
+      ∀ t ∈ Icc tmin tmax, HasDerivWithinAt α (f t (α t)) (Icc tmin tmax) t ∧ α t ∈ s := by
+  obtain ⟨α, hαx₀, hα⟩ := exists_eq_forall_mem_Icc_hasDerivWithinAt h hx₀ hf
+  use α, hαx₀
+  intro t ht
+  exact ⟨(hα t ht).1, hts (hα t ht).2⟩
 
 include h hx₀ in
 /-- **Picard-Lindelöf (Cauchy-Lipschitz) theorem**, differential form. -/
@@ -78,6 +90,18 @@ theorem exists_eq_forall_mem_Icc_hasDerivWithinAt₀
     ∃ α : ℝ → E, α tmin = x₀ ∧
       ∀ t ∈ Icc tmin tmax, HasDerivWithinAt α (f t (α t)) (Icc tmin tmax) t ∧ α t ∈ s :=
   exists_eq_forall_mem_Icc_hasDerivWithinAt h hx₀ hf
+
+include h in
+/-- **Picard-Lindelöf (Cauchy-Lipschitz) theorem**, differential form. -/
+theorem exists_eq_forall_mem_Icc_hasDerivWithinAt₀_of_subset {t : Set E} (hts : t ⊆ s)
+    (hx₀ : x₀ ∈ t)
+    (hf : IsPicardLindelofWithin f t tmin tmax x₀ a r L K) :
+    ∃ α : ℝ → E, α tmin = x₀ ∧
+      ∀ t ∈ Icc tmin tmax, HasDerivWithinAt α (f t (α t)) (Icc tmin tmax) t ∧ α t ∈ s := by
+  obtain ⟨α, hαx₀, hα⟩ := exists_eq_forall_mem_Icc_hasDerivWithinAt₀ h hx₀ hf
+  use α, hαx₀
+  intro t ht
+  exact ⟨(hα t ht).1, hts (hα t ht).2⟩
 
 end IsPicardLindelofWithin
 
@@ -93,18 +117,15 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E
 integral curve `α : ℝ → E` defined on an open interval, with initial condition `α t₀ = x`, where
 `x` may be different from `x₀`. -/
 theorem exists_forall_mem_closedBall_exists_eq_forall_mem_Ioo_hasDerivAt
-    (hs₁ : Convex ℝ s)
-    (hs₂ : IsClosed s) (hs₃ : (interior s).Nonempty) (hx₀ : x₀ ∈ s)
-    {hfx₀ : inwardPointing ℝ s x₀ (f x₀)}
-    (hf : ContDiffWithinAt ℝ 1 f s x₀)
-    (hsv : ∃ ε > 0, ∀ (v : E), derivableWithinAt ℝ s x₀ v → ‖v‖ ≤ ε → x₀ + v ∈ s) (t₀ : ℝ) :
+    (hs₁ : Convex ℝ s) (hs₃ : (interior s).Nonempty) (hx₀ : x₀ ∈ s)
+    {hfx₀ : inwardPointing ℝ s x₀ (f x₀)} (hf : ContDiffWithinAt ℝ 1 f s x₀) (t₀ : ℝ) :
     ∃ ε > (0 : ℝ), ∃ α : ℝ → E, α t₀ = x₀ ∧
       ∀ t ∈ Icc t₀ (t₀ + ε), HasDerivWithinAt α (f (α t)) (Icc t₀ (t₀ + ε)) t ∧ α t ∈ s := by
-  have ⟨ε, hε, a, r, _, _, hr, hpl⟩ :=
-    IsPicardLindelofWithin.of_contDiffAt_one hs₁ hs₂ hs₃ hx₀ hfx₀ hf hsv
+  have ⟨t, hts, htx₀, ε, hε, a, r, _, _, hr, hpl⟩ :=
+    IsPicardLindelofWithin.exists_subset_of_contDiffAt_one hs₁ hs₃ hx₀ hfx₀ hf
   refine ⟨ε, hε, ?_⟩
-  have ⟨α, hα1, hα2⟩ := (hpl t₀).exists_eq_forall_mem_Icc_hasDerivWithinAt
-    (le_add_of_nonneg_right hε.le) hx₀
+  obtain ⟨α, hα1, hα2⟩ := (hpl t₀).exists_eq_forall_mem_Icc_hasDerivWithinAt_of_subset
+    (le_add_of_nonneg_right hε.le) hts htx₀
   refine ⟨α, hα1, fun t ht ↦ ?_⟩
   apply hα2
   exact ht
