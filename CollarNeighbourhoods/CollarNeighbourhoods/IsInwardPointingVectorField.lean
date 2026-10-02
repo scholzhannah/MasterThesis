@@ -71,7 +71,8 @@ lemma IsInwardPointing_inwardPointingVec (x : H) :
     simpa [isInwardPointing_iff_extChartAt_mem_interior_posTangentConeAt (n := n),
       chartAt_self_eq, InwardPointingVec, -mvfderivModelWithCorners_symm_apply,
       coe_mvfderiv_modelWithCorners]
-  apply I.convex_range.subset_interior_posTangentCone (mem_range_self x)
+  rw [I.convex_range.interior_posTangentCone_eq_feasibleInteriorCone I.nonempty_interior
+    (mem_range_self x)]
   use 1, one_pos
   simpa using hy
 
