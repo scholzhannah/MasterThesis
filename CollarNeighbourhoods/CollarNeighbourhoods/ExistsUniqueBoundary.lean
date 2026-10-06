@@ -112,22 +112,19 @@ namespace ContDiffAt
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
   {f : E → E} {x₀ : E} {s : Set E}
 
-
-/-- If a vector field `f : E → E` is continuously differentiable at `x₀ : E`, then it admits an
-integral curve `α : ℝ → E` defined on an open interval, with initial condition `α t₀ = x`, where
-`x` may be different from `x₀`. -/
-theorem exists_forall_mem_closedBall_exists_eq_forall_mem_Ioo_hasDerivAt
+theorem exists_eq_forall_mem_Icc_hasDerivAt₀
     (hs₁ : Convex ℝ s) (hs₃ : (interior s).Nonempty) (hx₀ : x₀ ∈ s)
-    {hfx₀ : inwardPointing ℝ s x₀ (f x₀)} (hf : ContDiffWithinAt ℝ 1 f s x₀) (t₀ : ℝ) :
+    (hfx₀ : inwardPointing ℝ s x₀ (f x₀)) (hf : ContDiffWithinAt ℝ 1 f s x₀) (t₀ : ℝ) :
     ∃ ε > (0 : ℝ), ∃ α : ℝ → E, α t₀ = x₀ ∧
       ∀ t ∈ Icc t₀ (t₀ + ε), HasDerivWithinAt α (f (α t)) (Icc t₀ (t₀ + ε)) t ∧ α t ∈ s := by
   have ⟨t, hts, htx₀, ε, hε, a, r, _, _, hr, hpl⟩ :=
-    IsPicardLindelofWithin.exists_subset_of_contDiffAt_one hs₁ hs₃ hx₀ hfx₀ hf
+    IsPicardLindelofWithin.exists_subset_of_contDiffWithinAt_one hs₁ hs₃ hx₀ hfx₀ hf
   refine ⟨ε, hε, ?_⟩
   obtain ⟨α, hα1, hα2⟩ := (hpl t₀).exists_eq_forall_mem_Icc_hasDerivWithinAt_of_subset
     (le_add_of_nonneg_right hε.le) hts htx₀
   refine ⟨α, hα1, fun t ht ↦ ?_⟩
   apply hα2
   exact ht
+
 
 end ContDiffAt

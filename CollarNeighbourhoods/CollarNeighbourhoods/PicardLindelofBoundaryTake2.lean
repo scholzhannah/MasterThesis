@@ -74,10 +74,10 @@ open scoped Nat NNReal Topology
 
 /-! ## Assumptions of the Picard-Lindelöf theorem-/
 
--- we might could already fix `tmin` to be `t₀`
 structure IsPicardLindelofWithin {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    (f : ℝ → E → E) (s : Set E) (tmin tmax : ℝ) (x₀ : E) (a r L K : ℝ≥0) :
+    (f : ℝ → E → E) (s : Set E) (tmin tmax : ℝ) (x₀ x : E) (a r L K : ℝ≥0) :
     Prop where
+  mem_closedBall : x ∈ closedBall x₀ a ∩ s
   /-- The vector field at any time is Lipschitz with constant `K` within a closed ball. -/
   lipschitzOnWith : ∀ t ∈ Icc tmin tmax, LipschitzOnWith K (f t) (closedBall x₀ a ∩ s)
   /-- The vector field is continuous in time within a closed ball. -/
@@ -88,14 +88,14 @@ structure IsPicardLindelofWithin {E : Type*} [NormedAddCommGroup E] [NormedSpace
   mul_max_le : L * (tmax - tmin) ≤ a - r
   /-- The set `s` is  convex. -/
   convex : Convex ℝ s
+  /-- The set `s` is closed. -/
   isClosed : IsClosed s
   /-- The set `s` has nonempty interior. -/
   nonempty_interior : (interior s).Nonempty
   /-- The vector field is inward pointing within a closed ball. -/
-  isInwardPointing: ∀ v, (∃ t ∈ Icc tmin tmax, ‖f t x₀ - v‖ ≤ K * a) →
-    inwardPointing ℝ s x₀ v
-  --norm_sub_le : ∀ t ∈ Icc tmin tmax, ‖f tmin x₀ - f t x₀‖ ≤ L * a
-  mem_of_derivableWithinAt : ∀ v, derivableWithinAt ℝ s x₀ v → ‖v‖ ≤ a → (x₀ + v) ∈ s
+  isInwardPointing: ∀ v, (∃ t ∈ Icc tmin tmax, ‖f t x - v‖ ≤ K * a) →
+    inwardPointing ℝ s x v
+  mem_of_derivableWithinAt : ∀ v, derivableWithinAt ℝ s x v → ‖v‖ ≤ a → (x + v) ∈ s
 
 namespace ODE
 
@@ -304,10 +304,11 @@ section
 
 variable [NormedSpace ℝ E]
   {f : ℝ → E → E} {tmin tmax : ℝ} {x₀ x y : E} {a r L K : ℝ≥0} {s : Set E} {hx₀ : x₀ ∈ s}
+  {hx : x ∈ closedBall x₀ a ∩ s}
   (h : tmin ≤ tmax)
 
 /-- The integrand in `next` is continuous. -/
-lemma continuousOn_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
+lemma continuousOn_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ x a r L K)
     (α : FunSpace s tmin tmax x₀ hx₀ h r L) :
     ContinuousOn (fun t' ↦ f t' (α.compProj h t')) (Icc tmin tmax) :=
   continuousOn_comp
@@ -317,16 +318,16 @@ lemma continuousOn_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀
     fun _ _ ↦ ⟨compProj_mem_closedBall h α hf.mul_max_le, compProj_mem_set h α⟩
 
 /-- The integrand in `next` is integrable. -/
-lemma intervalIntegrable_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
+lemma intervalIntegrable_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ x a r L K)
     (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) :
     IntervalIntegrable (fun t' ↦ f t' (α.compProj h t')) volume tmin t := by
   apply ContinuousOn.intervalIntegrable
   apply α.continuousOn_comp_compProj h hf |>.mono
   exact uIcc_subset_Icc (left_mem_Icc.mpr h) t.2
 
-lemma lipschitzWith_picard (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
+lemma lipschitzWith_picard (hf : IsPicardLindelofWithin f s tmin tmax x₀ x a r L K)
     (α : FunSpace s tmin tmax x₀ hx₀ h r L) :
-    LipschitzWith L (fun t ↦ picard f tmin x₀ (compProj h α) t : Icc tmin tmax → _) :=
+    LipschitzWith L (fun t ↦ picard f tmin x (compProj h α) t : Icc tmin tmax → _) :=
   LipschitzWith.of_dist_le_mul fun t₁ t₂ ↦ by
     rw [dist_eq_norm, picard_apply, picard_apply, add_sub_add_left_eq_sub,
       integral_interval_sub_left (intervalIntegrable_comp_compProj h hf _ t₁)
@@ -338,18 +339,19 @@ lemma lipschitzWith_picard (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L
     apply hf.norm_le _ ht
     exact ⟨α.mem_closedBall h hf.mul_max_le, compProj_mem_set h α⟩
 
-lemma mem_tangentCone_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) (x : ℝ) (hx : x ∈ Icc tmin t) :
-    f x (compProj h α x) ∈ posTangentConeAt s x₀ := by
-  rw [← hf.convex.derivableWithinAt_iff_mem_posTangentConeAt hx₀]
+include hx in
+lemma mem_tangentCone_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ x a r L K)
+    (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) (i : ℝ) (hi : i ∈ Icc tmin t) :
+    f i (compProj h α i) ∈ posTangentConeAt s x := by
+  rw [← hf.convex.derivableWithinAt_iff_mem_posTangentConeAt hx.2]
   apply inwardPointing.derivableWithinAt
   apply hf.isInwardPointing
-  use x
-  refine ⟨⟨hx.1, hx.2.trans t.2.2⟩, ?_⟩
-  have hf' := hf.lipschitzOnWith x ⟨hx.1, hx.2.trans t.2.2⟩
+  use i
+  refine ⟨⟨hi.1, hi.2.trans t.2.2⟩, ?_⟩
+  have hf' := hf.lipschitzOnWith i ⟨hi.1, hi.2.trans t.2.2⟩
   rw [lipschitzOnWith_iff_norm_sub_le] at hf'
-  have h1 : x₀ ∈ closedBall x₀ a ∩ s := by simp [hx₀]
-  have h2 : (compProj h α x) ∈ closedBall x₀ a ∩ s := by
+  have h1 : x ∈ closedBall x₀ a ∩ s := by simp [hx]
+  have h2 : (compProj h α i) ∈ closedBall x₀ a ∩ s := by
     constructor
     · apply compProj_mem_closedBall h α hf.mul_max_le
     · exact compProj_mem_set h α
@@ -357,24 +359,24 @@ lemma mem_tangentCone_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a
   apply hf'.trans
   apply mul_le_mul_of_nonneg_left ?_ K.2
   rw [← mem_closedBall_iff_norm']
-  exact mem_of_mem_inter_left h2
+  exact mem_of_mem_inter_left h2.1
 
 variable [CompleteSpace E]
 
 /-- The map on `FunSpace` defined by `picard`, some `n`-th iterate of which will be a contracting
 map -/
 noncomputable def next
-    (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
+    (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K) (hx : x ∈ closedBall x₀ r ∩ s)
     (α : FunSpace s tmin tmax x₀ hx₀ h r L) : FunSpace s tmin tmax x₀ hx₀ h r L where
-  toFun t := picard f tmin x₀ α.compProj t
+  toFun t := picard f tmin x α.compProj t
   lipschitzWith := lipschitzWith_picard h hf α
-  mem_closedBall₀ := by simp
+  mem_closedBall₀ := by simp [hx.1]
   range_subset := by
     unfold picard
     rw [range_subset_iff]
     intro t
     by_cases ht : t = tmin
-    · simp [ht, hx₀]
+    · simp [ht, hx.2]
     apply hf.mem_of_derivableWithinAt (v := ∫ τ in tmin..t, f τ (compProj h α τ))
     · rw [Convex.derivableWithinAt_iff_mem_posTangentConeAt hf.convex hx₀]
       rw [← one_smul ℝ (∫ (τ : ℝ) in tmin..t, f τ (compProj h α τ) : E)]
@@ -744,7 +746,7 @@ lemma of_time_independent (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) (hs₃ : (
 
 /-- A time-independent, continuously differentiable ODE satisfies the hypotheses of the
 Picard-Lindelöf theorem. -/
-lemma of_contDiffWithinAt_one (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) (hs₃ : (interior s).Nonempty)
+lemma of_contDiffAt_one (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) (hs₃ : (interior s).Nonempty)
     {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ s) (hfx₀ : inwardPointing ℝ s x₀ (f x₀))
     (hf : ContDiffWithinAt ℝ 1 f s x₀)
     (hsv : ∃ ε > 0, ∀ (v : E), derivableWithinAt ℝ s x₀ v → ‖v‖ ≤ ε → x₀ + v ∈ s) :
@@ -802,19 +804,19 @@ lemma of_contDiffWithinAt_one (hs₁ : Convex ℝ s) (hs₂ : IsClosed s) (hs₃
   · intro v hv hva
     exact has₃ _ hv (le_trans hva (le_trans (half_le_self ha.le) (min_le_right _ _)))
 
-lemma of_contDiffWithinAt_one_coneNhdsWithin (hs₁ : Convex ℝ s)
+lemma of_contDiffAt_one_coneNhdsWithin (hs₁ : Convex ℝ s)
     (hs₃ : (interior s).Nonempty)
     {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ s \ interior s) (hfx₀ : inwardPointing ℝ s x₀ (f x₀))
     (hf : ContDiffWithinAt ℝ 1 f s x₀) :
     ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
       (fun _ ↦ f) (coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) t₀ (t₀ + ε) x₀ a r L K :=
-  of_contDiffWithinAt_one (convex_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
+  of_contDiffAt_one (convex_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
     (isClosed_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) (nonempty_interior_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
     (mem_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀) (isInwardPointing_coneNhdWithin hs₁ hs₃ hx₀.1 hfx₀)
     (hf.mono (coneNhdWithin_subset hs₁ hs₃ hx₀.1 hfx₀))
     (exists_mem_coneNhdsWithin_of_le_of_not_mem_interior hs₁ hs₃ hx₀ hfx₀)
 
-lemma of_contDiffWithinAt_one_of_mem_interior {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ interior s)
+lemma of_contDiffAt_one_of_mem_interior {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ interior s)
     (hf : ContDiffWithinAt ℝ 1 f s x₀) :
     ∃ t, t ⊆ s ∧ x₀ ∈ t ∧
         ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
@@ -823,7 +825,7 @@ lemma of_contDiffWithinAt_one_of_mem_interior {f : E → E} {x₀ : E} (hx₀ : 
   use closedBall x₀ (δ / 2),
     ((closedBall_subset_ball (half_lt_self hδ)).trans hδs).trans interior_subset,
     mem_closedBall_self (half_pos hδ).le
-  apply of_contDiffWithinAt_one (convex_closedBall x₀ (δ / 2)) isClosed_closedBall
+  apply of_contDiffAt_one (convex_closedBall x₀ (δ / 2)) isClosed_closedBall
     (interior_closedBall x₀ (half_pos hδ).ne' ▸ nonempty_ball.mpr (half_pos hδ))
     (mem_closedBall_self (half_pos hδ).le)
     (inwardPointing_of_mem_interior (convex_closedBall _ _)
@@ -833,7 +835,7 @@ lemma of_contDiffWithinAt_one_of_mem_interior {f : E → E} {x₀ : E} (hx₀ : 
   intro v _ hv
   simpa
 
-lemma exists_subset_of_contDiffWithinAt_one (hs₁ : Convex ℝ s)
+lemma exists_subset_of_contDiffAt_one (hs₁ : Convex ℝ s)
     (hs₃ : (interior s).Nonempty)
     {f : E → E} {x₀ : E} (hx₀ : x₀ ∈ s) (hfx₀ : inwardPointing ℝ s x₀ (f x₀))
     (hf : ContDiffWithinAt ℝ 1 f s x₀) :
@@ -841,10 +843,10 @@ lemma exists_subset_of_contDiffWithinAt_one (hs₁ : Convex ℝ s)
       ∃ (ε : ℝ) (_ : 0 < ε) (a r L K : ℝ≥0) (_ : 0 < r), ∀ (t₀ : ℝ), IsPicardLindelofWithin
       (fun _ ↦ f) t t₀ (t₀ + ε) x₀ a r L K := by
   by_cases hx₀' : x₀ ∈ interior s
-  · exact of_contDiffWithinAt_one_of_mem_interior hx₀' hf
+  · exact of_contDiffAt_one_of_mem_interior hx₀' hf
   · use (coneNhdWithin hs₁ hs₃ hx₀ hfx₀), coneNhdWithin_subset hs₁ hs₃ hx₀ hfx₀,
       mem_coneNhdWithin hs₁ hs₃ hx₀ hfx₀
-    exact of_contDiffWithinAt_one_coneNhdsWithin hs₁ hs₃ ⟨hx₀, hx₀'⟩ hfx₀ hf
+    exact of_contDiffAt_one_coneNhdsWithin hs₁ hs₃ ⟨hx₀, hx₀'⟩ hfx₀ hf
 
 end
 
