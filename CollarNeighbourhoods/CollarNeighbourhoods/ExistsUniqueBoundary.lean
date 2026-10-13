@@ -43,7 +43,7 @@ open scoped Nat NNReal Topology
 
 /-! ## Existence of solutions to ODEs -/
 
-open ODE
+open ODEWithin
 namespace IsPicardLindelofWithin
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -57,17 +57,17 @@ theorem exists_eq_forall_mem_Icc_hasDerivWithinAt
     (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K) :
     ∃ α : ℝ → E, α tmin = x₀ ∧
       ∀ t ∈ Icc tmin tmax, HasDerivWithinAt α (f t (α t)) (Icc tmin tmax) t ∧ α t ∈ s := by
-  obtain ⟨α, hα⟩ := FunSpace.exists_isFixedPt_next h hf (hx₀ := hx₀)
+  obtain ⟨α, hα⟩ := FunSpaceWithin.exists_isFixedPt_next h hf (hx₀ := hx₀)
   refine ⟨α.compProj, by rw [α.compProj_val h (t := ⟨tmin, le_refl _, h⟩),
-    ← hα, FunSpace.next_apply₀ h hf ], fun t ht ↦ ⟨?_, ?_⟩⟩
+    ← hα, FunSpaceWithin.next_apply₀ h hf], fun t ht ↦ ⟨?_, ?_⟩⟩
   · apply hasDerivWithinAt_picard_Icc ⟨le_refl _, h⟩ hf.continuousOn_uncurry
       α.continuous_compProj.continuousOn
       (fun _ ht' ↦ ⟨α.compProj_mem_closedBall h hf.mul_max_le, α.compProj_mem_set⟩)
       x₀ ht |>.congr_of_mem _ ht
     intro t' ht'
     nth_rw 1 [← hα]
-    rw [FunSpace.compProj_of_mem h ht', FunSpace.next_apply]
-  · rw [FunSpace.compProj_apply h]
+    rw [FunSpaceWithin.compProj_of_mem h ht', FunSpaceWithin.next_apply]
+  · rw [FunSpaceWithin.compProj_apply h]
     exact α.range_subset (mem_range_self _)
 
 include h in

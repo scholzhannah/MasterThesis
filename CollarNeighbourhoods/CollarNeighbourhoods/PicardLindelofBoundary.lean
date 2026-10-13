@@ -97,7 +97,7 @@ structure IsPicardLindelofWithin {E : Type*} [NormedAddCommGroup E] [NormedSpace
   --norm_sub_le : ∀ t ∈ Icc tmin tmax, ‖f tmin x₀ - f t x₀‖ ≤ L * a
   mem_of_derivableWithinAt : ∀ v, derivableWithinAt ℝ s x₀ v → ‖v‖ ≤ a → (x₀ + v) ∈ s
 
-namespace ODE
+namespace ODEWithin
 
 /-! ## Integral equation
 
@@ -150,7 +150,7 @@ within a closed ball.
 -/
 
 /-- The space of `L`-Lipschitz functions `α : Icc tmin tmax → E` -/
-structure FunSpace {E : Type*} [NormedAddCommGroup E] (s : Set E)
+structure FunSpaceWithin {E : Type*} [NormedAddCommGroup E] (s : Set E)
     (tmin tmax : ℝ) (x₀ : E) (hx₀ : x₀ ∈ s) (h : tmin ≤ tmax) (r L : ℝ≥0) where
   /-- The domain is `Icc tmin tmax`. -/
   toFun : Icc tmin tmax → E
@@ -159,7 +159,7 @@ structure FunSpace {E : Type*} [NormedAddCommGroup E] (s : Set E)
   range_subset : range toFun ⊆ s
 
 
-namespace FunSpace
+namespace FunSpaceWithin
 
 variable {E : Type*} [NormedAddCommGroup E]
 
@@ -167,44 +167,45 @@ section
 
 variable {s : Set E} {tmin tmax : ℝ} {x₀ : E} {hx₀ : x₀ ∈ s} {h : tmin ≤ tmax} {a r L : ℝ≥0}
 
-instance : CoeFun (FunSpace s tmin tmax x₀ hx₀ h r L) fun _ ↦ Icc tmin tmax → E := ⟨fun α ↦ α.toFun⟩
+instance : CoeFun (FunSpaceWithin s tmin tmax x₀ hx₀ h r L) fun _ ↦ Icc tmin tmax → E :=
+  ⟨fun α ↦ α.toFun⟩
 
 @[ext]
-lemma ext {α β : FunSpace s tmin tmax x₀ hx₀ h r L} (h : ∀ t, α t = β t) : α = β := by
+lemma ext {α β : FunSpaceWithin s tmin tmax x₀ hx₀ h r L} (h : ∀ t, α t = β t) : α = β := by
   cases α; cases β; simp only [mk.injEq]; ext t; exact h t
 
-/-- `FunSpace t₀ x₀ r L` contains the constant map at `x₀`. -/
-instance : Inhabited (FunSpace s tmin tmax x₀ hx₀ h r L) :=
+/-- `FunSpaceWithin t₀ x₀ r L` contains the constant map at `x₀`. -/
+instance : Inhabited (FunSpaceWithin s tmin tmax x₀ hx₀ h r L) :=
   ⟨fun _ ↦ x₀, (LipschitzWith.const _).weaken zero_le, mem_closedBall_self r.2,
     range_subset_iff.2 fun _ ↦ hx₀⟩
 
-protected lemma continuous (α : FunSpace s tmin tmax x₀ hx₀ h L r) : Continuous α :=
+protected lemma continuous (α : FunSpaceWithin s tmin tmax x₀ hx₀ h L r) : Continuous α :=
   α.lipschitzWith.continuous
 
 /-- The embedding of `FunSpace` into the space of continuous maps -/
-def toContinuousMap : FunSpace s tmin tmax x₀ hx₀ h r L ↪ C(Icc tmin tmax, E) :=
+def toContinuousMap : FunSpaceWithin s tmin tmax x₀ hx₀ h r L ↪ C(Icc tmin tmax, E) :=
   ⟨fun α ↦ ⟨α, α.continuous⟩, fun α β h ↦ by cases α; cases β; simpa using h⟩
 
 @[simp]
-lemma toContinuousMap_apply_eq_apply (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) :
-    α.toContinuousMap t = α t := rfl
+lemma toContinuousMap_apply_eq_apply (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L)
+    (t : Icc tmin tmax) : α.toContinuousMap t = α t := rfl
 
 /-- When the radius is zero, a curve in `FunSpace` evaluated at `t₀` equals `x₀`. -/
-lemma apply_of_zero (α : FunSpace s tmin tmax x₀ hx₀ h 0 L) (h : tmin ≤ tmax) :
+lemma apply_of_zero (α : FunSpaceWithin s tmin tmax x₀ hx₀ h 0 L) (h : tmin ≤ tmax) :
     α ⟨tmin, by simp [h]⟩ = x₀ := by
   simpa using α.mem_closedBall₀
 
 /-- The metric between two curves `α` and `β` is the supremum of the metric between `α t` and `β t`
 over all `t` in the domain. This is finite when the domain is compact, such as a closed
 interval in our case. -/
-noncomputable instance : MetricSpace (FunSpace s tmin tmax x₀ hx₀ h r L) :=
+noncomputable instance : MetricSpace (FunSpaceWithin s tmin tmax x₀ hx₀ h r L) :=
   MetricSpace.induced toContinuousMap toContinuousMap.injective inferInstance
 
 lemma isUniformInducing_toContinuousMap :
-    IsUniformInducing fun α : FunSpace s tmin tmax x₀ hx₀ h r L ↦ α.toContinuousMap := ⟨rfl⟩
+    IsUniformInducing fun α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L ↦ α.toContinuousMap := ⟨rfl⟩
 
 lemma range_toContinuousMap :
-    range (fun α : FunSpace s tmin tmax x₀ hx₀ h r L ↦ α.toContinuousMap) =
+    range (fun α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L ↦ α.toContinuousMap) =
       { α : C(Icc tmin tmax, E) | LipschitzWith L α ∧ α ⟨tmin, by simp [h]⟩ ∈ closedBall x₀ r ∧
         range α ⊆ s } := by
   ext α
@@ -226,8 +227,8 @@ lemma isClosed_range_subset_of_isClosed {α : Type*} [TopologicalSpace α] [Sequ
   exact hfg.eval_const a
 
 /-- We show that `FunSpace` is complete in order to apply the contraction mapping theorem. -/
-theorem completeSpaceFunSpace [CompleteSpace E] (hs : IsClosed s) :
-    CompleteSpace (FunSpace s tmin tmax x₀ hx₀ h r L) := by
+theorem completeSpaceFunSpaceWithin [CompleteSpace E] (hs : IsClosed s) :
+    CompleteSpace (FunSpaceWithin s tmin tmax x₀ hx₀ h r L) := by
   rw [completeSpace_iff_isComplete_range isUniformInducing_toContinuousMap]
   apply IsClosed.isComplete
   rw [range_toContinuousMap, ofPred_and]
@@ -240,21 +241,23 @@ variable (h : tmin ≤ tmax)
 
 /-- Extend the domain of `α` from `Icc tmin tmax` to `ℝ` such that `α t = α tmin` for all `t ≤ tmin`
 and `α t = α tmax` for all `t ≥ tmax`. -/
-noncomputable def compProj (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : ℝ) : E :=
+noncomputable def compProj (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (t : ℝ) : E :=
   α <| projIcc tmin tmax h t
 
 @[simp]
-lemma compProj_apply {α : FunSpace s tmin tmax x₀ hx₀ h r L} {t : ℝ} :
+lemma compProj_apply {α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L} {t : ℝ} :
     α.compProj h t = α (projIcc tmin tmax h t) := rfl
 
-lemma compProj_val {α : FunSpace s tmin tmax x₀ hx₀ h r L} {t : Icc tmin tmax} :
+lemma compProj_val {α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L} {t : Icc tmin tmax} :
     α.compProj h t = α t := by simp only [compProj_apply, projIcc_val]
 
-lemma compProj_of_mem {α : FunSpace s tmin tmax x₀ hx₀ h r L} {t : ℝ} (ht : t ∈ Icc tmin tmax) :
-    α.compProj h t = α ⟨t, ht⟩ := by rw [compProj_apply, projIcc_of_mem]
+lemma compProj_of_mem {α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L} {t : ℝ}
+    (ht : t ∈ Icc tmin tmax) : α.compProj h t = α ⟨t, ht⟩ := by
+  rw [compProj_apply, projIcc_of_mem]
 
 @[continuity, fun_prop]
-lemma continuous_compProj (α : FunSpace s tmin tmax x₀ hx₀ h r L) : Continuous (α.compProj h) :=
+lemma continuous_compProj (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) :
+    Continuous (α.compProj h) :=
   α.continuous.comp continuous_projIcc
 
 /-- The image of a function in `FunSpace` is contained within a closed ball. -/
@@ -280,19 +283,19 @@ protected lemma mem_closedBall' (α : Icc tmin tmax → E) (hα : LipschitzWith 
     _ = a := sub_add_cancel _ _
 
 /-- The image of a function in `FunSpace` is contained within a closed ball. -/
-protected lemma mem_closedBall (α : FunSpace s tmin tmax x₀ hx₀ h r L)
+protected lemma mem_closedBall (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L)
     (h' : L * (tmax - tmin) ≤ a - r)
     {t : Icc tmin tmax} :
     α t ∈ closedBall x₀ a :=
-  ODE.FunSpace.mem_closedBall' h  _ α.lipschitzWith α.mem_closedBall₀ h'
+  ODEWithin.FunSpaceWithin.mem_closedBall' h  _ α.lipschitzWith α.mem_closedBall₀ h'
 
 lemma compProj_mem_closedBall
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) (h' : L * (tmax - tmin) ≤ a - r) {t : ℝ} :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (h' : L * (tmax - tmin) ≤ a - r) {t : ℝ} :
     α.compProj h t ∈ closedBall x₀ a :=
   α.mem_closedBall h h'
 
 lemma compProj_mem_set
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) {t : ℝ} :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) {t : ℝ} :
     α.compProj h t ∈ s :=
   α.range_subset <| mem_range_self _
 
@@ -308,7 +311,7 @@ variable [NormedSpace ℝ E]
 
 /-- The integrand in `next` is continuous. -/
 lemma continuousOn_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) :
     ContinuousOn (fun t' ↦ f t' (α.compProj h t')) (Icc tmin tmax) :=
   continuousOn_comp
     (continuousOn_prod_of_continuousOn_lipschitzOnWith' (uncurry f) K hf.lipschitzOnWith
@@ -318,14 +321,14 @@ lemma continuousOn_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀
 
 /-- The integrand in `next` is integrable. -/
 lemma intervalIntegrable_comp_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) :
     IntervalIntegrable (fun t' ↦ f t' (α.compProj h t')) volume tmin t := by
   apply ContinuousOn.intervalIntegrable
   apply α.continuousOn_comp_compProj h hf |>.mono
   exact uIcc_subset_Icc (left_mem_Icc.mpr h) t.2
 
 lemma lipschitzWith_picard (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) :
     LipschitzWith L (fun t ↦ picard f tmin x₀ (compProj h α) t : Icc tmin tmax → _) :=
   LipschitzWith.of_dist_le_mul fun t₁ t₂ ↦ by
     rw [dist_eq_norm, picard_apply, picard_apply, add_sub_add_left_eq_sub,
@@ -339,7 +342,8 @@ lemma lipschitzWith_picard (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L
     exact ⟨α.mem_closedBall h hf.mul_max_le, compProj_mem_set h α⟩
 
 lemma mem_tangentCone_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) (x : ℝ) (hx : x ∈ Icc tmin t) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) (x : ℝ)
+    (hx : x ∈ Icc tmin t) :
     f x (compProj h α x) ∈ posTangentConeAt s x₀ := by
   rw [← hf.convex.derivableWithinAt_iff_mem_posTangentConeAt hx₀]
   apply inwardPointing.derivableWithinAt
@@ -365,7 +369,7 @@ variable [CompleteSpace E]
 map -/
 noncomputable def next
     (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) : FunSpace s tmin tmax x₀ hx₀ h r L where
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) : FunSpaceWithin s tmin tmax x₀ hx₀ h r L where
   toFun t := picard f tmin x₀ α.compProj t
   lipschitzWith := lipschitzWith_picard h hf α
   mem_closedBall₀ := by simp
@@ -397,21 +401,23 @@ noncomputable def next
       · rw [← intervalIntegrable_iff]
         exact intervalIntegrable_comp_compProj h hf α t
     · suffices picard f tmin x₀ (compProj h α) t ∈ closedBall x₀ a by simpa
-      exact ODE.FunSpace.mem_closedBall' h (picard f tmin x₀ (compProj h α) ∘ Subtype.val)
+      exact ODEWithin.FunSpaceWithin.mem_closedBall' h
+        (picard f tmin x₀ (compProj h α) ∘ Subtype.val)
         (α.lipschitzWith_picard h hf) (by simp) (hf.mul_max_le)
 
 @[simp]
 lemma next_apply (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) {t : Icc tmin tmax} :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) {t : Icc tmin tmax} :
     next h hf α t = picard f tmin x₀ α.compProj t := rfl
 
 lemma next_apply₀ (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) : next h hf α ⟨tmin, ⟨le_refl _, h⟩⟩ = x₀ := by simp
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) : next h hf α ⟨tmin, ⟨le_refl _, h⟩⟩ = x₀ := by
+  simp
 
 /-- `α` is a fixed point of `next` if and only if it satisfies the integral equation
 `α t = x + ∫_{t₀}^t f τ (α τ) dτ` for all `t`. -/
 lemma isFixedPt_next_iff (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) :
     IsFixedPt (next h hf) α ↔ ∀ t, α t = picard f tmin x₀ α.compProj t := by
   constructor
   · exact fun hα t ↦ congrArg (· t) hα |>.symm
@@ -422,7 +428,7 @@ lemma isFixedPt_next_iff (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K
 /-- A key step in the inductive case of `dist_iterate_next_apply_le` -/
 lemma dist_comp_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
     (n : ℕ) (t : Icc tmin tmax)
-    {α β : FunSpace s tmin tmax x₀ hx₀ h r L}
+    {α β : FunSpaceWithin s tmin tmax x₀ hx₀ h r L}
     (h' : dist ((next h hf)^[n] α t) ((next h hf)^[n] β t) ≤
       (K * |t - tmin|) ^ n / n ! * dist α β) :
     dist (f t ((next h hf)^[n] α t)) (f t ((next h hf)^[n] β t)) ≤
@@ -430,8 +436,8 @@ lemma dist_comp_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ 
   calc
     _ ≤ K * dist ((next h hf)^[n] α t) ((next h hf)^[n] β t) := by
       apply (hf.lipschitzOnWith t.1 t.2).dist_le_mul
-      · exact ⟨(FunSpace.mem_closedBall h _ hf.mul_max_le), range_subset _ (mem_range_self _)⟩
-      · exact ⟨(FunSpace.mem_closedBall h _ hf.mul_max_le), range_subset _ (mem_range_self _)⟩
+      · exact ⟨(FunSpaceWithin.mem_closedBall h _ hf.mul_max_le), range_subset _ (mem_range_self _)⟩
+      · exact ⟨(FunSpaceWithin.mem_closedBall h _ hf.mul_max_le), range_subset _ (mem_range_self _)⟩
     _ ≤ K ^ (n + 1) * |t - tmin| ^ n / n ! * dist α β := by
       rw [pow_succ', mul_assoc, mul_div_assoc, mul_assoc]
       gcongr
@@ -439,7 +445,7 @@ lemma dist_comp_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ 
 
 /-- A time-dependent bound on the distance between the `n`-th iterates of `next` on two curves -/
 lemma dist_iterate_next_apply_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α β : FunSpace s tmin tmax x₀ hx₀ h r L) (n : ℕ) (t : Icc tmin tmax) :
+    (α β : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (n : ℕ) (t : Icc tmin tmax) :
     dist ((next h hf)^[n] α t) ((next h hf)^[n] β t) ≤
       (K * |t.1 - tmin|) ^ n / n ! * dist α β := by
   induction n generalizing t with
@@ -473,11 +479,11 @@ lemma dist_iterate_next_apply_le (hf : IsPicardLindelofWithin f s tmin tmax x₀
 /-- The `n`-th iterate of `next` is Lipschitz continuous with respect to `FunSpace`, with constant
 $(K \max(t_{\mathrm{max}}, t_{\mathrm{min}})^n / n!$. -/
 lemma dist_iterate_next_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α β : FunSpace s tmin tmax x₀ hx₀ h r L) (n : ℕ) :
+    (α β : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (n : ℕ) :
     dist ((next h hf)^[n] α) ((next h hf)^[n] β) ≤
       (K * (tmax - tmin)) ^ n / n ! * dist α β := by
-  rw [← MetricSpace.isometry_induced FunSpace.toContinuousMap FunSpace.toContinuousMap.injective
-    |>.dist_eq, ContinuousMap.dist_le]
+  rw [← MetricSpace.isometry_induced FunSpaceWithin.toContinuousMap
+    FunSpaceWithin.toContinuousMap.injective |>.dist_eq, ContinuousMap.dist_le]
   · intro t
     apply le_trans <| dist_iterate_next_apply_le h hf α β n t
     gcongr
@@ -488,7 +494,8 @@ lemma dist_iterate_next_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tm
 independent of the initial point. -/
 lemma exists_contractingWith_iterate_next (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K) :
     ∃ (n : ℕ) (C : ℝ≥0), ContractingWith C
-    ((next h hf)^[n] : FunSpace s tmin tmax x₀ hx₀ h r L → FunSpace s tmin tmax x₀ hx₀ h r L) := by
+    ((next h hf)^[n] :
+      FunSpaceWithin s tmin tmax x₀ hx₀ h r L → FunSpaceWithin s tmin tmax x₀ hx₀ h r L) := by
   obtain ⟨n, hn⟩ := FloorSemiring.tendsto_pow_div_factorial_atTop (K * (tmax - tmin))
     |>.eventually (gt_mem_nhds zero_lt_one) |>.exists
   have : (0 : ℝ) ≤ (K * (tmax - tmin)) ^ n / n ! := by positivity
@@ -499,8 +506,8 @@ lemma exists_contractingWith_iterate_next (hf : IsPicardLindelofWithin f s tmin 
 solution `α : ℝ → E` to the ODE. -/
 lemma exists_isFixedPt_next
     (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K) :
-    ∃ α : FunSpace s tmin tmax x₀ hx₀ h r L, IsFixedPt (next h hf) α :=
-  have := completeSpaceFunSpace (tmin := tmin) (tmax := tmax) (hx₀ := hx₀) (r := r) (L := L)
+    ∃ α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L, IsFixedPt (next h hf) α :=
+  have := completeSpaceFunSpaceWithin (tmin := tmin) (tmax := tmax) (hx₀ := hx₀) (r := r) (L := L)
     hf.isClosed
   let ⟨_, _, h'⟩ := exists_contractingWith_iterate_next h hf
   ⟨_, h'.isFixedPt_fixedPoint_iterate⟩
@@ -515,7 +522,7 @@ distance between `α` and `next^[m]^[n] α`.
 -/
 
 lemma dist_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) (n : ℕ) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (n : ℕ) :
     dist α ((next h hf)^[n] α) ≤
       (∑ i ∈ Finset.range n, (K * (tmax - tmin)) ^ i / i !)
         * dist α (next h hf α) := by
@@ -528,8 +535,8 @@ lemma dist_iterate_next_le (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L
 
 lemma dist_iterate_iterate_next_le_of_lipschitzWith
     (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
-    (α : FunSpace s tmin tmax x₀ hx₀ h r L) {m : ℕ} {C : ℝ≥0}
-    (hm : LipschitzWith C ((next h hf)^[m] : FunSpace s tmin tmax x₀ hx₀ h r L → _)) (n : ℕ) :
+    (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) {m : ℕ} {C : ℝ≥0}
+    (hm : LipschitzWith C ((next h hf)^[m] : FunSpaceWithin s tmin tmax x₀ hx₀ h r L → _)) (n : ℕ) :
     dist α ((next h hf)^[m]^[n] α) ≤
       (∑ i ∈ Finset.range m, (K * (tmax - tmin)) ^ i / i !) *
         (∑ i ∈ Finset.range n, (C : ℝ) ^ i) * dist α (next h hf α) := by
@@ -545,7 +552,7 @@ lemma dist_iterate_iterate_next_le_of_lipschitzWith
 
 end
 
-end FunSpace
+end FunSpaceWithin
 
 /-! ## Properties of the integral equation -/
 
@@ -663,7 +670,7 @@ theorem contDiffOn_enat_Icc_of_hasDerivWithinAt {n : ℕ∞}
 
 end
 
-end ODE
+end ODEWithin
 
 namespace IsPicardLindelofWithin
 
@@ -850,7 +857,7 @@ end
 
 /-! ## Existence of solutions to ODEs -/
 
-open ODE
+open ODEWithin
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
   {f : ℝ → E → E} {tmin tmax : ℝ} {h : tmin ≤ tmax} {x₀ : E} {a r L K : ℝ≥0}
@@ -862,17 +869,19 @@ of a local solution whose initial point `x` may be different from the centre `x�
 ball within which the properties of the vector field hold. -/
 theorem exists_eq_forall_mem_Icc_eq_picard
     (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K) :
-    ∃ α : ℝ → E, α tmin = x₀ ∧ ∀ t ∈ Icc tmin tmax, α t = ODE.picard f tmin x₀ α t ∧ α t ∈ s := by
-  obtain ⟨α, hα⟩ := FunSpace.exists_isFixedPt_next h hf (hx₀ := hx₀)
-  refine ⟨(FunSpace.next h hf α).compProj, by simp, fun t ht ↦ ⟨?_, ?_⟩⟩
-  · rw [FunSpace.compProj_apply, FunSpace.next_apply, hα, projIcc_of_mem _ ht]
-  · rw [FunSpace.compProj_apply]
-    exact (FunSpace.next h hf α).range_subset (mem_range_self _)
+    ∃ α : ℝ → E, α tmin = x₀ ∧
+      ∀ t ∈ Icc tmin tmax, α t = ODEWithin.picard f tmin x₀ α t ∧ α t ∈ s := by
+  obtain ⟨α, hα⟩ := FunSpaceWithin.exists_isFixedPt_next h hf (hx₀ := hx₀)
+  refine ⟨(FunSpaceWithin.next h hf α).compProj, by simp, fun t ht ↦ ⟨?_, ?_⟩⟩
+  · rw [FunSpaceWithin.compProj_apply, FunSpaceWithin.next_apply, hα, projIcc_of_mem _ ht]
+  · rw [FunSpaceWithin.compProj_apply]
+    exact (FunSpaceWithin.next h hf α).range_subset (mem_range_self _)
 
 include h in
 theorem exists_eq_forall_mem_Icc_eq_picard_of_subset {s' : Set E} (hx₀ : x₀ ∈ s') (hs : s' ⊆ s)
     (hf : IsPicardLindelofWithin f s' tmin tmax x₀ a r L K) :
-    ∃ α : ℝ → E, α tmin = x₀ ∧ ∀ t ∈ Icc tmin tmax, α t = ODE.picard f tmin x₀ α t ∧ α t ∈ s := by
+    ∃ α : ℝ → E, α tmin = x₀ ∧
+      ∀ t ∈ Icc tmin tmax, α t = ODEWithin.picard f tmin x₀ α t ∧ α t ∈ s := by
   obtain ⟨α, hαx, hαfs⟩ := exists_eq_forall_mem_Icc_eq_picard (hx₀ := hx₀) (h := h) hf
   use α, hαx
   intro t ht
