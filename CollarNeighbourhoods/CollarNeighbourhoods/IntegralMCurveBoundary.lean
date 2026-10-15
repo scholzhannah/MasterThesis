@@ -1,10 +1,11 @@
 module
 
 public import Mathlib.Geometry.Manifold.MFDeriv.Tangent
-public import Mathlib.Geometry.Manifold.IntegralCurve.Basic
+public import Mathlib.Geometry.Manifold.IntegralCurve.ExistUnique
 public import Mathlib.Geometry.Manifold.IsManifold.InteriorBoundary
 public import CollarNeighbourhoods.ExistsUniqueBoundary
 public import Mathlib.Analysis.ODE.ExistUnique
+public import Mathlib.LinearAlgebra.AffineSpace.Ordered
 
 /-! Header -/
 
@@ -46,10 +47,19 @@ example (γ : ℝ → M) (v : (x : M) → TangentSpace% x) (t₀ : ℝ)
 
     sorry
 
+theorem continuousWithinAt_def {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {f : X → Y}
+    {s : Set X} {x : X} : ContinuousWithinAt f s x ↔ ∀ A ∈ 𝓝 (f x), f ⁻¹' A ∈ 𝓝[s] x :=
+  Iff.rfl
+
 @[to_dual]
 theorem nhdsWithin_Icc_eq_nhdsLE' {α : Type u} [TopologicalSpace α] [LinearOrder α]
     [ClosedIicTopology α] {a b c : α} (h : a < c) : 𝓝[Icc a b] c = 𝓝[Iic b] c :=
   nhdsWithin_inter_of_mem <| nhdsWithin_le_nhds <| Ici_mem_nhds h
+
+@[to_dual]
+theorem nhdsWithin_Ioc_eq_nhdsLE' {α : Type u} [TopologicalSpace α] [LinearOrder α]
+    [ClosedIicTopology α] {a b c : α} (h : a < c) : 𝓝[Ioc a b] c = 𝓝[Iic b] c :=
+  nhdsWithin_inter_of_mem <| nhdsWithin_le_nhds <| Ioi_mem_nhds h
 
 -- do `IntegralCurveWithinAt`
 def IsRightMIntegralCurveAt (γ : ℝ → M) (v : (x : M) → TangentSpace% x) (t₀ : ℝ) : Prop :=
@@ -101,9 +111,34 @@ theorem IsRightMIntegralCurveAt.continuousWithinAt {E : Type*} [NormedAddCommGro
   rw [← nhdsWithin_eq_iff_eventuallyEqSet]
   exact nhdsWithin_Icc_eq_nhdsGE' hs
 
-theorem continuousWithinAt_def {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {f : X → Y}
-    {s : Set X} {x : X} : ContinuousWithinAt f s x ↔ ∀ A ∈ 𝓝 (f x), f ⁻¹' A ∈ 𝓝[s] x :=
-  Iff.rfl
+set_option backward.isDefEq.respectTransparency false in
+lemma IsRightMIntegralCurveAt.eventually_hasDerivWithinAt {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H} {M : Type*}
+    [TopologicalSpace M] [ChartedSpace H M] {γ : ℝ → M} {v : (x : M) → TangentSpace I x} {t₀ : ℝ}
+    [IsManifold I 1 M] (hγ : IsRightMIntegralCurveAt γ v t₀) :
+    ∀ᶠ t in 𝓝[≥] t₀, HasDerivWithinAt ((extChartAt I (γ t₀)) ∘ γ)
+      (tangentCoordChange I (γ t) (γ t₀) (γ t) (v (γ t))) (Ici t₀) t := by
+  apply eventually_mem_nhdsWithin_iff.mpr
+    (hγ.continuousWithinAt.preimage_mem_nhdsWithin (extChartAt_source_mem_nhds (I := I) _)) |>.and
+    hγ |>.mp
+  obtain ⟨t, htt₀, ht⟩ := mem_nhdsGE_iff_exists_Icc_subset.1 <|
+    (continuousWithinAt_def.1 hγ.continuousWithinAt)
+    (extChartAt I (γ t₀)).source (extChartAt_source_mem_nhds (γ t₀))
+  rw [← nhdsWithin_Icc_eq_nhdsGE' htt₀]
+  apply eventually_nhdsWithin_of_forall
+  intro x hx ⟨hx1, hx2⟩
+  have hsrc := mem_of_mem_nhdsWithin hx.1 hx1
+  rw [mem_preimage, extChartAt_source I (γ t₀)] at hsrc
+  rw [hasDerivWithinAt_iff_hasFDerivWithinAt, ← hasMFDerivWithinAt_iff_hasFDerivWithinAt]
+  apply (HasMFDerivAt.comp_hasMFDerivWithinAt x
+    (hasMFDerivAt_extChartAt (I := I) hsrc) hx2).congr_mfderiv
+  rw [ContinuousLinearMap.ext_iff]
+  intro a
+  rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply, map_smul,
+    ← one_apply_eq_self (F := TangentSpace 𝓘(ℝ, ℝ) t →L[ℝ] TangentSpace 𝓘(ℝ, ℝ) t) a,
+    ← ContinuousLinearMap.smulRight_apply,
+    mfderiv_chartAt_eq_tangentCoordChange hsrc]
+  rfl
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -223,36 +258,31 @@ open NNReal in
 theorem ODE_solution_unique_right_of_eventually {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     {v : ℝ → E → E} {s : ℝ → Set E} {K : ℝ≥0} {f g : ℝ → E} {t₀ : ℝ}
     (hv : ∀ᶠ t in 𝓝[≥] t₀, LipschitzOnWith K (v t) (s t))
-    (hf : ∀ᶠ t in 𝓝[≥] t₀, HasDerivAt f (v t (f t)) t ∧ f t ∈ s t)
-    (hg : ∀ᶠ t in 𝓝[≥] t₀, HasDerivAt g (v t (g t)) t ∧ g t ∈ s t)
+    (hf : ∀ᶠ t in 𝓝[≥] t₀, HasDerivWithinAt f (v t (f t)) (Ici t₀) t ∧ f t ∈ s t)
+    (hg : ∀ᶠ t in 𝓝[≥] t₀, HasDerivWithinAt g (v t (g t)) (Ici t₀) t ∧ g t ∈ s t)
     (heq : f t₀ = g t₀) : f =ᶠ[𝓝[≥] t₀] g := by
-  obtain ⟨s, hs, h⟩ := Filter.eventually_iff_exists_mem.mp (hv.and (hf.and hg))
-  rw [mem_nhdsGE_iff_exists_Icc_subset] at hs
-  obtain ⟨t, htt₀, ht⟩ := hs
+  obtain ⟨u, hu, h⟩ := Filter.eventually_iff_exists_mem.mp (hv.and (hf.and hg))
+  rw [mem_nhdsGE_iff_exists_Icc_subset] at hu
+  -- might be nicer to directly have a lemma that gives you this `t` instead of going through `u`
+  obtain ⟨t, htt₀, ht⟩ := hu
   rw [Filter.eventuallyEq_iff_exists_mem]
   use Icc t₀ t, Icc_mem_nhdsGE htt₀
-  apply ODE_solution_unique_of_mem_Icc_right
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
-  sorry
+  exact ODE_solution_unique_of_mem_Icc_right (fun x hx ↦ (h x (ht (Ico_subset_Icc_self hx))).1)
+    (fun x hx ↦ (h x (ht hx)).2.1.1.continuousWithinAt.mono Icc_subset_Ici_self)
+    (fun x hx ↦ (h x (ht (Ico_subset_Icc_self hx))).2.1.1.mono (Ici_subset_Ici.mpr hx.1))
+    (fun x hx ↦ (h x (ht (Ico_subset_Icc_self hx))).2.1.2)
+    (fun x hx ↦ (h x (ht hx)).2.2.1.continuousWithinAt.mono Icc_subset_Ici_self)
+    (fun x hx ↦ (h x (ht (Ico_subset_Icc_self hx))).2.2.1.mono (Ici_subset_Ici.mpr hx.1))
+    (fun x hx ↦ (h x (ht (Ico_subset_Icc_self hx))).2.2.2) heq
 
 /-- Local integral curves are unique.
 
 If a $C^1$ vector field `v` admits two local integral curves `γ γ' : ℝ → M` at `t₀` with
 `γ t₀ = γ' t₀`, then `γ` and `γ'` agree on some open interval containing `t₀`. -/
-theorem isMIntegralCurveAt_eventuallyEq_of_contMDiffAt
+theorem isRightMIntegralCurveAt_eventuallyEq_of_contMDiffAt
     (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) (γ t₀))
     (hγ : IsRightMIntegralCurveAt γ v t₀) (hγ' : IsRightMIntegralCurveAt γ' v t₀)
-    (h : γ t₀ = γ' t₀) :
-    γ =ᶠ[𝓝[≥] t₀] γ' := by
+    (h : γ t₀ = γ' t₀) : γ =ᶠ[𝓝[≥] t₀] γ' := by
   -- first define `v'` as the vector field expressed in the local chart around `γ t₀`
   -- this is basically what the function looks like when `hv` is unfolded
   set v' : E → E := fun x ↦
@@ -274,6 +304,38 @@ theorem isMIntegralCurveAt_eventuallyEq_of_contMDiffAt
       g t ∈ (extChartAt I (g t₀)).source := by
     apply mem_preimage.mp
     exact mem_of_mem_nhdsWithin htt₀ ht
+  have hdrv {g} (hg : IsRightMIntegralCurveAt g v t₀) (h' : γ t₀ = g t₀) : ∀ᶠ t in 𝓝[≥] t₀,
+      HasDerivWithinAt ((extChartAt I (g t₀)) ∘ g) ((fun _ ↦ v') t
+      (((extChartAt I (g t₀)) ∘ g) t)) (Ici t₀) t ∧
+      ((extChartAt I (g t₀)) ∘ g) t ∈ (fun _ ↦ s) t := by
+    apply Filter.Eventually.and
+    · apply (hsrc hg |>.and hg.eventually_hasDerivWithinAt).mp
+      apply eventually_nhdsWithin_of_forall
+      intro t htt₀ ⟨ht1, ht2⟩
+      rw [hv', h']
+      apply ht2.congr_deriv
+      congr <;>
+      rw [Function.comp_apply, PartialEquiv.left_inv _ (hmem htt₀ ht1)]
+    · obtain ⟨t, htt₀, ht⟩ := mem_nhdsGE_iff_exists_Icc_subset.1 <|
+        (continuousWithinAt_def.1 hg.continuousWithinAt)
+        (extChartAt I (g t₀)).source (extChartAt_source_mem_nhds (g t₀))
+      have : ContinuousWithinAt g (Icc t₀ t) t₀ := by
+        apply hg.continuousWithinAt.congr_set
+        rw [← nhdsWithin_eq_iff_eventuallyEqSet]
+        exact (nhdsWithin_Icc_eq_nhdsGE' htt₀).symm
+      rw [← nhdsWithin_Icc_eq_nhdsGE' htt₀]
+      apply ((continuousAt_extChartAt (g t₀)).comp_continuousWithinAt
+        this).preimage_mem_nhdsWithin'
+      rw [Function.comp_apply, ← h']
+      suffices 𝓝[(extChartAt I (γ t₀)) ∘ g '' Icc t₀ t] (extChartAt I (γ t₀)) (γ t₀) ≤
+          𝓝[range I] (extChartAt I (γ t₀)) (γ t₀) from
+        this hs
+      apply nhdsWithin_mono
+      rw [image_comp]
+      apply subset_trans ?_ (extChartAt_target_subset_range (γ t₀))
+      rw [← PartialEquiv.image_source_eq_target (extChartAt I (γ t₀)), h']
+      apply image_mono
+      exact image_subset_iff.mpr ht
   have heq {g} (hg : IsRightMIntegralCurveAt g v t₀) :
       g =ᶠ[𝓝[≥] t₀] (extChartAt I (g t₀)).symm ∘ ↑(extChartAt I (g t₀)) ∘ g := by
     refine (hsrc hg).mp <| eventually_nhdsWithin_of_forall ?_
@@ -282,7 +344,92 @@ theorem isMIntegralCurveAt_eventuallyEq_of_contMDiffAt
   -- main proof
   suffices (extChartAt I (γ t₀)) ∘ γ =ᶠ[𝓝[≥] t₀] (extChartAt I (γ' t₀)) ∘ γ' from
     (heq hγ).trans <| (this.fun_comp (extChartAt I (γ t₀)).symm).trans (h ▸ (heq hγ').symm)
+  apply ODE_solution_unique_right_of_eventually (.of_forall hlip) (hdrv hγ rfl) (hdrv hγ' h)
+  simp [h]
 
-  sorry
+omit [IsManifold I 1 M] in
+lemma IsMIntegralCurveOn.isRightMIntegralCurve [T2Space M] {a b : ℝ} (hab : a < b)
+    (hγ : IsMIntegralCurveOn γ v (Ico a b)) : IsRightMIntegralCurveAt γ v a := by
+  rw [IsRightMIntegralCurveAt, Filter.eventually_iff_exists_mem]
+  use Ico a b, Ico_mem_nhdsGE hab
+  intro t ht
+  refine (hasMFDerivWithinAt_congr_set ?_).1 (hγ t ht)
+  rw [← nhdsWithin_eq_iff_eventuallyEqSet]
+  exact nhdsWithin_Ico_eq_nhdsGE' ht.2
+
+@[simp]
+theorem left_lt_midpoint {k E : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
+    [AddCommGroup E] [PartialOrder E] [IsOrderedAddMonoid E] [Module k E]
+    [IsStrictOrderedModule k E] [PosSMulReflectLE k E] {a b : E} :
+    a < midpoint k a b ↔ a < b :=
+  left_lt_lineMap_iff_lt <| inv_pos.2 zero_lt_two
+
+@[simp]
+theorem midpoint_lt_right {k E : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
+    [AddCommGroup E] [PartialOrder E] [IsOrderedAddMonoid E] [Module k E]
+    [IsStrictOrderedModule k E] [PosSMulReflectLE k E] {a b : E} :
+    midpoint k a b < b ↔ a < b :=
+  lineMap_lt_right_iff_lt two_inv_lt_one
+
+/-- Integral curves are unique on open intervals.
+
+If a $C^1$ vector field `v` admits two integral curves `γ γ' : ℝ → M` on some open interval
+`Ioo a b`, and `γ t₀ = γ' t₀` for some `t ∈ Ioo a b`, then `γ` and `γ'` agree on `Ioo a b`. -/
+theorem isMIntegralCurveOn_Ico_eqOn_of_contMDiff [T2Space M] {a b : ℝ} (hab : a < b)
+    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+    (hγ : IsMIntegralCurveOn γ v (Ico a b)) (hγ' : IsMIntegralCurveOn γ' v (Ico a b))
+    (h : γ a = γ' a) : EqOn γ γ' (Ico a b) := by
+  set s := {t | γ t = γ' t} ∩ Ico a b
+  suffices hsub : Ico a b ⊆ s from fun t ht ↦ mem_ofPred.mp ((subset_def ▸ hsub) t ht).1
+  set x := sSup {x ∈ Ico a b| ∀ y ≤ x, a ≤ y → y ∈ s} with hx
+  have hxset : BddAbove {x ∈ Ico a b| ∀ y ≤ x, a ≤ y → y ∈ s} := ⟨b, fun y ⟨hy, _⟩ ↦ hy.2.le⟩
+  have ha : a ∈ {x ∈ Ico a b| ∀ y ≤ x, a ≤ y → y ∈ s} :=
+    ⟨left_mem_Ico.mpr hab, fun y hy hay ↦ eq_of_le_of_ge hy hay ▸ ⟨h, left_mem_Ico.mpr hab⟩⟩
+  have hxnon : {x ∈ Ico a b| ∀ y ≤ x, a ≤ y → y ∈ s}.Nonempty := ⟨a, ha⟩
+  have hxsa : ∀ z < x, a ≤ z → z ∈ s := by
+    intro y hyx
+    rw [hx, lt_csSup_iff hxset hxnon] at hyx
+    obtain ⟨z, ⟨hz, hzs⟩, hyz⟩ := hyx
+    apply hzs _ hyz.le
+  suffices x = b from fun y ⟨hya, hyb⟩ ↦ hxsa _ (this ▸ hyb) hya
+  by_contra hxb
+  have hxb' : x < b := by
+    apply lt_of_le_of_ne ?_ hxb
+    apply csSup_le hxnon
+    intro y ⟨hy, _⟩
+    exact hy.2.le
+  have hxa : a ≤ x := le_csSup hxset ha
+  suffices ∃ y > x, y ∈ {y | y ∈ Ico a b ∧ ∀ z ≤ y, a ≤ z → z ∈ s} by
+    obtain ⟨y, hyx, hy⟩ := this
+    exact not_le_of_gt hyx (le_csSup hxset hy)
+  have hxs : x ∈ s := by
+    obtain ⟨u, hu, (hux : Filter.Tendsto u Filter.atTop (𝓝 x)), hus⟩ :=
+      exists_seq_tendsto_sSup hxnon hxset
+    refine ⟨?_, ⟨hxa, hxb'⟩⟩
+    suffices x ∈ {t | γ t = γ' t} ∩ Icc a x from this.1
+    have : IsClosed ({t | γ t = γ' t} ∩ Icc a x) := by
+      rw [inter_comm]
+      exact isClosed_Icc.isClosed_eq (hγ.continuousOn.mono (Icc_subset_Ico_right hxb'))
+        (hγ'.continuousOn.mono (Icc_subset_Ico_right hxb'))
+    apply this.mem_of_frequently_of_tendsto ?_ hux
+    apply Filter.Frequently.of_forall
+    intro n
+    exact ⟨((hus n).2 (u n) (le_refl _) (hus n).1.1).1, ⟨(hus n).1.1, hu.ge_of_tendsto hux _⟩⟩
+  obtain ⟨t, ht, htγ⟩ := Filter.eventuallyEq_iff_exists_mem.1
+    (isRightMIntegralCurveAt_eventuallyEq_of_contMDiffAt hv.contMDiffAt
+    ((hγ.mono (Ico_subset_Ico_left hxa)).isRightMIntegralCurve hxb' )
+    ((hγ'.mono (Ico_subset_Ico_left hxa)).isRightMIntegralCurve hxb') hxs.1)
+  -- we should have a lemma that does this directly
+  obtain ⟨c, hc, hct⟩ := mem_nhdsGE_iff_exists_Icc_subset.1 ht
+  use midpoint ℝ x (min b c), left_lt_midpoint.2 <| lt_min hxb' hc
+  have hbc : midpoint ℝ x (min b c) < b :=
+    lt_of_lt_of_le (midpoint_lt_right.mpr (lt_min hxb' hc)) (min_le_left b c)
+  refine ⟨⟨hxa.trans (left_lt_midpoint.2 <| lt_min hxb' hc).le, hbc⟩, ?_⟩
+  intro z hz haz
+  refine ⟨?_, ⟨haz, lt_of_le_of_lt hz hbc⟩⟩
+  by_cases! hzx : z < x
+  · exact (hxsa _ hzx haz).1
+  · refine htγ (hct ?_)
+    exact ⟨hzx, hz.trans ((midpoint_lt_right.mpr (lt_min hxb' hc)).le.trans (min_le_right b c))⟩
 
 end
