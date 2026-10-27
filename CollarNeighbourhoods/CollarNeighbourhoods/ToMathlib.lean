@@ -9,6 +9,8 @@ public import Mathlib.Geometry.Manifold.Instances.Real
 public import Mathlib.Geometry.Manifold.MFDeriv.NormedSpace
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
 public import Mathlib.Geometry.Convex.Cone.Basic
+public import Mathlib.Analysis.Calculus.Deriv.Add
+public import Mathlib.LinearAlgebra.AffineSpace.Ordered
 
 /-! Header-/
 
@@ -539,6 +541,65 @@ lemma add_mem_segment_iff_exists_icc (𝕜 : Type*) {E : Type*} [Field 𝕜] [Li
     [IsStrictOrderedRing 𝕜] [AddCommGroup E] [Module 𝕜 E]
     (x y z : E) : x + z ∈ segment 𝕜 x y ↔ ∃ i ∈ Icc (0 : 𝕜) 1, z = i • (y - x) := by
   simp_rw [mem_segment_iff_exists_icc, add_left_cancel_iff]
+
+theorem continuousWithinAt_def {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {f : X → Y}
+    {s : Set X} {x : X} : ContinuousWithinAt f s x ↔ ∀ A ∈ 𝓝 (f x), f ⁻¹' A ∈ 𝓝[s] x :=
+  Iff.rfl
+
+@[to_dual]
+theorem nhdsWithin_Icc_eq_nhdsLE' {α : Type u} [TopologicalSpace α] [LinearOrder α]
+    [ClosedIicTopology α] {a b c : α} (h : a < c) : 𝓝[Icc a b] c = 𝓝[Iic b] c :=
+  nhdsWithin_inter_of_mem <| nhdsWithin_le_nhds <| Ici_mem_nhds h
+
+@[to_dual]
+theorem nhdsWithin_Ioc_eq_nhdsLE' {α : Type u} [TopologicalSpace α] [LinearOrder α]
+    [ClosedIicTopology α] {a b c : α} (h : a < c) : 𝓝[Ioc a b] c = 𝓝[Iic b] c :=
+  nhdsWithin_inter_of_mem <| nhdsWithin_le_nhds <| Ioi_mem_nhds h
+
+@[simp]
+theorem left_lt_midpoint {k E : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
+    [AddCommGroup E] [PartialOrder E] [IsOrderedAddMonoid E] [Module k E]
+    [IsStrictOrderedModule k E] [PosSMulReflectLE k E] {a b : E} :
+    a < midpoint k a b ↔ a < b :=
+  left_lt_lineMap_iff_lt <| inv_pos.2 zero_lt_two
+
+@[simp]
+theorem midpoint_lt_right {k E : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
+    [AddCommGroup E] [PartialOrder E] [IsOrderedAddMonoid E] [Module k E]
+    [IsStrictOrderedModule k E] [PosSMulReflectLE k E] {a b : E} :
+    midpoint k a b < b ↔ a < b :=
+  lineMap_lt_right_iff_lt two_inv_lt_one
+
+lemma image_pointReflection_mem_nhdsWithin_le {G : Type*} [AddGroup G] [TopologicalSpace G]
+    [Preorder G] [IsTopologicalAddTorsor G] [OrderedSub G] [AddRightMono G] [AddRightReflectLE G]
+    {x : G} {s : Set G} (hs : s ∈ 𝓝[≥] x) : Equiv.pointReflection x '' s ∈ 𝓝[≤] x := by
+  rw [Equiv.image_eq_preimage_symm]
+  apply ContinuousWithinAt.preimage_mem_nhdsWithin'
+  · rw [Equiv.pointReflection_symm, ← Homeomorph.coe_pointReflection x]
+    exact (Homeomorph.pointReflection x).continuous.continuousWithinAt
+  · rw [Equiv.pointReflection_symm, Equiv.pointReflection_self]
+    convert hs
+    ext y
+    simp [Equiv.pointReflection_apply]
+
+lemma image_pointReflection_mem_nhdsWithin_ge {G : Type*} [AddGroup G] [TopologicalSpace G]
+    [Preorder G] [IsTopologicalAddTorsor G] [OrderedSub G] [AddRightMono G] [AddRightReflectLE G]
+    {x : G} {s : Set G} (hs : s ∈ 𝓝[≤] x) : Equiv.pointReflection x '' s ∈ 𝓝[≥] x := by
+  rw [Equiv.image_eq_preimage_symm]
+  apply ContinuousWithinAt.preimage_mem_nhdsWithin'
+  · rw [Equiv.pointReflection_symm, ← Homeomorph.coe_pointReflection x]
+    exact (Homeomorph.pointReflection x).continuous.continuousWithinAt
+  · rw [Equiv.pointReflection_symm, Equiv.pointReflection_self]
+    convert hs
+    ext y
+    simp [Equiv.pointReflection_apply]
+
+lemma hasDerivAt_pointReflection {G : Type*} [NontriviallyNormedField G] [ContinuousSMul G G]
+    {x y : G} : HasDerivAt ((Equiv.pointReflection x)) (-1) y := by
+  simp only [Equiv.pointReflection, Equiv.coe_trans, Equiv.coe_vaddConst, vadd_eq_add,
+    Equiv.coe_constVSub, vsub_eq_sub, comp_def, hasDerivAt_add_const_iff]
+  rw [neg_eq_zero_sub 1]
+  exact (hasDerivAt_const y x).sub (hasDerivAt_id' y)
 
 open MeasureTheory
 

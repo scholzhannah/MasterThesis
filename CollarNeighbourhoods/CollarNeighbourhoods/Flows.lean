@@ -25,7 +25,7 @@ variable {E : Type*} [NormedAddCommGroup E]
   {I : ModelWithCorners ℝ E H} {n : ℕ∞} [NeZero n] [IsManifold I n M]
 
 def IsFlowDomain (D : Set (ℝ × M)) :=
-  ∀ p, IsOpen {t | (t, p) ∈ D} ∧ Convex ℝ {t | (t, p) ∈ D} ∧ (0, p) ∈ D
+  ∀ p, Convex ℝ {t | (t, p) ∈ D} ∧ (0, p) ∈ D
 
 structure FlowOn (D : Set (ℝ × M)) (v : (x : M) → TangentSpace I x) where
   toFun : ℝ × M → M
@@ -39,6 +39,10 @@ lemma isFlowDomain_univ : IsFlowDomain (univ : Set (ℝ × M)) := by
   simp [convex_univ]
 
 def Flow (v : (x : M) → TangentSpace I x) := FlowOn univ v
+
+
+
+
 
 #check exists_isMIntegralCurveAt_of_contMDiffAt
 

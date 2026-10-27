@@ -47,27 +47,69 @@ example (γ : ℝ → M) (v : (x : M) → TangentSpace% x) (t₀ : ℝ)
 
     sorry
 
-theorem continuousWithinAt_def {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y] {f : X → Y}
-    {s : Set X} {x : X} : ContinuousWithinAt f s x ↔ ∀ A ∈ 𝓝 (f x), f ⁻¹' A ∈ 𝓝[s] x :=
-  Iff.rfl
-
-@[to_dual]
-theorem nhdsWithin_Icc_eq_nhdsLE' {α : Type u} [TopologicalSpace α] [LinearOrder α]
-    [ClosedIicTopology α] {a b c : α} (h : a < c) : 𝓝[Icc a b] c = 𝓝[Iic b] c :=
-  nhdsWithin_inter_of_mem <| nhdsWithin_le_nhds <| Ici_mem_nhds h
-
-@[to_dual]
-theorem nhdsWithin_Ioc_eq_nhdsLE' {α : Type u} [TopologicalSpace α] [LinearOrder α]
-    [ClosedIicTopology α] {a b c : α} (h : a < c) : 𝓝[Ioc a b] c = 𝓝[Iic b] c :=
-  nhdsWithin_inter_of_mem <| nhdsWithin_le_nhds <| Ioi_mem_nhds h
+def IsMIntegralCurveWithinAt (γ : ℝ → M) (v : (x : M) → TangentSpace% x) (s : Set ℝ)
+    (t₀ : ℝ) : Prop :=
+  ∀ᶠ t in 𝓝[s] t₀, HasMFDerivAt[s] γ t ((1 : ℝ →L[ℝ] ℝ).smulRight <| v (γ t))
 
 -- do `IntegralCurveWithinAt`
 def IsRightMIntegralCurveAt (γ : ℝ → M) (v : (x : M) → TangentSpace% x) (t₀ : ℝ) : Prop :=
-  ∀ᶠ t in 𝓝[≥] t₀, HasMFDerivAt[Ici t₀] γ t ((1 : ℝ →L[ℝ] ℝ).smulRight <| v (γ t))
+  IsMIntegralCurveWithinAt γ v (Ici t₀) t₀
+
+def IsLeftMIntegralCurveAt (γ : ℝ → M) (v : (x : M) → TangentSpace% x) (t₀ : ℝ) : Prop :=
+  IsMIntegralCurveWithinAt γ v (Iic t₀) t₀
+
+lemma IsRightMIntegralCurve.isLeftMIntegralCurveAt {γ : ℝ → M} {v : (x : M) → TangentSpace% x}
+    {t₀ : ℝ} (hγ : IsRightMIntegralCurveAt γ v t₀) :
+    IsLeftMIntegralCurveAt (γ ∘ (Equiv.pointReflection t₀)) (-v) t₀ := by
+  simp only [IsRightMIntegralCurveAt, IsMIntegralCurveWithinAt, IsLeftMIntegralCurveAt,
+    Filter.eventually_iff_exists_mem] at hγ ⊢
+  obtain ⟨s, hs, hsγ⟩ := hγ
+  use Equiv.pointReflection t₀ '' s, image_pointReflection_mem_nhdsWithin_le hs
+  intro y hy
+  -- I would like to make this into a suffices but there are some defeq things going on
+  have hf : (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) ((-v)
+      ((γ ∘ (Equiv.pointReflection t₀)) y))) =
+      (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) (v ((γ ∘ (Equiv.pointReflection t₀)) y))) ∘SL
+      (ContinuousLinearMap.toSpanSingleton ℝ (-1)) :=
+    ContinuousLinearMap.ext_ring (by simp)
+  rw [hf]
+  apply (hsγ (Equiv.pointReflection t₀ y) (by simpa using hy)).comp _
+    hasDerivAt_pointReflection.hasFDerivAt.hasMFDerivAt.hasMFDerivWithinAt
+  intro x hx
+  simpa [mem_preimage, Equiv.pointReflection_apply t₀ x]
+
+lemma IsLeftMIntegralCurve.isRightMIntegralCurveAt {γ : ℝ → M} {v : (x : M) → TangentSpace% x}
+    {t₀ : ℝ} (hγ : IsLeftMIntegralCurveAt γ v t₀) :
+    IsRightMIntegralCurveAt (γ ∘ (Equiv.pointReflection t₀)) (-v) t₀ := by
+  simp only [IsRightMIntegralCurveAt, IsMIntegralCurveWithinAt, IsLeftMIntegralCurveAt,
+    Filter.eventually_iff_exists_mem] at hγ ⊢
+  obtain ⟨s, hs, hsγ⟩ := hγ
+  use Equiv.pointReflection t₀ '' s, image_pointReflection_mem_nhdsWithin_ge hs
+  intro y hy
+  -- I would like to make this into a suffices but there are some defeq things going on
+  have hf : (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) ((-v)
+      ((γ ∘ (Equiv.pointReflection t₀)) y))) =
+      (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) (v ((γ ∘ (Equiv.pointReflection t₀)) y))) ∘SL
+      (ContinuousLinearMap.toSpanSingleton ℝ (-1)) :=
+    ContinuousLinearMap.ext_ring (by simp)
+  rw [hf]
+  apply (hsγ (Equiv.pointReflection t₀ y) (by simpa using hy)).comp _
+    hasDerivAt_pointReflection.hasFDerivAt.hasMFDerivAt.hasMFDerivWithinAt
+  intro x hx
+  simpa [mem_preimage, Equiv.pointReflection_apply t₀ x]
+
+lemma isRightMIntegralCurve_iff_isLeftMIntegralCurveAt {γ : ℝ → M} {v : (x : M) → TangentSpace% x}
+    {t₀ : ℝ} : IsRightMIntegralCurveAt γ v t₀ ↔
+    IsLeftMIntegralCurveAt (γ ∘ (Equiv.pointReflection t₀)) (-v) t₀ := by
+  refine ⟨IsRightMIntegralCurve.isLeftMIntegralCurveAt, fun h ↦ ?_⟩
+  convert (IsLeftMIntegralCurve.isRightMIntegralCurveAt h)
+  · nth_rw 1 [← Equiv.pointReflection_symm, Function.comp_assoc, Equiv.symm_comp_self,
+      Function.comp_id]
+  · exact (neg_neg v).symm
 
 lemma isRightMIntegralCurveAt_iff {γ : ℝ → M} {v : (x : M) → TangentSpace% x} {t₀ : ℝ} :
     IsRightMIntegralCurveAt γ v t₀ ↔ ∃ s ∈ 𝓝[≥] t₀, IsMIntegralCurveOn γ v s := by
-  unfold IsRightMIntegralCurveAt IsMIntegralCurveOn
+  unfold IsRightMIntegralCurveAt IsMIntegralCurveWithinAt IsMIntegralCurveOn
   rw [Filter.eventually_iff_exists_mem]
   have htt₀ : ∀ t, ∀ i ∈ Ico t₀ t, Ico t₀ t =ᶠ[𝓝 i] Ici t₀ := by
     intro t i hi
@@ -243,6 +285,14 @@ theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
     intro x hx
     exact (hαI x (Ico_subset_Icc_self hx.2)).2
 
+/-
+theorem exists_isLeftMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
+    (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
+    (hx : IsOutwardPointingMinimal (v x₀)) :
+    ∃ γ : ℝ → M, γ t₀ = x₀ ∧ IsLeftMIntegralCurveAt γ v t₀ := by
+  have := exists_isRightMIntegralCurveAt_of_contMDiffAt (v := -v) (x₀ := x₀) t₀
+  sorry-/
+
 theorem exists_isMRightIntegralCurveAt_of_contMDiffAt_of_isInteriorPoint [CompleteSpace E]
     (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
     (hx : I.IsInteriorPoint x₀) :
@@ -350,26 +400,12 @@ theorem isRightMIntegralCurveAt_eventuallyEq_of_contMDiffAt
 omit [IsManifold I 1 M] in
 lemma IsMIntegralCurveOn.isRightMIntegralCurve [T2Space M] {a b : ℝ} (hab : a < b)
     (hγ : IsMIntegralCurveOn γ v (Ico a b)) : IsRightMIntegralCurveAt γ v a := by
-  rw [IsRightMIntegralCurveAt, Filter.eventually_iff_exists_mem]
+  rw [IsRightMIntegralCurveAt, IsMIntegralCurveWithinAt, Filter.eventually_iff_exists_mem]
   use Ico a b, Ico_mem_nhdsGE hab
   intro t ht
   refine (hasMFDerivWithinAt_congr_set ?_).1 (hγ t ht)
   rw [← nhdsWithin_eq_iff_eventuallyEqSet]
   exact nhdsWithin_Ico_eq_nhdsGE' ht.2
-
-@[simp]
-theorem left_lt_midpoint {k E : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
-    [AddCommGroup E] [PartialOrder E] [IsOrderedAddMonoid E] [Module k E]
-    [IsStrictOrderedModule k E] [PosSMulReflectLE k E] {a b : E} :
-    a < midpoint k a b ↔ a < b :=
-  left_lt_lineMap_iff_lt <| inv_pos.2 zero_lt_two
-
-@[simp]
-theorem midpoint_lt_right {k E : Type*} [Field k] [LinearOrder k] [IsStrictOrderedRing k]
-    [AddCommGroup E] [PartialOrder E] [IsOrderedAddMonoid E] [Module k E]
-    [IsStrictOrderedModule k E] [PosSMulReflectLE k E] {a b : E} :
-    midpoint k a b < b ↔ a < b :=
-  lineMap_lt_right_iff_lt two_inv_lt_one
 
 /-- Integral curves are unique on open intervals.
 
@@ -431,5 +467,55 @@ theorem isMIntegralCurveOn_Ico_eqOn_of_contMDiff [T2Space M] {a b : ℝ} (hab : 
   · exact (hxsa _ hzx haz).1
   · refine htγ (hct ?_)
     exact ⟨hzx, hz.trans ((midpoint_lt_right.mpr (lt_min hxb' hc)).le.trans (min_le_right b c))⟩
+
+variable (v) in
+def maximalMIntegralCurveDomainAt (p : M) : Set ℝ :=
+  sUnion {s : Set ℝ | Convex ℝ s ∧ 0 ∈ s ∧ ∃ γ : ℝ → M, IsMIntegralCurveOn γ v s ∧ γ 0 = p}
+
+lemma mem_maximalMIntegralCurveDomainAt [CompleteSpace E]
+    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} :
+    0 ∈ maximalMIntegralCurveDomainAt v p := by
+  use {0}
+  simp only [mem_ofPred_eq, convex_singleton, mem_singleton_iff, true_and, and_true]
+  by_cases hp : I.IsInteriorPoint p
+  · obtain ⟨γ, hγp, hγ0⟩ := exists_isMIntegralCurveAt_of_contMDiffAt 0 hv.contMDiffAt hp
+    refine ⟨γ, IsMIntegralCurveAt.isMIntegralCurveOn ?_, hγp⟩
+    simpa
+  · obtain ⟨γ, hγp, hγ0⟩ := exists_isRightMIntegralCurveAt_of_contMDiffAt 0 hv.contMDiffAt (hx p)
+    refine ⟨γ, ?_, hγp⟩
+    simp only [IsMIntegralCurveOn, mem_singleton_iff, forall_eq]
+    rw [IsRightMIntegralCurveAt, IsMIntegralCurveWithinAt, Filter.eventually_iff_exists_mem] at hγ0
+    obtain ⟨s, hs0, hsv⟩ := hγ0
+    apply (hsv 0 (mem_of_mem_nhdsWithin self_mem_Ici hs0)).mono
+    simp
+
+--lemma exists_subset_maximalMIntegralCurveDomainAt [CompleteSpace E]
+--    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+--    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} : sorry :=
+--  sorry
+
+variable (v) in
+open Classical in
+noncomputable def maximalMIntegralCurveAt (p : M) (x : ℝ) : M :=
+  if hx' : x ∈ maximalMIntegralCurveDomainAt v p then hx'.choose_spec.1.2.2.choose x
+    else p
+
+lemma isMIntegralCurveOn_maximalMIntegralCurveAt
+    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+    (hx : ∀ x, IsInwardPointingMinimal (v x)) (p : M) :
+    IsMIntegralCurveOn (maximalMIntegralCurveAt v p) v (maximalMIntegralCurveDomainAt v p) := by
+  intro t ht
+  let s := ht.choose
+  have hs : Convex ℝ s := ht.choose_spec.1.1
+  have hst : t ∈ s := ht.choose_spec.2
+  let γ := ht.choose_spec.1.2.2.choose
+  have hγ : IsMIntegralCurveOn γ v s := ht.choose_spec.1.2.2.choose_spec.1
+  have hγt : γ 0 = p := ht.choose_spec.1.2.2.choose_spec.2
+  by_cases ht : I.IsBoundaryPoint (γ t)
+  · sorry
+  · rw [← I.isInteriorPoint_iff_not_isBoundaryPoint] at ht
+
+    sorry
 
 end
