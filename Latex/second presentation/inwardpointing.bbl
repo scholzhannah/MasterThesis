@@ -1,0 +1,221 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{anyt/global//global/global/global}
+    \entry{Aubin1990}{book}{}{}
+      \name{author}{2}{}{%
+        {{hash=8d7b99825f254daaa5a8485ad9ffc25f}{%
+           family={Aubin},
+           familyi={A\bibinitperiod},
+           given={Jean-Pierre},
+           giveni={J\bibinithyphendelim P\bibinitperiod}}}%
+        {{hash=ad62ae1996f794df864746ed115f8f88}{%
+           family={Frankowska},
+           familyi={F\bibinitperiod},
+           given={Hélène},
+           giveni={H\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Boston}%
+      }
+      \list{publisher}{1}{%
+        {Birkhaeuser}%
+      }
+      \strng{namehash}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{fullhash}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{fullhashraw}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{bibnamehash}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{authorbibnamehash}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{authornamehash}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{authorfullhash}{d513ab398dd13f18d52a029063c86b4f}
+      \strng{authorfullhashraw}{d513ab398dd13f18d52a029063c86b4f}
+      \field{labelalpha}{AF90}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{0817634789}
+      \field{series}{Systems \& control 2}
+      \field{title}{Set-valued analysis}
+      \field{year}{1990}
+    \endentry
+    \entry{Amr2021}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=6bfc3a47e9b69e14a7fd0f0125cd2212}{%
+           family={{Amr (https://math.stackexchange.com/users/29267/amr)}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{fullhash}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{fullhashraw}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{bibnamehash}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{authorbibnamehash}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{authornamehash}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{authorfullhash}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \strng{authorfullhashraw}{6bfc3a47e9b69e14a7fd0f0125cd2212}
+      \field{labelalpha}{Amr21}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{Mathematics Stack Exchange}
+      \field{title}{Definition of an inward-pointing tangent vector for smooth manifolds with corners}
+      \field{year}{2021}
+      \verb{urlraw}
+      \verb https://math.stackexchange.com/q/4279072
+      \endverb
+      \verb{url}
+      \verb https://math.stackexchange.com/q/4279072
+      \endverb
+    \endentry
+    \entry{Joyce2009}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=2061b42521b86d65f43a5b606160753b}{%
+           family={Joyce},
+           familyi={J\bibinitperiod},
+           given={Dominic},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{2061b42521b86d65f43a5b606160753b}
+      \strng{fullhash}{2061b42521b86d65f43a5b606160753b}
+      \strng{fullhashraw}{2061b42521b86d65f43a5b606160753b}
+      \strng{bibnamehash}{2061b42521b86d65f43a5b606160753b}
+      \strng{authorbibnamehash}{2061b42521b86d65f43a5b606160753b}
+      \strng{authornamehash}{2061b42521b86d65f43a5b606160753b}
+      \strng{authorfullhash}{2061b42521b86d65f43a5b606160753b}
+      \strng{authorfullhashraw}{2061b42521b86d65f43a5b606160753b}
+      \field{labelalpha}{Joy09}
+      \field{sortinit}{J}
+      \field{sortinithash}{b2f54a9081ace9966a7cb9413811edb4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Advances in Geometric Analysis}
+      \field{month}{10}
+      \field{title}{On manifolds with corners}
+      \field{volume}{21}
+      \field{year}{2009}
+    \endentry
+    \entry{Lee2006}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=36896354ee3aedc1a13d683ea773634e}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={John\bibnamedelima M.},
+           giveni={J\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{36896354ee3aedc1a13d683ea773634e}
+      \strng{fullhash}{36896354ee3aedc1a13d683ea773634e}
+      \strng{fullhashraw}{36896354ee3aedc1a13d683ea773634e}
+      \strng{bibnamehash}{36896354ee3aedc1a13d683ea773634e}
+      \strng{authorbibnamehash}{36896354ee3aedc1a13d683ea773634e}
+      \strng{authornamehash}{36896354ee3aedc1a13d683ea773634e}
+      \strng{authorfullhash}{36896354ee3aedc1a13d683ea773634e}
+      \strng{authorfullhashraw}{36896354ee3aedc1a13d683ea773634e}
+      \field{labelalpha}{Lee06}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{0387954481}
+      \field{series}{Graduate texts in mathematics 218}
+      \field{title}{Introduction to smooth manifolds}
+      \field{year}{2006}
+      \verb{urlraw}
+      \verb http://www.gbv.de/dms/goettingen/347921388.pdf
+      \endverb
+      \verb{url}
+      \verb http://www.gbv.de/dms/goettingen/347921388.pdf
+      \endverb
+    \endentry
+    \entry{Melrose1996}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=abea731486fd7e1f9d0c651f9ee02b8e}{%
+           family={Melrose},
+           familyi={M\bibinitperiod},
+           given={Richard},
+           giveni={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{fullhash}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{fullhashraw}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{bibnamehash}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{authorbibnamehash}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{authornamehash}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{authorfullhash}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \strng{authorfullhashraw}{abea731486fd7e1f9d0c651f9ee02b8e}
+      \field{labelalpha}{Mel96}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{9}
+      \field{title}{Differential analysis on manifolds with corners}
+      \field{year}{1996}
+      \verb{urlraw}
+      \verb https://math.mit.edu/~rbm/book.html
+      \endverb
+      \verb{url}
+      \verb https://math.mit.edu/~rbm/book.html
+      \endverb
+    \endentry
+    \entry{Rockafellar1998}{book}{}{}
+      \name{author}{2}{}{%
+        {{hash=4d9e50cf067b8569b3dfae82e92d9583}{%
+           family={Rockafellar},
+           familyi={R\bibinitperiod},
+           given={Ralph\bibnamedelima Tyrrell},
+           giveni={R\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+        {{hash=3d0d87df42b50ab590103231156f8f2c}{%
+           family={Wets},
+           familyi={W\bibinitperiod},
+           given={Roger\bibnamedelima J.-B.},
+           giveni={R\bibinitperiod\bibinitdelim J\bibinithyphendelim B\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{fullhash}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{fullhashraw}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{bibnamehash}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{authorbibnamehash}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{authornamehash}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{authorfullhash}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \strng{authorfullhashraw}{3bd8c0b31dc293b2f547dc7da5021dd1}
+      \field{labelalpha}{RW98}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{3540627723}
+      \field{series}{Grundlehren der mathematischen Wissenschaften 317}
+      \field{title}{Variational analysis}
+      \field{year}{1998}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
