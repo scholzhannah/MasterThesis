@@ -1,17 +1,17 @@
 [0] Config.pm:308> INFO - This is Biber 2.20
 [0] Config.pm:311> INFO - Logfile is 'c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.blg'
-[110] biber-MSWIN64:340> INFO - === 
-[161] Biber.pm:420> INFO - Reading 'c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.bcf'
-[321] Biber.pm:994> INFO - Found 6 citekeys in bib section 0
-[345] Biber.pm:4463> INFO - Processing section 0
-[367] Biber.pm:4654> INFO - Looking for bibtex file 'thesis.bib' for section 0
-[459] bibtex.pm:1713> INFO - LaTeX decoding ...
-[472] bibtex.pm:1519> INFO - Found BibTeX data source 'thesis.bib'
-[539] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[539] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[539] Biber.pm:4283> INFO - Sorting list 'anyt/global//global/global/global' of type 'entry' with template 'anyt' and locale 'en-US'
-[539] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
-[549] bbl.pm:676> INFO - Writing 'c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.bbl' with encoding 'UTF-8'
-[552] bbl.pm:779> INFO - Output to c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.bbl
-[553] Biber.pm:131> WARN - legacy month field 'September' in entry 'Melrose1996' is not an integer - this will probably not sort properly.
-[553] Biber.pm:133> INFO - WARNINGS: 1
+[164] biber-MSWIN64:340> INFO - === 
+[257] Biber.pm:420> INFO - Reading 'c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.bcf'
+[427] Biber.pm:994> INFO - Found 6 citekeys in bib section 0
+[441] Biber.pm:4463> INFO - Processing section 0
+[453] Biber.pm:4654> INFO - Looking for bibtex file 'thesis.bib' for section 0
+[588] bibtex.pm:1713> INFO - LaTeX decoding ...
+[608] bibtex.pm:1519> INFO - Found BibTeX data source 'thesis.bib'
+[703] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[703] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[703] Biber.pm:4283> INFO - Sorting list 'anyt/global//global/global/global' of type 'entry' with template 'anyt' and locale 'en-US'
+[703] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
+[713] bbl.pm:676> INFO - Writing 'c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.bbl' with encoding 'UTF-8'
+[716] bbl.pm:779> INFO - Output to c:/Users/hanna/Documents/Uni/Masterarbeit/MasterThesis/Latex/second presentation/inwardpointing.bbl
+[716] Biber.pm:131> WARN - legacy month field 'September' in entry 'Melrose1996' is not an integer - this will probably not sort properly.
+[716] Biber.pm:133> INFO - WARNINGS: 1

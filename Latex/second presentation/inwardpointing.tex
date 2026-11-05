@@ -9,6 +9,7 @@
 \usepackage[backend=biber, style=alphabetic, language=british]{biblatex}
 \usepackage{bookmark}
 \usepackage{graphicx}
+\usepackage[OT1]{fontenc}
 \graphicspath{ {./images/} }
 \usepackage{tikz}
 \usetikzlibrary{shapes.callouts,shadows, calc}
@@ -72,7 +73,26 @@ A \emph{model with corners} from $E$ to $H$ is a partial equivalence $I \colon H
   \item the range is convex and has nonempty interior. 
 \end{enumerate}
 \end{block}
-\alert{Example picture here (one for boundary one for corners one circle)}
+\end{frame}
+
+\begin{frame}{Intuition: Model with Corners}
+\begin{figure}
+  \begin{minipage}[b]{0.3\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/ModelWithCornersUpperHalfPlane.png}
+  \end{minipage}
+  \hspace{1cm}
+  \begin{minipage}[b]{0.2\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/ModelWithCornersCorner.png}
+  \end{minipage}
+  \hspace{1cm}
+  \begin{minipage}[b]{0.2\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/ModelWithCornersCurve.png}
+  \end{minipage}
+  \caption{Different examples of models with corners}
+\end{figure}
 \end{frame}
 
 \begin{frame}{Topological Manifold with Corners}
@@ -124,9 +144,32 @@ A pair $(M, \fA)$ of a topological manifold $M$ and a smooth altas $\fA$ on $M$,
 
 \section{Inward-pointing vectors}
 
-\begin{frame}{Intuition}
+\begin{frame}{Intuition: Inward pointing vectors}
+\begin{figure}
+  \begin{minipage}[b]{0.2\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/CornerInwardPointing.png}
+  \end{minipage}
+  \hspace{1cm}
+  \begin{minipage}[b]{0.2\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/CurveInwardPointing.png}
+  \end{minipage}
+  \caption{Example of inward pointing vectors}
+\end{figure}
 
-\alert{pictures of inward pointing and not inward pointing vectors}
+\begin{figure}
+  \begin{minipage}[b]{0.2\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/CornerNotInwardPointing.png}
+  \end{minipage}
+  \hspace{1cm}
+  \begin{minipage}[b]{0.2\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/CurveNotInwardPointing.png}
+  \end{minipage}
+  \caption{Different examples of models with corners}
+\end{figure}
 
 \end{frame}
 
@@ -136,8 +179,18 @@ A pair $(M, \fA)$ of a topological manifold $M$ and a smooth altas $\fA$ on $M$,
 \end{block}
 
 \begin{overprint}
-\onslide<1>\alert{first have picture for intuition here}
-\onslide<2>\alert{then picture of square here}
+\onslide<1>\begin{figure}
+\begin{minipage}[b]{0.4\linewidth}
+  \centering
+  \includegraphics[width=\textwidth]{images/InwardPointingIntuition.png}
+\end{minipage}
+\end{figure}
+\onslide<2>\begin{figure}
+\begin{minipage}[b]{0.6\linewidth}
+  \centering
+  \includegraphics[width=\textwidth]{images/BoundaryNotManifold.png}
+\end{minipage}
+\end{figure}
 \end{overprint}
 
 \end{frame}
@@ -165,7 +218,12 @@ We have the following two options for the definition of inward-pointing vectors:
     Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is an $\varepsilon > 0$ and a smooth curve $\gamma \colon [0, \varepsilon) \to M$ such that $\gamma (0) = p$, $\gamma' (0) = v$ and $\gamma ((0, \varepsilon)) \subseteq \interior{M}$.
 \end{block}
 
-\onslide<2>\alert{picture of why this doesn't work}
+\onslide<2>\begin{figure}
+\begin{minipage}[b]{0.4\linewidth}
+  \centering
+  \includegraphics[width=\textwidth]{images/ParabolaProblem.png}
+\end{minipage}
+\end{figure}
 
 \end{frame}
 
@@ -184,7 +242,12 @@ This definition is clearly designed to mean weakly inward-pointing.
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is a non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$ such that $\direcderiv{v}f (p) > 0$. 
 \end{block}
 
-\onslide<2>\alert{picture of why this doesn't work}
+\onslide<2>\begin{figure}
+\begin{minipage}[b]{0.6\linewidth}
+  \centering
+  \includegraphics[width=\textwidth]{images/InwardPointingJacobian.png}
+\end{minipage}
+\end{figure}
 
 \end{frame}
 
@@ -220,7 +283,7 @@ A sensible definition of realisability needs to fulfil these two conditions:
 
 \begin{frame}[fragile]{Sensible notion in normed spaces: tangent cones}
 \small
-\begin{block}{Definition: contingent Tangent Cone, \cite{Aubin1990}}
+\begin{block}{Definition: contingent tangent cone, \cite{Aubin1990}}
     Let $E$ be a normed vector space, $K \subset E$ and $x \in \closure{E}$. 
     Then the \emph{contingent tangent cone} to $K$ at $x$ is the set of all $v \in E$ such that there is a sequence of scalars $c \colon \bN \to \bR_\ge$ and a sequence of vectors $d \colon \bN \to E$ such that 
     \begin{enumerate}[(i)]
@@ -234,8 +297,21 @@ A sensible definition of realisability needs to fulfil these two conditions:
 This is in Mathlib as \lstinline|posTangentConeAt|. 
 For convex sets this notion agrees with other types of tangent cones such as the Clarke tangent cone. 
 
-\alert{Pictures for definition and examples of tangent cones}
+\end{frame}
 
+\begin{frame}{Tangent Cone: Intuition}
+\begin{figure}
+  \begin{minipage}[b]{0.4\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/TangentConeCircle.png}
+  \end{minipage}
+  \hspace{1cm}
+  \begin{minipage}[b]{0.4\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/TangentConeCorner.png}
+  \end{minipage}
+  \caption{Examples of tangent cones}
+\end{figure}
 \end{frame}
 
 \begin{frame}{Option B: attempt 1}
@@ -246,7 +322,7 @@ For convex sets this notion agrees with other types of tangent cones such as the
 
 \begin{overprint}
 \onslide<2>\alert{picture of why this is really hard}
-\onslide<3> Requiring $\gamma$ to be smooth instead of continuous would work better. 
+\onslide<3> Requiring $\gamma$ to be continuous instead of smooth would work better. 
 \end{overprint}
 
 \end{frame}
@@ -267,13 +343,64 @@ def IsRealizable {M H E : Type*} [TopologicalSpace H]
     mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 \end{lstlisting}
 
+\alert{picutre of why the issue from before doesn't appear here}
+
 \end{frame}
 
-\begin{frame}{Properties of definition}
+\begin{frame}{Invariance under charts}
 
 \begin{block}{Lemma: invariance under charts}
 Let $f \colon M \to M'$ be a local diffeomorphism between manifolds with corners. Let $p \in M$ and $v \in \tanspace{p}{M}$. Then $v$ is realisable if and only if $\direcderiv{v}f(p)$ is realisable. 
 \end{block}
+
+\end{frame}
+
+\begin{frame}[fragile]{Equivalence to tanget cone I}
+\small
+\begin{block}{Definition: derivable cone}
+Let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
+We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\varepsilon (0) = p$ and $\varepsilon' (0) = v$. 
+The set of all derivable vectors in $C$ at $p$ is called the \emph{derivable cone} to $C$ at $p$.
+\end{block}
+
+\begin{lstlisting}
+def derivableWithinAt (𝕜 : Type*) {E : Type*} 
+    [NontriviallyNormedField 𝕜] 
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] 
+    [LinearOrder 𝕜] (s : Set E) (p : E) 
+    (v : E) : Prop :=
+  ∃ (γ : 𝕜 → E) 
+      (_ : DifferentiableWithinAt 𝕜 γ (Ici 0) 0), 
+      γ 0 = p ∧ derivWithin γ (Ici 0) (0 : 𝕜) = v ∧ 
+      ∀ᶠ (x : 𝕜) in 𝓝[≥] 0, γ x ∈ s
+\end{lstlisting}
+  
+\end{frame}
+\begin{frame}{Equivalence to tanget cone II}
+
+\begin{block}{Lemma: derivable and tangent cones agree}
+Let $E$ be a normed space over $\bR$, let $C \subseteq \bR$ be a convex set and let $p \in C$ be a point. Then the derivable cone and the tangent cone to $C$ at $p$ agree.  
+
+\end{block}
+
+Proof steps: 
+\begin{enumerate}
+  \item Show that the tangent cone is the closure of feasible cone. 
+  \item Show that the derivable cone is closed. 
+  \item Show that the derivable cone equals the closure of the feasible cone. 
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Equivalence to tangent cone: step 1}
+
+\begin{block}{Definition: feasible cone}
+The set of all vectors $v$ such that there is an $r > 0$ such that $r \cdot v + p \in C$ is called the \emph{feasible cone} to $C$ at $p$.
+\end{block}
+
+\alert{picture of step II}
+
+\alert{maybe show something about step III}
 
 \end{frame}
 
