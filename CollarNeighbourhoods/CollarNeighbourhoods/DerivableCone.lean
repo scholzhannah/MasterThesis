@@ -339,19 +339,49 @@ def derivableWithinAt (s : Set E) (p : E) (v : E) : Prop :=
    ∃ (γ : 𝕜 → E) (_ : DifferentiableWithinAt 𝕜 γ (Ici 0) 0), γ 0 = p ∧
       derivWithin γ (Ici 0) (0 : 𝕜) = v ∧ ∀ᶠ (x : 𝕜) in 𝓝[≥] 0, γ x ∈ s
 
-def derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) : ConvexCone ℝ E where
-  carrier := {v | derivableWithinAt ℝ s p v}
-  smul_mem' := by
-    intro c hc x ⟨γ, hγ, hγp, hγv, hγs⟩
-    use fun t ↦ γ (c * t)
-    refine ⟨?_, by simp [hγp], ?_, ?_⟩
-    · nth_rw 2 [← mul_zero c] at hγ
-      exact hγ.comp 0 (by fun_prop) (fun x hx ↦ by simpa [hc])
-    · rw [derivWithin_comp_mul_left]
+example : SMul ℝ (Set ℝ) := by exact Set.smulSet
 
-      sorry
-    · sorry
-  add_mem' := sorry
+private lemma convex_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) :
+    Convex ℝ {v | derivableWithinAt ℝ s p v} := by
+  rw [convex_iff_add_mem]
+  intro x ⟨γ, hγ, hγp, hγv, hγs⟩ y ⟨δ, hδ, hδp, hδv, hδs⟩ a b ha hb hab
+  use a • γ + b • δ
+  simp only [Pi.add_apply, Pi.smul_apply, hγp, hδp, Convex.combo_self hab p, true_and,
+    exists_and_left, exists_prop]
+  refine ⟨?_, (hγ.const_smul a).add (hδ.const_smul b), ?_⟩
+  · rw [derivWithin_add (hγ.const_smul a) (hδ.const_smul b),
+      derivWithin_const_smul_field, derivWithin_const_smul_field, hγv, hδv]
+  · rw [eventually_iff_exists_mem] at hγs hδs ⊢
+    -- lemma to shorten the next 5 lines
+    obtain ⟨t1, ht1, ht1s⟩ := hγs
+    obtain ⟨t2, ht2, ht2s⟩ := hδs
+    rw [mem_nhdsGE_iff_exists_Icc_subset] at ht1 ht2
+    obtain ⟨u1, hu1, hu1t1⟩ := ht1
+    obtain ⟨u2, hu2, hu2t2⟩ := ht2
+    use Icc 0 (min u1 u2), Icc_mem_nhdsGE (lt_min hu1 hu2)
+    intro y ⟨hy1, hy2⟩
+    exact hs (ht1s _ (hu1t1 ⟨hy1, hy2.trans (min_le_left _ _)⟩))
+      (ht2s _ (hu2t2 ⟨hy1, hy2.trans (min_le_right _ _)⟩)) ha hb hab
+
+def derivableCone {s : Set E} (p : E) (hs : Convex ℝ s) : ConvexCone ℝ E :=
+  ConvexCone.ofConvexSmul ℝ E {v | derivableWithinAt ℝ s p v} (by exact convex_derivableCone hs)
+    (by
+      intro c hc x ⟨γ, hγ, hγp, hγv, hγs⟩
+      use fun t ↦ γ (c * t)
+      refine ⟨?_, by simp [hγp], ?_, ?_⟩
+      · nth_rw 2 [← mul_zero c] at hγ
+        exact hγ.comp 0 (by fun_prop) (fun x hx ↦ by simpa [hc])
+      · simp [derivWithin_comp_mul_left, smul_ici_zero_of_lt hc, hγv]
+      · rw [eventually_iff_exists_mem] at hγs ⊢
+        obtain ⟨t, ht, hts⟩ := hγs
+        rw [mem_nhdsGE_iff_exists_Icc_subset] at ht
+        obtain ⟨u, hu, hut⟩ := ht
+        use Icc 0 (c⁻¹ • u), Icc_mem_nhdsGE ((smul_pos_iff_of_pos_left (inv_pos.mpr hc)).mpr hu)
+        intro y ⟨hy1, hy2⟩
+        apply hts
+        apply hut
+        rw [le_inv_smul_iff_of_pos hc] at hy2
+        simpa [mul_nonneg_iff_of_pos_left hc, hy1, le_inv_smul_iff_of_pos hc])
 
 -- I should provide the definition of a derivable cone
 
@@ -382,26 +412,32 @@ lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
   simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
   exact this
 
-@[simps!]
-def feasibleCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) : ConvexCone ℝ E :=
-  ConvexCone.ofConvexSmul ℝ E {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s}
-    (by
-      intro x ⟨r1, hr1, hrx1⟩ y ⟨r2, hr2, hry2⟩ a b ha hb hab
-      let r := r1 ⊓ r2
-      have hr : 0 < r := lt_min hr1 hr2
-      have hrx : p + r • x ∈ s :=
-        hs.add_smul_mem_icc hp hr1 hrx1 ⟨hr.le, min_le_left _ _⟩
-      have hry : p + r • y ∈ s :=
-        hs.add_smul_mem_icc hp hr2 hry2 ⟨hr.le, min_le_right _ _⟩
-      use r, hr
-      rw [← one_smul ℝ p, ← hab, smul_add, smul_algebra_smul_comm, smul_algebra_smul_comm b r y,
-        add_smul, add_add_add_comm, ← smul_add, ← smul_add]
-      exact hs hrx hry ha hb hab)
-    (by
-      intro c hc x ⟨r, hr, hrs⟩
-      use r • c⁻¹, by simp [hr, hc]
-      rw [smul_smul, smul_eq_mul, inv_mul_cancel_right₀ hc.ne.symm r]
-      exact hrs)
+lemma isClosed_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) :
+    IsClosed (derivableCone p hs : Set E) :=
+  isClosed_derivable hp
+
+@[simps]
+def feasibleCone {s : Set E} (hs : Convex ℝ s) (p : E) : ConvexCone ℝ E where
+  carrier := {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s}
+  smul_mem' c hc v hv := by
+    obtain ⟨r, hr, hrs⟩ := hv
+    use r / c, div_pos hr hc
+    rw [smul_smul, div_mul_cancel₀ r hc.ne.symm]
+    exact hrs
+  add_mem' v hv w hw := by
+    obtain ⟨r, hr, hrs⟩ := hv
+    obtain ⟨t, ht, hts⟩ := hw
+    use (r * t) / (r + t)
+    refine ⟨?_, ?_⟩
+    · field_simp
+      simp [mul_pos hr ht]
+    · rw [smul_add]
+      nth_rw 1 [mul_div_assoc, mul_comm r, mul_smul]
+      rw [mul_div_right_comm, mul_smul, ← one_smul ℝ p, ← div_self (add_pos hr ht).ne.symm,
+        add_div, add_comm (r / (r + t)) (t / (r + t)), add_smul, add_add_add_comm,
+        ← smul_add, ← smul_add]
+      apply hs hrs hts
+      all_goals (field_simp; simp [ht.le, hr.le, add_comm])
 
 @[simps!]
 def feasibleInteriorCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) : ConvexCone ℝ E :=
@@ -444,11 +480,11 @@ lemma Convex.nonempty_feasibleInteriorCone {s : Set E} {p : E} (hs : Convex ℝ 
 
 -- it should probably be enough to requiere `p ∈ closure s`
 lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
-    posTangentConeAt s p = closure (feasibleCone hs hp) := by
+    posTangentConeAt s p = (feasibleCone hs p).closure := by
   apply subset_antisymm
   · intro v hv
     obtain ⟨c, d, hd, hdp, hcd⟩ := mem_tangentConeAt_iff_exists_seq.1 hv
-    rw [← seqClosure_eq_closure]
+    rw [ConvexCone.coe_closure, ← seqClosure_eq_closure]
     rw [eventually_atTop] at hdp
     obtain ⟨N, hN⟩ := hdp
     use fun n ↦ (c (n + N)) • (d (n + N))
@@ -463,7 +499,7 @@ lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E}
       exact lt_of_le_of_ne (c (n + N)).coe_nonneg hcn.symm
     · rw [Filter.tendsto_add_atTop_iff_nat (f := fun n ↦ c n • d n)]
       exact hcd
-  · rw [← seqClosure_eq_closure, feasibleCone_carrier hs hp]
+  · rw [ConvexCone.coe_closure, ← seqClosure_eq_closure, feasibleCone_carrier hs p]
     intro v ⟨e, he, hev⟩
     simp only [mem_ofPred_eq] at he
     have he' : ∀ n, ∃ (r : ℝ), 0 < r ∧ p + r • e n ∈ s ∧ ‖r • e n‖ ≤ 1 / (n + 1) := by
@@ -505,6 +541,17 @@ lemma Convex.posTangentConeAt_eq_closure {s : Set E} (hs : Convex ℝ s) {p : E}
       intro n
       simp [NNReal.smul_def, smul_smul, show g n = (f n)⁻¹ by rfl, inv_mul_cancel₀ (hf0 n).ne.symm]
 
+lemma smul_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) (r : ℝ)
+    (hr : 0 < r) (v : E) (hv : v ∈ posTangentConeAt s p) : r • v ∈ posTangentConeAt s p := by
+  rw [hs.posTangentConeAt_eq_closure hp] at hv ⊢
+  exact (feasibleCone hs p).closure.smul_mem hr hv
+
+lemma add_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    (v : E) (hv : v ∈ posTangentConeAt s p) (w : E) (hw : w ∈ posTangentConeAt s p) :
+    v + w ∈ posTangentConeAt s p := by
+  rw [hs.posTangentConeAt_eq_closure hp] at hv hw ⊢
+  exact (feasibleCone hs p).closure.add_mem hv hw
+
 lemma Convex.derivable_of_smul_mem {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
     {v : E} {r : ℝ} (hr : r > 0) (hrv : p + r • v ∈ s) :
     derivableWithinAt ℝ s p v := by
@@ -517,23 +564,28 @@ lemma Convex.derivable_of_smul_mem {s : Set E} (hs : Convex ℝ s) {p : E} (hp :
     intro y hy
     exact hs.add_smul_mem_icc hp hr hrv hy
 
--- it should probably be enough to require `p ∈ closure s`
-lemma Convex.derivable_of_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
-    {v : E} (hv : v ∈ posTangentConeAt s p) :
-    derivableWithinAt ℝ s p v := by
-  rw [hs.posTangentConeAt_eq_closure hp] at hv
-  rw [← mem_ofPred_eq (x := v) (p := derivableWithinAt ℝ s p)]
-  suffices closure {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s} ⊆ {y | derivableWithinAt ℝ s p y} from
-    this hv
-  apply closure_minimal ?_ (isClosed_derivable hp)
+lemma Convex.closure_feasibleCone_subset_derivableCone {s : Set E} (hs : Convex ℝ s) {p : E}
+    (hp : p ∈ s) : ((feasibleCone hs p).closure : Set E) ⊆ derivableCone p hs := by
+  apply closure_minimal ?_ (isClosed_derivableCone hs hp)
   intro y hy
   obtain ⟨r, hr, hrs⟩ := hy
   exact hs.derivable_of_smul_mem hp hr hrs
 
--- it should probably be enough to requiere `p ∈ closure s`
-lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
-    {v : E} (hv : derivableWithinAt ℝ s p v) : v ∈ posTangentConeAt s p := by
-  rw [hs.posTangentConeAt_eq_closure hp, ← seqClosure_eq_closure]
+lemma Convex.posTangentConeAt_subset_derivableCone {s : Set E} (hs : Convex ℝ s) {p : E}
+    (hp : p ∈ s) : posTangentConeAt s p ⊆ derivableCone p hs := by
+  rw [hs.posTangentConeAt_eq_closure hp]
+  exact closure_feasibleCone_subset_derivableCone hs hp
+
+-- it should probably be enough to require `p ∈ closure s`
+lemma Convex.derivable_of_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    {v : E} (hv : v ∈ posTangentConeAt s p) :
+    derivableWithinAt ℝ s p v :=
+  hs.posTangentConeAt_subset_derivableCone hp hv
+
+lemma Convex.derivableCone_subset {s : Set E} (hs : Convex ℝ s) {p : E} :
+    (derivableCone p hs : Set E) ⊆ (feasibleCone hs p).closure := by
+  intro v hv
+  rw [ConvexCone.coe_closure, ← seqClosure_eq_closure]
   obtain ⟨γ, hγ, hγp, hγv, hγs⟩ := hv
   have : HasDerivWithinAt γ v (Ici 0) 0 := hγv ▸ hγ.hasDerivWithinAt
   rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left] at this
@@ -556,9 +608,23 @@ lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p 
     exact tendsto_inv_atTop_nhdsGT_zero.comp
       (tendsto_atTop_add_const_left _ _ tendsto_natCast_atTop_atTop)
 
+lemma Convex.derivableCone_eq_closure_feasibleCone {s : Set E} (hs : Convex ℝ s) {p : E}
+    (hp : p ∈ s) : (derivableCone p hs : Set E) = (feasibleCone hs p).closure :=
+  subset_antisymm (derivableCone_subset hs) (closure_feasibleCone_subset_derivableCone hs hp)
+
+lemma Convex.derivableCone_eq_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E}
+    (hp : p ∈ s) : derivableCone p hs = posTangentConeAt s p :=
+  (hs.derivableCone_eq_closure_feasibleCone hp).trans (posTangentConeAt_eq_closure hs hp).symm
+
 lemma Convex.derivableWithinAt_iff_mem_posTangentConeAt {s : Set E} (hs : Convex ℝ s) {p : E}
-    (hp : p ∈ s) {v : E} : derivableWithinAt ℝ s p v ↔ v ∈ posTangentConeAt s p :=
-  ⟨mem_posTangentCone_of_derivable hs hp, derivable_of_mem_posTangentCone hs hp⟩
+    (hp : p ∈ s) {v : E} : derivableWithinAt ℝ s p v ↔ v ∈ posTangentConeAt s p := by
+  rw [← hs.derivableCone_eq_posTangentCone hp]
+  rfl
+
+-- it should probably be enough to requiere `p ∈ closure s`
+lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
+    {v : E} (hv : derivableWithinAt ℝ s p v) : v ∈ posTangentConeAt s p :=
+  (derivableWithinAt_iff_mem_posTangentConeAt hs hp).mp hv
 
 -- this can definitely be generalised
 lemma Convex.derivableWithinAt_of_mem_interior {s : Set E} (hs : Convex ℝ s) {p : E}
@@ -582,7 +648,7 @@ lemma inwardPointing.derivableWithinAt {𝕜 : Type*} {E : Type*} [NontriviallyN
 
 lemma closure_feasibleCone_eq_closure_feasibleInteriorCone {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) :
-    closure (feasibleCone hs hp) =
+    closure (feasibleCone hs p) =
       closure (feasibleInteriorCone hs hp : Set E) := by
   apply subset_antisymm
   · refine closure_minimal ?_ isClosed_closure
@@ -603,14 +669,15 @@ lemma closure_feasibleCone_eq_closure_feasibleInteriorCone {s : Set E} (hs : Con
         inv_mul_lt_iff₀ hr, dist_sub_eq_dist_add_right, add_comm]
       exact hwv
   · apply closure_mono
-    rw [feasibleInteriorCone_carrier, feasibleCone_carrier hs hp]
+    rw [feasibleInteriorCone_carrier, feasibleCone_carrier hs p]
     grw [interior_subset]
+    simp
 
 lemma Convex.interior_posTangentCone_eq_feasibleInteriorCone {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) :
     interior (posTangentConeAt s p) =
       feasibleInteriorCone hs hp := by
-  rw [hs.posTangentConeAt_eq_closure hp,
+  rwa [hs.posTangentConeAt_eq_closure hp, ConvexCone.coe_closure,
     closure_feasibleCone_eq_closure_feasibleInteriorCone hs hs',
     (feasibleInteriorCone hs hp).convex.interior_closure_eq_interior_of_nonempty_interior
     ((hs.isOpen_feasibleInteriorCone hp).interior_eq.symm ▸
@@ -815,48 +882,3 @@ lemma interior_posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : Eucl
     interior (posTangentConeAt {x | ∀ i, 0 ≤ x.ofLp i} p) = {v | ∀ i, 0 < v.ofLp i} := by
   rw [posTangentConeAt_euclideanQuadrant hp]
   exact interior_euclideanQuadrant n 2 0
-
-@[simps]
-def ConvexCone.preTangentCone {s : Set E} (hs : Convex ℝ s) (p : E) :
-    ConvexCone ℝ E where
-  carrier := {v | ∃ (r : ℝ) (_ : r > 0), p + r • v ∈ s}
-  smul_mem' c hc v hv := by
-    obtain ⟨r, hr, hrs⟩ := hv
-    use r / c, div_pos hr hc
-    rw [smul_smul, div_mul_cancel₀ r hc.ne.symm]
-    exact hrs
-  add_mem' v hv w hw := by
-    obtain ⟨r, hr, hrs⟩ := hv
-    obtain ⟨t, ht, hts⟩ := hw
-    use (r * t) / (r + t)
-    refine ⟨?_, ?_⟩
-    · field_simp
-      simp [mul_pos hr ht]
-    · rw [smul_add]
-      nth_rw 1 [mul_div_assoc, mul_comm r, mul_smul]
-      rw [mul_div_right_comm, mul_smul, ← one_smul ℝ p, ← div_self (add_pos hr ht).ne.symm,
-        add_div, add_comm (r / (r + t)) (t / (r + t)), add_smul, add_add_add_comm,
-        ← smul_add, ← smul_add]
-      apply hs hrs hts
-      all_goals (field_simp; simp [ht.le, hr.le, add_comm])
-
-def ConvexCone.tangentCone {s : Set E} (hs : Convex ℝ s) (p : E) :
-    ConvexCone ℝ E :=
-  (ConvexCone.preTangentCone hs p).closure
-
-lemma ConvexCone.tangentCone_eq {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) :
-    ConvexCone.tangentCone hs p  = posTangentConeAt s p := by
-  unfold tangentCone
-  rw [coe_closure, preTangentCone_carrier hs p]
-  exact (hs.posTangentConeAt_eq_closure hp).symm
-
-lemma smul_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s) (r : ℝ)
-    (hr : 0 < r) (v : E) (hv : v ∈ posTangentConeAt s p) : r • v ∈ posTangentConeAt s p := by
-  rw [← ConvexCone.tangentCone_eq hs hp] at hv ⊢
-  exact (ConvexCone.tangentCone hs p).smul_mem hr hv
-
-lemma add_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
-    (v : E) (hv : v ∈ posTangentConeAt s p) (w : E) (hw : w ∈ posTangentConeAt s p) :
-    v + w ∈ posTangentConeAt s p := by
-  rw [← ConvexCone.tangentCone_eq hs hp] at hv hw ⊢
-  exact (ConvexCone.tangentCone hs p).add_mem hv hw

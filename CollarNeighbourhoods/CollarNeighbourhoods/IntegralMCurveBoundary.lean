@@ -468,6 +468,7 @@ theorem isMIntegralCurveOn_Ico_eqOn_of_contMDiff [T2Space M] {a b : ℝ} (hab : 
   · refine htγ (hct ?_)
     exact ⟨hzx, hz.trans ((midpoint_lt_right.mpr (lt_min hxb' hc)).le.trans (min_le_right b c))⟩
 
+-- maybe use connected instead
 variable (v) in
 def maximalMIntegralCurveDomainAt (p : M) : Set ℝ :=
   sUnion {s : Set ℝ | Convex ℝ s ∧ 0 ∈ s ∧ ∃ γ : ℝ → M, IsMIntegralCurveOn γ v s ∧ γ 0 = p}
@@ -490,11 +491,37 @@ lemma mem_maximalMIntegralCurveDomainAt [CompleteSpace E]
     apply (hsv 0 (mem_of_mem_nhdsWithin self_mem_Ici hs0)).mono
     simp
 
+--lemma exists_of_subset_maximalMIntegralCurveDomain_of_isBounded {p : M} {a b : ℝ}
+--  {hsp : s ⊆ maximalMIntegralCurveDomainAt v p} :
+--  ∃ (t : Set ℝ), Convex ℝ t ∧ 0 ∈ t ∧ ∃ γ : ℝ → M, IsMIntegralCurveOn γ v s ∧ γ 0 = p
+
+lemma convex_maximalMIntegralCurveDomain [CompleteSpace E]
+    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} :
+    Convex ℝ (maximalMIntegralCurveDomainAt v p) := by
+  intro x hx y hy a b ha hb hab
+
+  sorry
+
+-- # alternative way to define the domain
+
+variable (v) in
+def minimaSet (p : M) : Set ℝ := {a : ℝ | ∃ γ : ℝ → M, IsMIntegralCurveOn γ v (Icc a 0) ∧ γ 0 = p}
+
+--variable (v) in
+--def maximalMIntegralCurveDomainAt' (p : M) : Set ℝ :=
+--  if BddBelow (minimaSet v p) then
+
+noncomputable def minIntegral (p : M) := sInf (minimaSet v p)
+
 --lemma exists_subset_maximalMIntegralCurveDomainAt [CompleteSpace E]
 --    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
 --    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} : sorry :=
 --  sorry
 
+
+-- do this with inclusion limits
+-- use `iUnionLift`
 variable (v) in
 open Classical in
 noncomputable def maximalMIntegralCurveAt (p : M) (x : ℝ) : M :=
@@ -506,6 +533,11 @@ lemma isMIntegralCurveOn_maximalMIntegralCurveAt
     (hx : ∀ x, IsInwardPointingMinimal (v x)) (p : M) :
     IsMIntegralCurveOn (maximalMIntegralCurveAt v p) v (maximalMIntegralCurveDomainAt v p) := by
   intro t ht
+  by_cases ht' : t ∈ interior (maximalMIntegralCurveDomainAt v p)
+  · have := Metric.isOpen_iff.1 (isOpen_interior) t ht'
+    rw [mem_interior] at ht'
+    obtain ⟨s, hsp, hs, hst⟩ := ht'
+    sorry
   let s := ht.choose
   have hs : Convex ℝ s := ht.choose_spec.1.1
   have hst : t ∈ s := ht.choose_spec.2
@@ -515,7 +547,6 @@ lemma isMIntegralCurveOn_maximalMIntegralCurveAt
   by_cases ht : I.IsBoundaryPoint (γ t)
   · sorry
   · rw [← I.isInteriorPoint_iff_not_isBoundaryPoint] at ht
-
     sorry
 
 end

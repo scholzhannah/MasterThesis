@@ -46,7 +46,7 @@ def IsRealizable {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (γ : ℝ → M) (ε : ℝ) (_ : ε > 0) (_ : CMDiff[Ico 0 ε] ∞ γ),
     γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 
--- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
+-- should this be `HasMFDerivAt[Ici 0]`
 def IsRealizableMinimal {p : M} (v : TangentSpace I p) : Prop :=
   ∃ (γ : ℝ → M) (_ : MDiffAt[Ici 0] γ 0), γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 

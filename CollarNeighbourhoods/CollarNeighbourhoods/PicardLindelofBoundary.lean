@@ -388,9 +388,9 @@ noncomputable def next
       apply smul_mem_posTangentCone hf.convex hx₀ (↑t - tmin)
         (lt_of_le_of_ne (sub_nonneg_of_le t.2.1) (sub_ne_zero.mpr ht).symm)
       apply Convex.set_average_mem
-      · rw [← ConvexCone.tangentCone_eq hf.convex hx₀]
+      · rw [Convex.posTangentConeAt_eq_closure hf.convex hx₀]
         exact ConvexCone.convex _
-      · rw [← ConvexCone.tangentCone_eq hf.convex hx₀]
+      · rw [Convex.posTangentConeAt_eq_closure hf.convex hx₀]
         exact isClosed_closure
       · simp [sub_ne_zero.mpr ht]
       · simp
@@ -511,7 +511,6 @@ lemma exists_isFixedPt_next
     hf.isClosed
   let ⟨_, _, h'⟩ := exists_contractingWith_iterate_next h hf
   ⟨_, h'.isFixedPt_fixedPoint_iterate⟩
-
 
 /-! ## Lipschitz continuity of the solution with respect to the initial condition
 

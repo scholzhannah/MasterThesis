@@ -601,6 +601,33 @@ lemma hasDerivAt_pointReflection {G : Type*} [NontriviallyNormedField G] [Contin
   rw [neg_eq_zero_sub 1]
   exact (hasDerivAt_const y x).sub (hasDerivAt_id' y)
 
+-- # iUnionLift'
+
+open Classical in
+@[nolint unusedArguments]
+noncomputable def iUnionLift' {α : Type*} {ι β : Sort _} [Inhabited β] (S : ι → Set α)
+    (f : ∀ _, α → β)
+    (_ : ∀ (i j) (x : α) (_ : x ∈ S i) (_ : x ∈ S j), f i x = f j x) (x : α) : β :=
+  if hx : ∃ i, x ∈ S i then
+    let i := Classical.choose hx
+    f i x
+  else
+    default
+
+lemma iUnionLift'_eq {α : Type*} {ι β : Sort _} [Inhabited β] {S : ι → Set α}
+    {f : ∀ _, α → β}
+    (hf : ∀ (i j) (x : α) (_ : x ∈ S i) (_ : x ∈ S j), f i x = f j x)
+    {x : α} {i : ι} (hx : x ∈ S i) : iUnionLift' S f hf x = f i x := by
+  rw [iUnionLift', dite_eq_left ⟨i, hx⟩]
+
+lemma smul_ici_zero_of_lt {α : Type*} {β : Type*} [GroupWithZero α] [PartialOrder α]
+    [PosMulReflectLT α] [Preorder β] [AddMonoid β] [DistribMulAction α β] [PosSMulMono α β]
+    [PosSMulReflectLE α β] {c : α} (hc : c > 0) :
+    letI := Set.smulSet (α := α) (β := β)
+    c • Ici (0 : β) = Ici (0 : β) := by
+  ext x
+  simp [mem_smul_set_iff_inv_smul_mem₀ hc.ne', smul_nonneg_iff_nonneg_of_pos_left (inv_pos.mpr hc)]
+
 open MeasureTheory
 
 /-
