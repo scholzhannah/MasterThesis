@@ -321,7 +321,23 @@ For convex sets this notion agrees with other types of tangent cones such as the
 \end{block}
 
 \begin{overprint}
-\onslide<2>\alert{picture of why this is really hard}
+\onslide<2>\begin{figure}
+  \begin{minipage}[b]{0.3\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/DerivableEasy.png}
+  \end{minipage}
+  \hspace{0.7cm}
+  \begin{minipage}[b]{0.25\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/DerivableHard.png}
+  \end{minipage}
+  \hspace{0.7cm}
+  \begin{minipage}[b]{0.25\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/DerivableHarder.png}
+  \end{minipage}
+  \caption{Realisability examples}
+\end{figure}
 \onslide<3> Requiring $\gamma$ to be continuous instead of smooth would work better. 
 \end{overprint}
 
@@ -342,8 +358,6 @@ def IsRealizable {M H E : Type*} [TopologicalSpace H]
   ∃ (γ : ℝ → M) (_ : MDiffAt[Ici 0] γ 0), γ 0 = p ∧ 
     mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 \end{lstlisting}
-
-\alert{picutre of why the issue from before doesn't appear here}
 
 \end{frame}
 
@@ -379,7 +393,7 @@ def derivableWithinAt (𝕜 : Type*) {E : Type*}
 \begin{frame}{Equivalence to tanget cone II}
 
 \begin{block}{Lemma: derivable and tangent cones agree}
-Let $E$ be a normed space over $\bR$, let $C \subseteq \bR$ be a convex set and let $p \in C$ be a point. Then the derivable cone and the tangent cone to $C$ at $p$ agree.  
+Let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a convex set and let $p \in C$ be a point. Then the derivable cone and the tangent cone to $C$ at $p$ agree.  
 
 \end{block}
 
@@ -398,9 +412,17 @@ Proof steps:
 The set of all vectors $v$ such that there is an $r > 0$ such that $r \cdot v + p \in C$ is called the \emph{feasible cone} to $C$ at $p$.
 \end{block}
 
-\alert{picture of step II}
+\end{frame}
 
-\alert{maybe show something about step III}
+\begin{frame}{Equivalence to tangent cone: step 2}
+
+\begin{figure}
+\begin{minipage}[b]{0.4\linewidth}
+  \centering
+  \includegraphics[width=\textwidth]{images/ClosedDerivable.png}
+  \caption{The derivable cone is closed}
+\end{minipage}
+\end{figure}
 
 \end{frame}
 
