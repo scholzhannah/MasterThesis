@@ -10,7 +10,7 @@ Here is a common definition for manifolds with boundary without corners:
 
 This definition cannot be used for manifolds with corners as in this case $\boundary M$ is not always a manifold and thus $\tanspace{p}{\boundary M}$ is not defined. 
 
-The existence of the $\gamma \colon : [0, \varepsilon) \to M$ by itself characterises whether a vector is inward pointing or tangent to the boundary, a notion which we will call \emph{realisable}. 
+The existence of the $\gamma \colon [0, \varepsilon) \to M$ by itself characterises whether a vector is inward pointing or tangent to the boundary, a notion which we will call \emph{realisable} or \emph{weakly inward pointing}. 
 
 So for manifolds with corners we either need a completely new definition that intrinsically excludes the vectors tangent to the boundary or we need a definition of realisability and a way to exclude the tangent vectors. 
 
@@ -47,9 +47,9 @@ Unfortunately, this definition doesn't exclude vectors tangent to the boundary:
 \label{fig:InwLee2}
 \end{figure}
 
-Then we found this definition by \citeauthor{Melrose1996}. 
+Then we found this definition by \citeauthor{Melrose1996} which he however formulates for vector fields instead of individual vectors. Here is the version for vectors:  
 
-\begin{defi}[\cite{Melrose1996} Definition 1.13.10]\label{defi:InwMelrose}
+\begin{defi}[adapted from \cite{Melrose1996} Definition 1.13.10]\label{defi:InwMelrose}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if $\direcderiv{v}f (p) \ge 0$ for every non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$. 
 \end{defi}
 
@@ -80,6 +80,8 @@ Unfortunately, both of the above definitions do not work for manifolds with corn
     So in the case of Definition \ref{defi:InwMelrose}, this would mean that any vector was inward pointing, and in the case of Definition \ref{defi:InwMelrose2}, no vector would be inward pointing. 
 \end{example}
 
+This definition however does give the correct notion for smooth vector fields which was perhaps what \citeauthor{Melrose1996} intended. 
+
 Lastly, here is another popular definition that falls into this category: 
 
 \begin{defi}[E.g.\ \cite{Joyce2009} Definition 2.2]
@@ -89,7 +91,7 @@ Lastly, here is another popular definition that falls into this category:
 \end{defi}
 
 This definition is of course correct, however it depends on a choice of chart. 
-In Mathlib definitions are generally preferred to not depend on choices. \todo{Why exactly? Reference?}
+In \mathlib definitions are generally preferred to not depend on choices. \todo{Why exactly? Reference?} Additionally, it only work for models with corners of the form $\bR^n_k$. For \mathlib we would need a more general version. 
 
 \section{Definitions through realisability}
 
@@ -183,11 +185,67 @@ So we arrive at the following definition of realisability based on \cite{Rockafe
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is \emph{realisable} if and only if there is a function $\gamma \colon [0, \infty) \to M$ that is differentiable at $0$ and fulfils $\gamma (0) = p$ and $\gamma'(0) = v$.
 \end{defi}
 
+In a normed space this definition reduces to the following which we will call by the name derivability instead of realisability in accordance with \cite{Rockafellar1998}.
+
+\begin{defi}[Derivability]
+Let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
+We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\varepsilon (0) = p$ and $\varepsilon' (0) = v$. 
+
+The set of all derivable vectors in $C$ at $p$ is called the \emph{derivable cone} to $C$ at $p$.
+\end{defi}
+
 \section{Preservation under charts}
 
 Here I should write down the proof that realisability and inward pointing are properties preserved by charts.
 
 
+
 \section{Equivalence with tangent cone on model space}
+
+We now need to show that this definition of realisability does indeed equal our desired notion of being in the tangent cone. 
+
+For this section let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
+
+First we need to show the following lemma: 
+
+\begin{lem}
+Let $C$ be convex.
+Then the derivable cone to $C$ at $p$ is a convex cone.
+\end{lem}
+
+The next lemma we need is the following for which the proof is inspired by \cite{Rios2018}:
+
+\begin{lem}
+Let $p \in C$. 
+Then the derivable cone is closed in $E$. 
+\end{lem}
+
+Now we need yet another cone: 
+
+\begin{defi}
+The set of all vectors $v$ such that there is an $r > 0$ such that $r \cdot v + p \in C$ is called the \emph{feasible cone} to $C$ at $p$.
+\end{defi}
+
+Again we get the following lemma: 
+
+\begin{lem}
+Let $C$ be convex. Then the feasible cone to $C$ at $p$ is a convex cone. 
+\end{lem}
+
+Now we can show our first equality of cones: 
+
+\begin{lem}
+Let $C$ be convex and $p \in C$. Then the tangent cone to $C$ at $p$ agrees with the closure of the feasible cone to $C$ at $p$. 
+\end{lem}
+
+Now we just need to show the following: 
+
+\begin{lem}
+Let $C$ be convex and $p \in C$. Then the derivable cone to $C$ at $p$ equals the closure of the feasible cone to $C$ at $p$.
+\end{lem}
+
+\begin{lem}
+Let $C$ be convex and $p \in C$. Then any vector $v$ in the tangent cone to $C$ at $p$ is derivable within $C$ at $p$.
+\end{lem}
 
 Here I should show that this is equivalent to the tangent cone for convex sets. 

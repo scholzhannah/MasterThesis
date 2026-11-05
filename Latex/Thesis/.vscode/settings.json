@@ -40,12 +40,10 @@
     ],
     "latex-workshop.latex.recipes": [
         {
-            "name": "pdflatex -> biber -> makeindex1 -> makeindex2 -> pdflatex * 2",
+            "name": "pdflatex -> biber -> pdflatex * 2",
             "tools": [
                 "pdflatex",
                 "biber",
-                "makeindex1",
-                "makeindex2",
                 "pdflatex",
                 "pdflatex"
             ]
