@@ -333,16 +333,12 @@ lemma derivWithin_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
     derivWithin (limitFun hγv hγ hs p) (Ici 0) 0 = w :=
   (hasDerivWithinAt_limitFun hγv hγ hs hγp hv).derivWithin (uniqueDiffWithinAt_Ici 0)
 
-variable (𝕜)
-
 def derivableWithinAt (s : Set E) (p : E) (v : E) : Prop :=
-   ∃ (γ : 𝕜 → E) (_ : DifferentiableWithinAt 𝕜 γ (Ici 0) 0), γ 0 = p ∧
-      derivWithin γ (Ici 0) (0 : 𝕜) = v ∧ ∀ᶠ (x : 𝕜) in 𝓝[≥] 0, γ x ∈ s
-
-example : SMul ℝ (Set ℝ) := by exact Set.smulSet
+   ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
+      derivWithin γ (Ici 0) (0 : ℝ) = v ∧ ∀ᶠ (x : ℝ) in 𝓝[≥] 0, γ x ∈ s
 
 private lemma convex_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) :
-    Convex ℝ {v | derivableWithinAt ℝ s p v} := by
+    Convex ℝ {v | derivableWithinAt s p v} := by
   rw [convex_iff_add_mem]
   intro x ⟨γ, hγ, hγp, hγv, hγs⟩ y ⟨δ, hδ, hδp, hδv, hδs⟩ a b ha hb hab
   use a • γ + b • δ
@@ -364,7 +360,7 @@ private lemma convex_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) :
       (ht2s _ (hu2t2 ⟨hy1, hy2.trans (min_le_right _ _)⟩)) ha hb hab
 
 def derivableCone {s : Set E} (p : E) (hs : Convex ℝ s) : ConvexCone ℝ E :=
-  ConvexCone.ofConvexSmul ℝ E {v | derivableWithinAt ℝ s p v} (by exact convex_derivableCone hs)
+  ConvexCone.ofConvexSmul ℝ E {v | derivableWithinAt s p v} (by exact convex_derivableCone hs)
     (by
       intro c hc x ⟨γ, hγ, hγp, hγv, hγs⟩
       use fun t ↦ γ (c * t)
@@ -387,7 +383,7 @@ def derivableCone {s : Set E} (p : E) (hs : Convex ℝ s) : ConvexCone ℝ E :=
 
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
 lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
-    IsClosed {v : E | derivableWithinAt ℝ s p v} := by
+    IsClosed {v : E | derivableWithinAt s p v} := by
   classical
   rw [← isSeqClosed_iff_isClosed]
   intro v w h hv
@@ -554,7 +550,7 @@ lemma add_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈
 
 lemma Convex.derivable_of_smul_mem {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
     {v : E} {r : ℝ} (hr : r > 0) (hrv : p + r • v ∈ s) :
-    derivableWithinAt ℝ s p v := by
+    derivableWithinAt s p v := by
   use fun i ↦ p + (i • v)
   refine ⟨by fun_prop, by simp, ?_, ?_⟩
   · rw [derivWithin_const_add_fun, derivWithin_smul_const (differentiableWithinAt_fun_id) v,
@@ -579,7 +575,7 @@ lemma Convex.posTangentConeAt_subset_derivableCone {s : Set E} (hs : Convex ℝ 
 -- it should probably be enough to require `p ∈ closure s`
 lemma Convex.derivable_of_mem_posTangentCone {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
     {v : E} (hv : v ∈ posTangentConeAt s p) :
-    derivableWithinAt ℝ s p v :=
+    derivableWithinAt s p v :=
   hs.posTangentConeAt_subset_derivableCone hp hv
 
 lemma Convex.derivableCone_subset {s : Set E} (hs : Convex ℝ s) {p : E} :
@@ -617,30 +613,27 @@ lemma Convex.derivableCone_eq_posTangentCone {s : Set E} (hs : Convex ℝ s) {p 
   (hs.derivableCone_eq_closure_feasibleCone hp).trans (posTangentConeAt_eq_closure hs hp).symm
 
 lemma Convex.derivableWithinAt_iff_mem_posTangentConeAt {s : Set E} (hs : Convex ℝ s) {p : E}
-    (hp : p ∈ s) {v : E} : derivableWithinAt ℝ s p v ↔ v ∈ posTangentConeAt s p := by
+    (hp : p ∈ s) {v : E} : derivableWithinAt s p v ↔ v ∈ posTangentConeAt s p := by
   rw [← hs.derivableCone_eq_posTangentCone hp]
   rfl
 
 -- it should probably be enough to requiere `p ∈ closure s`
 lemma Convex.mem_posTangentCone_of_derivable {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ s)
-    {v : E} (hv : derivableWithinAt ℝ s p v) : v ∈ posTangentConeAt s p :=
+    {v : E} (hv : derivableWithinAt s p v) : v ∈ posTangentConeAt s p :=
   (derivableWithinAt_iff_mem_posTangentConeAt hs hp).mp hv
 
 -- this can definitely be generalised
 lemma Convex.derivableWithinAt_of_mem_interior {s : Set E} (hs : Convex ℝ s) {p : E}
-    (hp : s ∈ 𝓝 p) {v : E} : derivableWithinAt ℝ s p v := by
+    (hp : s ∈ 𝓝 p) {v : E} : derivableWithinAt s p v := by
   rw [hs.derivableWithinAt_iff_mem_posTangentConeAt (mem_of_mem_nhds hp), posTangentConeAt,
     tangentConeAt_of_mem_nhds hp]
   exact mem_univ _
 
-def inwardPointing (𝕜 : Type*) {E : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E]
-    [NormedSpace 𝕜 E] [LinearOrder 𝕜] (s : Set E) (p v : E) : Prop :=
-  v ∈ interior {w | derivableWithinAt 𝕜 s p w}
+def inwardPointing (s : Set E) (p v : E) : Prop :=
+  v ∈ interior {w | derivableWithinAt s p w}
 
-lemma inwardPointing.derivableWithinAt {𝕜 : Type*} {E : Type*} [NontriviallyNormedField 𝕜]
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] [LinearOrder 𝕜] {s : Set E} {p v : E}
-    (hv : inwardPointing 𝕜 s p v) :
-    derivableWithinAt 𝕜 s p v := by
+lemma inwardPointing.derivableWithinAt {s : Set E} {p v : E} (hv : inwardPointing s p v) :
+    derivableWithinAt s p v := by
   apply interior_subset hv
 
 -- `https://hal.science/hal-01552475v1/document` has a characterisation of the interior of the
@@ -686,13 +679,13 @@ lemma Convex.interior_posTangentCone_eq_feasibleInteriorCone {s : Set E} (hs : C
 
 lemma inwardPointing_iff_exist {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) (v : E) :
-    inwardPointing ℝ s p v ↔ ∃ r > (0 : ℝ), p + r • v ∈ interior s := by
+    inwardPointing s p v ↔ ∃ r > (0 : ℝ), p + r • v ∈ interior s := by
   simp_rw [inwardPointing, hs.derivableWithinAt_iff_mem_posTangentConeAt hp, ofPred_mem_eq,
     hs.interior_posTangentCone_eq_feasibleInteriorCone hs' hp, feasibleInteriorCone_carrier hs hp]
   rfl
 
 lemma inwardPointing_of_mem_interior {s : Set E} (hs : Convex ℝ s) {p : E} (hp : p ∈ interior s)
-    (v : E) : inwardPointing ℝ s p v := by
+    (v : E) : inwardPointing s p v := by
   rw [inwardPointing_iff_exist hs ⟨p, hp⟩ (interior_subset hp) v]
   by_cases hv : v = 0
   · use 1, zero_lt_one
@@ -707,14 +700,14 @@ lemma inwardPointing_of_mem_interior {s : Set E} (hs : Convex ℝ s) {p : E} (hp
 -- one should definitely be able to generalize this to non convex sets
 lemma norm_pos_of_mem_frontier_of_inwardPointing {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s \ (interior s)) {v : E}
-    (hv : inwardPointing ℝ s p v) :
+    (hv : inwardPointing s p v) :
     ‖v‖ > 0 := by
   contrapose hv
   simp only [gt_iff_lt, norm_pos_iff, ne_eq, not_not] at hv
   simp [hv, inwardPointing_iff_exist hs hs' (mem_of_mem_inter_left hp) 0, hp.2]
 
 lemma exists_closedBall_subset_of_inwardPointing {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     ∃ r > (0 : ℝ), ∃ ε > (0 : ℝ), closedBall (p + r • v) ε ⊆ interior s := by
   obtain ⟨r, hr, hrs⟩ := (inwardPointing_iff_exist hs hs' hp v).1 hv
   obtain ⟨ε, hε, hεs⟩ := (isOpen_iff.1 isOpen_interior) _ hrs
@@ -722,21 +715,21 @@ lemma exists_closedBall_subset_of_inwardPointing {s : Set E} (hs : Convex ℝ s)
   exact (Metric.closedBall_subset_ball (half_lt_self hε)).trans hεs
 
 def coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     Set E :=
   letI r := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose
   letI ε := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose_spec.2.choose
   convexHull ℝ (closedBall (p + r • v) ε ∪ {p})
 
 lemma isClosed_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     IsClosed (coneNhdWithin hs hs' hp hv) := by
   rw [coneNhdWithin, union_comm]
   exact isCompact_singleton.isClosed_convexHull_union (convex_singleton p) (isClosed_closedBall)
     (convex_closedBall _ _) (NormedSpace.isVonNBounded_closedBall' ℝ E _ _)
 
 lemma coneNhdWithin_subset {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     coneNhdWithin hs hs' hp hv ⊆ s := by
   have hεs :=
     (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose_spec.2.choose_spec.2
@@ -744,12 +737,12 @@ lemma coneNhdWithin_subset {s : Set E} (hs : Convex ℝ s)
   apply union_subset (hεs.trans interior_subset) (singleton_subset_iff.mpr hp)
 
 lemma convex_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     Convex ℝ (coneNhdWithin hs hs' hp hv) :=
   convex_convexHull ℝ _
 
 lemma subset_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     letI r := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose
     letI ε := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose_spec.2.choose
     ball (p + r • v) ε ⊆ interior (coneNhdWithin hs hs' hp hv) := by
@@ -758,19 +751,19 @@ lemma subset_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
   exact interior_mono (subset_trans subset_union_left (subset_convexHull _ _))
 
 lemma nonempty_interior_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     (interior (coneNhdWithin hs hs' hp hv)).Nonempty := by
   let hε := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose_spec.2.choose_spec.1
   exact (nonempty_ball.mpr hε).mono (subset_coneNhdWithin hs hs' hp hv)
 
 lemma mem_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
     p ∈ coneNhdWithin hs hs' hp hv :=
   subset_convexHull _ _ (mem_union_right _ rfl)
 
 lemma isInwardPointing_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
-    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing ℝ s p v) :
-    inwardPointing ℝ (coneNhdWithin hs hs' hp hv) p v := by
+    (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) {v : E} (hv : inwardPointing s p v) :
+    inwardPointing (coneNhdWithin hs hs' hp hv) p v := by
   let r := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose
   have hr : r > 0 := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose_spec.1
   have hε := (exists_closedBall_subset_of_inwardPointing hs hs' hp hv).choose_spec.2.choose_spec.1
@@ -781,8 +774,8 @@ lemma isInwardPointing_coneNhdWithin {s : Set E} (hs : Convex ℝ s)
 
 lemma exists_mem_coneNhdsWithin_of_lt_of_not_mem_interior {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s \ interior s) {v : E}
-    (hv : inwardPointing ℝ s p v) :
-    ∃ ε > 0, ∀ (v : E), derivableWithinAt ℝ (coneNhdWithin hs hs' hp.1 hv) p v → ‖v‖ < ε →
+    (hv : inwardPointing s p v) :
+    ∃ ε > 0, ∀ (v : E), derivableWithinAt (coneNhdWithin hs hs' hp.1 hv) p v → ‖v‖ < ε →
       p + v ∈ coneNhdWithin hs hs' hp.1 hv := by
   let r := (exists_closedBall_subset_of_inwardPointing hs hs' hp.1 hv).choose
   have hr : r > 0 := (exists_closedBall_subset_of_inwardPointing hs hs' hp.1 hv).choose_spec.1
@@ -831,8 +824,8 @@ lemma exists_mem_coneNhdsWithin_of_lt_of_not_mem_interior {s : Set E} (hs : Conv
 
 lemma exists_mem_coneNhdsWithin_of_le_of_not_mem_interior {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s \ interior s) {v : E}
-    (hv : inwardPointing ℝ s p v) :
-    ∃ ε > 0, ∀ (v : E), derivableWithinAt ℝ (coneNhdWithin hs hs' hp.1 hv) p v → ‖v‖ ≤ ε →
+    (hv : inwardPointing s p v) :
+    ∃ ε > 0, ∀ (v : E), derivableWithinAt (coneNhdWithin hs hs' hp.1 hv) p v → ‖v‖ ≤ ε →
       p + v ∈ coneNhdWithin hs hs' hp.1 hv := by
   obtain ⟨ε, hε, hεv⟩ := exists_mem_coneNhdsWithin_of_lt_of_not_mem_interior hs hs' hp hv
   use ε / 2, half_pos hε
@@ -850,7 +843,7 @@ lemma posTangentConeAt_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpa
 
 lemma derivableWithinAt_iff_euclideanHalfSpace {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : p.ofLp 0 = 0) {v : EuclideanSpace ℝ (Fin n)} :
-    derivableWithinAt ℝ {x | 0 ≤ x.ofLp 0} p v ↔ 0 ≤ v.ofLp 0 := by
+    derivableWithinAt {x | 0 ≤ x.ofLp 0} p v ↔ 0 ≤ v.ofLp 0 := by
   rw [EuclideanHalfSpace.convex.derivableWithinAt_iff_mem_posTangentConeAt hp.ge,
     posTangentConeAt_euclideanHalfSpace hp, mem_ofPred]
 
@@ -873,7 +866,7 @@ lemma posTangentConeAt_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpac
 
 lemma derivableWithinAt_iff_euclideanQuadrant {n : ℕ} [NeZero n] {p : EuclideanSpace ℝ (Fin n)}
     (hp : ∀ i, p.ofLp i = 0) {v : EuclideanSpace ℝ (Fin n)} :
-    derivableWithinAt ℝ {x | ∀ i, 0 ≤ x.ofLp i} p v ↔ ∀ i, 0 ≤ v.ofLp i := by
+    derivableWithinAt {x | ∀ i, 0 ≤ x.ofLp i} p v ↔ ∀ i, 0 ≤ v.ofLp i := by
   rw [EuclideanQuadrant.convex.derivableWithinAt_iff_mem_posTangentConeAt (fun i ↦ (hp i).ge),
     posTangentConeAt_euclideanQuadrant hp, mem_ofPred]
 

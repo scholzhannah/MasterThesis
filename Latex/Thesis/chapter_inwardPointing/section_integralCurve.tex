@@ -1,0 +1,152 @@
+\section{Integral Curves}
+
+To prove the existence of integral curve, one needs to solve an ODE in the model space. \todo{expand on this}.
+The typical way to do this is via the \emph{Picard-Lindelöf} theorem (also called the \emph{Cauchy-Lipschitz} theorem). 
+This and other similar theorems about ODE are typically formulated for open sets. 
+Since we work with vector fields defined on sets that need not be open, we need to adapt. 
+In a lot of differential geometry textbooks, continuous differentiability and similar notions in not-open sets are defined to mean that there exist local extensions to open neighbourhoods that have this property. \todo{discuss this in prerequisites section}
+However, \mathlib has chosen to not do this. \todo{cite Gouezels paper}
+So, if we wanted to extend our functions, we would need to have a theorem that permits this. That theorem is the \emph{Whitney extension theorem}. 
+Unfortunately, the proof of this theorem is quite long and thus did not appear to be in scope of this thesis. 
+Additionally, it seems that \mathlib has found a lot of beautiful general statements by avoiding this theorem and instead develop a theory that also works for not-open sets.
+
+So this is the route that we also chose to go for. 
+Thus we also needed a version of the Picard-Lindelöf theorem for our use case. 
+\todo{say that this is all based on the mathlib implementation}
+
+
+We first collect some conditions for our theorem: 
+
+\begin{defi}
+Let $E$ be a normed commutative group under addition and a normed space over $\bR$. 
+Let $s \subseteq E$ a set, $\minsub{t}, \maxsub{t} \in \bR$, $f \colon [\minsub{t}, \maxsub{t}] \times s \to E$ a function, $x_0 \in E$ and $a, r, L, K \in \bR_{\ge 0}$. 
+Then we say that $f$ is \emph{Picard-Lindelöf} with respect to $x_0, a, r, L, K$ if the following conditions hold: 
+\begin{enumerate}
+    \item \label{PicLindI} \emph{Lipschitz condition}: for all $t \in [\minsub{t}, \maxsub{t}]$, the function $f_t \colon s \to E, x \mapsto f ((t, x))$ is Lipschitz on $s \cap \closedBall{a}{x_0}$ with Lipschitz constant $L$. 
+    \item \label{PicLindII} \emph{Continuity}: for all $x \in s \cap \closedBall{a}{x_0}$, the function $f^x \colon [\minsub{t}, \maxsub{t}] \to E, t \mapsto f ((t, x))$ is continuous. 
+    \item \label{PicLindIII} \emph{Norm condition}: for all $t \in [\minsub{t}, \maxsub{t}]$ and $x \in s \cap \closedBall{a}{x_0}$, $\norm{f ((t, x))} \le L$.
+    \item \label{PicLindIV} \emph{Time condition}: We have $L (\maxsub{t} - \minsub{t}) \le a - r$. 
+    \item \label{PicLindV} \emph{Set conditions}: The set $s$ is convex and closed. 
+    \item \label{PicLindVI}\emph{Direction of vector field}: for all $v \in E$ if there is a $t \in [\minsub{t}, \maxsub{t}]$ such that $\norm{v - f ((t, x_0))} \le Ka$, then $v$ is inward pointing with respect to $s$ at $x_0$.
+    \item \label{PicLindVII}\emph{Shape condition:} for all vectors $v \in E$ that are derivable within $s$ at $x_0$ and fulfil $\norm{v} \le a$, we get $x_0 + v \in s$. 
+\end{enumerate}
+\end{defi}
+
+For the rest of the section let us fix a normed commutative additive group $E$ which is also a normed space over $\bR$ and a complete space. Additionally fix $\minsub{t} \le \maxsub{t}$ in $\bR$, $s \subseteq E$, a vector field $f \colon [\minsub{t}, \maxsub{t}] \times s \to E$, $x_0 \in s$ and $a, r, L, K \in \bR_{\ge}$. 
+
+The theorem that we want to prove is the following: 
+
+\begin{lem}
+Assume that $f$ is Picard-Lindelöf with respect to $x_0, a, r, L, K$. 
+The there is a differentiable function $\alpha \colon [\minsub{t}, \maxsub{t}] \to E$ such that for all $t \in [\minsub{t}, \maxsub{t}]$ it holds that $\alpha'(t) = f ((t, \alpha (t)))$ and $\alpha(t) \in s$. 
+\end{lem}
+
+Like in the proof of the usual Picard-Lindelöf theorem, we prove this by defining a contraction on a function space and then showing that the fixed point fulfils the conditions required in the theorem. 
+
+So let us first define the function space: 
+
+\begin{defi}
+We define $\fM$ to be the space of functions $g \colon [\minsub{t}, \maxsub{t}] \to E$ such that
+\begin{enumerate}
+    \item $g$ is Lipschitz continuous with constant $L$,
+    \item $g (\minsub{t}) \in \closedBall{r}{x_0}$, and 
+    \item $g ([\minsub{t}, \maxsub{t}]) \subseteq s$.
+\end{enumerate}
+\end{defi}
+
+Since we later want to apply the fact that every contraction in a complete space has a fixed point, we first need to show that this space is complete. 
+
+\begin{lem}
+If $s$ is closed, then $\fM$ is a complete space. 
+\end{lem}
+\begin{proof}
+Since $\fM$ is a subspace of the complete space $\contMaps{[\minsub{t}, \maxsub{t}]}{E}$ it suffices to show that it is closed. 
+We can express $\fM$ as the intersection of the following three sets: 
+\begin{equation*}
+    \begin{split}
+    \{g \in \contMaps{[\minsub{t}, \maxsub{t}]}{E} &\mid g \text{ is Lipschitz with constant } L\} \\
+    \{g \in \contMaps{[\minsub{t}, \maxsub{t}]}{E} &\mid \norm{g (\minsub{t}) - x_0} \le r\} \\ 
+    \{g \in \contMaps{[\minsub{t}, \maxsub{t}]}{E} &\mid g ([\minsub{t}, \maxsub{t}]) \subseteq s\}
+    \end{split}
+\end{equation*}
+
+In any metric space, the set of function that a Lipschitz with a specific constant is closed. Thus the first set is closed. 
+The second set is closed since the function $g \mapsto \norm{g (\minsub{t}) - x_0}$ is continuous. 
+And the last set is closed because $s$ is closed. 
+
+Thus, as the intersection of these three sets, $\fM$ is also closed. 
+
+\end{proof}
+
+Let us now define the relevant contraction: 
+
+\begin{defi}
+We define the function $C \colon \fM \to ([\minsub{t}, \maxsub{t}] \to E)$ as 
+\begin{equation*}
+    \begin{split}
+        C(g) \colon [\minsub{t}, \maxsub{t}] &\to E \\
+        t &\mapsto x_0 + \int_{\minsub{t}}^t f(x, g(x)) \diff x
+    \end{split}
+\end{equation*}
+\end{defi}
+
+A priori, we do not know that this function again maps to $\fM$.
+So let us prove this. 
+
+We first need some helper lemmas: 
+
+\begin{lem}\label{lem:funInBall}
+Let $f \in \fM$ and $L (\maxsub{t} - \minsub{t}) \le a - r$. Then for all $t \in [\minsub{t}, \maxsub{t}]$, we get $f (t) \in \closedBall{a}{x_0}$. 
+\end{lem}
+\begin{proof}
+Take any $t \in [\minsub{t}, \maxsub{t}]$. Then
+\begin{equation*}
+    \begin{split}
+        \norm{f(t) - x_0} &\le \norm{f(t) - f(\minsub{t})} + \norm{f(\minsub{t}) - x_0} \\
+        &\stackrel{(1)}{\le} \norm{t - \minsub{t}} + r \\ 
+        &\le \norm{\maxsub{t} - \minsub{t}} + r \\
+        &\le a - r + r = a
+    \end{split}
+\end{equation*}
+where in (1) we used that $f \in \fM$. 
+\end{proof}
+
+\begin{lem}\label{lem:contFunInInt}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$ and let $g \in \fM$. 
+Then the function $[\minsub{t}, \maxsub{t}] \to E, t \mapsto f ((t, g(t)))$ is continuous. 
+\end{lem}
+\begin{proof}
+Using the above lemma and the fact that $g$ is continuous on $s$, it suffices to show that $f$ is continuous on $[\minsub{t}, \maxsub{t}] \times (s \cap \closedBall{a}{x_0})$. 
+This then follows from conditions \ref{PicLindI} and \ref{PicLindII} of $f$ being Picard-Lindelöf. 
+\end{proof}
+
+\begin{lem}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$ and let $g \in \fM$. 
+Then $C(f)$ is Lipschitz continuous with constant $L$. 
+\end{lem}
+
+\begin{proof}
+Take $t_1, t_2 \in [\minsub{t}, \maxsub{t}]$. We assume that $t_2 \le t_1$
+Then we get 
+\begin{equation*}
+    \begin{split}
+        &\norm{C(f)(t_1) - C(f)(t_2)} \\
+        =& \norm{x_0 + \int_{\minsub{t}}^{t_1} f(x, g(x)) \diff x - (x_0 + \int_{\minsub{t}}^{t_2} f(x, g(x)) \diff x)} \\ 
+        \stackrel{(1)}{=}& \norm{\int_{t_2}^{t_1} f(x, g(x)) \diff x} \\ 
+        \le& \int_{t_2}^{t_1} \norm{f(x, g(x))} \diff x \\ 
+        \stackrel{(2)}{\le}& \int_{t_2}^{t_1} L \diff x \\ 
+        =& L(t_1 - t_2)
+    \end{split}
+\end{equation*}
+where in (1) we used that the function $x \mapsto f(x, g(x))$ is continuous by Lemma \ref{lem:contFunInInt} and thus integrable. 
+In (2), we used Lemma \ref{lem:contFunInInt} and condition \ref{PicLindI} of $f$ being Picard-Lindelöf.
+\end{proof}
+
+\begin{lem}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$ and let $g \in \fM$. 
+Then $C(f)([\minsub{t}, \maxsub{t}]) \subseteq s$. 
+\end{lem}
+
+\begin{proof}
+\todo[inline]{do this proof next}
+\end{proof}

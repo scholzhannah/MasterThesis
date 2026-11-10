@@ -47,7 +47,7 @@ open ODEWithin
 namespace IsPicardLindelofWithin
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
-  {f : ℝ → E → E} {tmin tmax : ℝ} (h : tmin ≤ tmax) {t₀ : Icc tmin tmax} {x₀ x : E} {a r L K : ℝ≥0}
+  {f : ℝ → E → E} {tmin tmax : ℝ} (h : tmin ≤ tmax) {x₀ : E} {a r L K : ℝ≥0}
   {s : Set E} (hx₀ : x₀ ∈ s)
 
 include h hx₀ in
@@ -114,7 +114,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E
 
 theorem exists_eq_forall_mem_Icc_hasDerivAt₀
     (hs₁ : Convex ℝ s) (hs₃ : (interior s).Nonempty) (hx₀ : x₀ ∈ s)
-    (hfx₀ : inwardPointing ℝ s x₀ (f x₀)) (hf : ContDiffWithinAt ℝ 1 f s x₀) (t₀ : ℝ) :
+    (hfx₀ : inwardPointing s x₀ (f x₀)) (hf : ContDiffWithinAt ℝ 1 f s x₀) (t₀ : ℝ) :
     ∃ ε > (0 : ℝ), ∃ α : ℝ → E, α t₀ = x₀ ∧
       ∀ t ∈ Icc t₀ (t₀ + ε), HasDerivWithinAt α (f (α t)) (Icc t₀ (t₀ + ε)) t ∧ α t ∈ s := by
   have ⟨t, hts, htx₀, ε, hε, a, r, _, _, hr, hpl⟩ :=

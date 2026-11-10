@@ -136,7 +136,7 @@ lemma isRealizable_iff_chartAt {p : M} (v : TangentSpace I p) :
 set_option backward.isDefEq.respectTransparency false in
 -- fix `mvfderivWithin_eq_fderivWithin`
 lemma IsRealizable.derivableWithinAt {p : H} {v : TangentSpace I p} (hv : IsRealizableMinimal v) :
-    derivableWithinAt ℝ (range I) (I p) (d% I p v) := by
+    derivableWithinAt (range I) (I p) (d% I p v) := by
   obtain ⟨γ, hγ, hγp, hγv⟩ := hv
   use I ∘ γ
   refine ⟨?_, ?_, ?_, ?_⟩
@@ -154,7 +154,7 @@ lemma IsRealizable.derivableWithinAt {p : H} {v : TangentSpace I p} (hv : IsReal
     exact mem_range_self (γ x)
 
 lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
-    (hv : derivableWithinAt ℝ (range I) (I p) (d% I p v)) :
+    (hv : derivableWithinAt (range I) (I p) (d% I p v)) :
     IsRealizableMinimal v := by
   obtain ⟨γ, hγ, hγp, hγv, hγI⟩ := hv
   use I.symm ∘ γ
@@ -185,7 +185,7 @@ lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
     exact fderivWithin_derivWithin (𝕜 := ℝ)
 
 lemma isRealizable_iff_derivableWithinAt {p : H} {v : TangentSpace I p} :
-    IsRealizableMinimal v ↔ derivableWithinAt ℝ (range I) (I p) (d% I p v) :=
+    IsRealizableMinimal v ↔ derivableWithinAt (range I) (I p) (d% I p v) :=
   ⟨IsRealizable.derivableWithinAt, derivableWithinAt.IsRealizable⟩
 
 omit [IsManifold I n M] in
@@ -193,7 +193,7 @@ lemma isRealizable_iff_derivableWithinAt_of_mem_maximalAtlas {p : M} {v : Tangen
     (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
     (hf : f ∈ IsManifold.maximalAtlas I n M) :
     IsRealizableMinimal v ↔
-      derivableWithinAt ℝ (range I) (f.extend I p) (d% (f.extend I) p v) := by
+      derivableWithinAt (range I) (f.extend I p) (d% (f.extend I) p v) := by
   have hfp := mdifferentiableAt_of_mem_maximalAtlas
     (IsManifold.maximalAtlas_subset_of_le (ENat.one_le_iff_ne_zero_withTop.mpr (NeZero.ne n)) hf) hp
   rw [isRealizable_iff_of_mem_maximalAtlas v f hp hf, isRealizable_iff_derivableWithinAt,
@@ -212,7 +212,7 @@ lemma isRealizable_iff_mem_posTangentConeAt_of_mem_maximalAtlas {p : M} {v : Tan
 include n in
 lemma isRealizable_iff_derivablewithinAt_extChartAt {p : M} {v : TangentSpace I p} :
     IsRealizableMinimal v ↔
-      derivableWithinAt ℝ (range I) (extChartAt I p p) (d% (extChartAt I p) p v) :=
+      derivableWithinAt (range I) (extChartAt I p p) (d% (extChartAt I p) p v) :=
   isRealizable_iff_derivableWithinAt_of_mem_maximalAtlas _ (mem_chart_source H p)
     (IsManifold.chart_mem_maximalAtlas (n := n) p)
 
@@ -312,7 +312,7 @@ lemma isInwardPointing_iff_chartAt' {p : M} {q : M}
     (IsManifold.chart_mem_maximalAtlas (n := n) p)
 
 lemma interior_derivableWithinAt_eq {p : H} :
-    interior {w | derivableWithinAt ℝ (range I) (I p) w} =
+    interior {w | derivableWithinAt (range I) (I p) w} =
       d% I p '' interior {v | IsRealizableMinimal v} := by
   rw [(isHomeomorph_mvfderiv_modelWithCorners I p).image_interior]
   congr
@@ -320,14 +320,14 @@ lemma interior_derivableWithinAt_eq {p : H} :
   change _ ↔ _ ∈ (mvfderivModelWithCorners I p).toEquiv '' _
   rw [mem_image_equiv, mem_ofPred, isRealizable_iff_derivableWithinAt,
     ← mvfderivModelWithCorners_apply]
-  congrm derivableWithinAt ℝ (range I) (I p) ?_
+  congrm derivableWithinAt (range I) (I p) ?_
   exact (Homeomorph.symm_apply_eq (mvfderivModelWithCorners I p)).mp rfl
 
 lemma isInwardPointing_iff_inwardPointing_of_mem_maximalAtlas {p : M} (v : TangentSpace I p)
     (f : OpenPartialHomeomorph M H) (hp : p ∈ f.source)
     (hf : f ∈ IsManifold.maximalAtlas I n M) :
     IsInwardPointingMinimal v ↔
-      inwardPointing ℝ (range I) ((f.extend I) p) (d% (f.extend I) p v) := by
+      inwardPointing (range I) ((f.extend I) p) (d% (f.extend I) p v) := by
   have hfp := mdifferentiableAt_of_mem_maximalAtlas
     (IsManifold.maximalAtlas_subset_of_le (ENat.one_le_iff_ne_zero_withTop.mpr (NeZero.ne n)) hf) hp
   simp_rw [isInwardPointing_iff_of_mem_maximalAtlas v f hp hf, f.extend_coe, comp_apply,
@@ -339,7 +339,7 @@ lemma isInwardPointing_iff_inwardPointing_of_mem_maximalAtlas {p : M} (v : Tange
 include n in
 lemma isInwardPointing_iff_inwardPointing_extChartAt {p : M} (v : TangentSpace I p) :
     IsInwardPointingMinimal v ↔
-      inwardPointing ℝ (range I) (extChartAt I p p) (d% (extChartAt I p) p v) :=
+      inwardPointing (range I) (extChartAt I p p) (d% (extChartAt I p) p v) :=
   isInwardPointing_iff_inwardPointing_of_mem_maximalAtlas _ _ (mem_chart_source H p)
     (IsManifold.chart_mem_maximalAtlas (n := n) p)
 
