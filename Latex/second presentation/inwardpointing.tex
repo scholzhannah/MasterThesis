@@ -91,7 +91,7 @@ A \emph{model with corners} from $E$ to $H$ is a partial equivalence $I \colon H
       \centering
       \includegraphics[width=\textwidth]{images/ModelWithCornersCurve.png}
   \end{minipage}
-  \caption{Different examples of models with corners}
+  \caption{Different examples of model spaces}
 \end{figure}
 \end{frame}
 
@@ -135,7 +135,7 @@ Let $M$ be a topological manifold with boundary.
 \begin{block}{Definition: Smooth Atlas}
 Let $M$ be a topological manifold. 
 Let $\fA$ be a collection of charts whose domains cover $M$.
-$\fA$ is a smooth atlas for $M$ if any two charts $(\varphi, U)$ and $(\psi, V)$ are \emph{smoothly compatible}, i.e.\ either $U \cap V$ is empty or $I \circ\psi \circ \inv{\varphi} \circ \inv{I} \colon I(\varphi(U \cap V)) \to \psi I((U \cap V))$ is smooth in the ordinary sense.
+$\fA$ is a smooth atlas for $M$ if any two charts $(\varphi, U)$ and $(\psi, V)$ are \emph{smoothly compatible}, i.e.\ either $U \cap V$ is empty or $I \circ\psi \circ \inv{\varphi} \circ \inv{I} \colon I(\varphi(U \cap V)) \to I(\psi(U \cap V))$ is smooth in the ordinary sense.
 \end{block}
 \begin{block}{Definition: Smooth Manifold}
 A pair $(M, \fA)$ of a topological manifold $M$ and a smooth altas $\fA$ on $M$, which is maximal with respect to inclusion, is called a \emph{smooth manifold}. 
@@ -168,7 +168,7 @@ A pair $(M, \fA)$ of a topological manifold $M$ and a smooth altas $\fA$ on $M$,
       \centering
       \includegraphics[width=\textwidth]{images/CurveNotInwardPointing.png}
   \end{minipage}
-  \caption{Different examples of models with corners}
+  \caption{Examples of vectors that are not inward pointing}
 \end{figure}
 
 \end{frame}
@@ -203,8 +203,8 @@ A pair $(M, \fA)$ of a topological manifold $M$ and a smooth altas $\fA$ on $M$,
 
 We have the following two options for the definition of inward-pointing vectors: 
 \begin{enumerate}[(A)]
-  \alert<1>{\item intrinsically exclude tangent vectors, or} 
-  \item define realisable vectors and then exclude tangent vectors
+  \alert<1>{\item intrinsically exclude vectors tangent to the boundary, or} 
+  \item define realisable vectors and then exclude vectors tangent to the boundary
 \end{enumerate}
 
 \end{frame}
@@ -271,7 +271,7 @@ This definition is clearly designed to mean weakly inward-pointing.
 
 \end{frame}
 
-\begin{frame}{Conditions for a definition inward-pointing}
+\begin{frame}{Conditions for a definition of realisability}
 
 A sensible definition of realisability needs to fulfil these two conditions: 
 \begin{enumerate}[(i)]
@@ -284,7 +284,7 @@ A sensible definition of realisability needs to fulfil these two conditions:
 \begin{frame}[fragile]{Sensible notion in normed spaces: tangent cones}
 \small
 \begin{block}{Definition: contingent tangent cone, \cite{Aubin1990}}
-    Let $E$ be a normed vector space, $K \subset E$ and $x \in \closure{E}$. 
+    Let $E$ be a normed vector space, $K \subseteq E$ and $x \in \closure{K}$. 
     Then the \emph{contingent tangent cone} to $K$ at $x$ is the set of all $v \in E$ such that there is a sequence of scalars $c \colon \bN \to \bR_\ge$ and a sequence of vectors $d \colon \bN \to E$ such that 
     \begin{enumerate}[(i)]
         \item $\lim_{n \to \infty} d_n = 0$, 
@@ -371,22 +371,19 @@ Let $f \colon M \to M'$ be a local diffeomorphism between manifolds with corners
 
 \begin{frame}[fragile]{Equivalence to tanget cone I}
 \small
-\begin{block}{Definition: derivable cone}
+\begin{block}{Definition: derivable cone, \cite{Melrose1996}}
 Let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
-We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\varepsilon (0) = p$ and $\varepsilon' (0) = v$. 
+We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\gamma (0) = p$ and $\gamma' (0) = v$. 
 The set of all derivable vectors in $C$ at $p$ is called the \emph{derivable cone} to $C$ at $p$.
 \end{block}
 
 \begin{lstlisting}
-def derivableWithinAt (𝕜 : Type*) {E : Type*} 
-    [NontriviallyNormedField 𝕜] 
-    [NormedAddCommGroup E] [NormedSpace 𝕜 E] 
-    [LinearOrder 𝕜] (s : Set E) (p : E) 
-    (v : E) : Prop :=
-  ∃ (γ : 𝕜 → E) 
-      (_ : DifferentiableWithinAt 𝕜 γ (Ici 0) 0), 
-      γ 0 = p ∧ derivWithin γ (Ici 0) (0 : 𝕜) = v ∧ 
-      ∀ᶠ (x : 𝕜) in 𝓝[≥] 0, γ x ∈ s
+def derivableWithinAt (s : Set E) (p : E) (v : E) : 
+    Prop :=
+  ∃ (γ : ℝ → E) 
+    (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
+    derivWithin γ (Ici 0) (0 : ℝ) = v ∧ 
+    ∀ᶠ (x : ℝ) in 𝓝[≥] 0, γ x ∈ s
 \end{lstlisting}
   
 \end{frame}
@@ -424,6 +421,13 @@ The set of all vectors $v$ such that there is an $r > 0$ such that $r \cdot v + 
 \end{minipage}
 \end{figure}
 
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{enumerate}
+  \item a lot of the difficulty from manifolds with corners in Mathlib comes from curvature not corners
+  \item it seems that the correct notion to define inward pointing vectors is through cones
+\end{enumerate}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}
