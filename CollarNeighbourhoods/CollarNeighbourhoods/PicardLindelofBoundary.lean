@@ -339,27 +339,23 @@ lemma lipschitzWith_picard (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L
     apply hf.norm_le _ ht
     exact ⟨α.mem_closedBall h hf.mul_max_le, compProj_mem_set h α⟩
 
-lemma mem_tangentCone_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
+lemma mem_derivableCone_compProj (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L K)
     (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) (x : ℝ)
     (hx : x ∈ Icc tmin t) :
-    f x (compProj h α x) ∈ posTangentConeAt s x₀ := by
-  rw [← hf.convex.derivableWithinAt_iff_mem_posTangentConeAt hx₀]
+    f x (compProj h α x) ∈ derivableCone x₀ hf.convex := by
   apply inwardPointing.derivableWithinAt
   apply hf.isInwardPointing
-  use x
-  refine ⟨⟨hx.1, hx.2.trans t.2.2⟩, ?_⟩
+  use x, ⟨hx.1, hx.2.trans t.2.2⟩
   have hf' := hf.lipschitzOnWith x ⟨hx.1, hx.2.trans t.2.2⟩
   rw [lipschitzOnWith_iff_norm_sub_le] at hf'
   have h1 : x₀ ∈ closedBall x₀ a ∩ s := by simp [hx₀]
-  have h2 : (compProj h α x) ∈ closedBall x₀ a ∩ s := by
-    constructor
-    · apply compProj_mem_closedBall h α hf.mul_max_le
-    · exact compProj_mem_set h α
+  have h2 : (compProj h α x) ∈ closedBall x₀ a ∩ s :=
+    ⟨compProj_mem_closedBall h α hf.mul_max_le, compProj_mem_set h α⟩
   specialize hf' h1 h2
   apply hf'.trans
   apply mul_le_mul_of_nonneg_left ?_ K.2
   rw [← mem_closedBall_iff_norm']
-  exact mem_of_mem_inter_left h2
+  exact h2.1
 
 variable [CompleteSpace E]
 
@@ -371,24 +367,18 @@ lemma range_picard_subset (hf : IsPicardLindelofWithin f s tmin tmax x₀ a r L 
   by_cases ht : t = tmin
   · simp [ht, hx₀]
   apply hf.mem_of_derivableWithinAt (v := ∫ τ in tmin..t, f τ (compProj h α τ))
-  · rw [Convex.derivableWithinAt_iff_mem_posTangentConeAt hf.convex hx₀]
-    rw [← one_smul ℝ (∫ (τ : ℝ) in tmin..t, f τ (compProj h α τ) : E)]
-    rw [← GroupWithZero.mul_inv_cancel (t - tmin) (sub_ne_zero.mpr ht)]
-    rw [mul_smul]
-    rw [← interval_average_eq]
-    apply smul_mem_posTangentCone hf.convex hx₀ (↑t - tmin)
-      (lt_of_le_of_ne (sub_nonneg_of_le t.2.1) (sub_ne_zero.mpr ht).symm)
-    apply Convex.set_average_mem
-    · rw [Convex.posTangentConeAt_eq_closure hf.convex hx₀]
-      exact ConvexCone.convex _
-    · rw [Convex.posTangentConeAt_eq_closure hf.convex hx₀]
-      exact isClosed_closure
+  · rw [← one_smul ℝ (∫ (τ : ℝ) in tmin..t, f τ (compProj h α τ) : E),
+      ← GroupWithZero.mul_inv_cancel (t - tmin) (sub_ne_zero.mpr ht), mul_smul,
+      ← interval_average_eq, ← mem_derivableCone_iff _ hf.convex]
+    apply (derivableCone x₀ hf.convex).smul_mem (by simp [lt_of_le_of_ne t.2.1 (Ne.symm ht)])
+    apply (derivableCone x₀ hf.convex).convex.set_average_mem
+      (isClosed_derivableCone hf.convex hx₀)
     · simp [sub_ne_zero.mpr ht]
     · simp
     · apply MeasureTheory.ae_restrict_of_forall_mem measurableSet_uIoc
       intro x hx
       rw [uIoc_of_le t.2.1] at hx
-      exact mem_tangentCone_compProj (t.2.1.trans t.2.2) hf α t x (mem_Icc_of_Ioc hx)
+      exact mem_derivableCone_compProj (t.2.1.trans t.2.2) hf α t x (mem_Icc_of_Ioc hx)
     · rw [← intervalIntegrable_iff]
       exact intervalIntegrable_comp_compProj h hf α t
   · suffices picard f tmin x₀ (compProj h α) t ∈ closedBall x₀ a by simpa

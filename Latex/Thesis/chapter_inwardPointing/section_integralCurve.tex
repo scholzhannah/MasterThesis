@@ -1,6 +1,6 @@
 \section{Integral Curves}
 
-To prove the existence of integral curve, one needs to solve an ODE in the model space. \todo{expand on this}.
+To prove the existence of integral curve, one needs to solve an ODE in the model space.\todo{expand on this}
 The typical way to do this is via the \emph{Picard-Lindelöf} theorem (also called the \emph{Cauchy-Lipschitz} theorem). 
 This and other similar theorems about ODE are typically formulated for open sets. 
 Since we work with vector fields defined on sets that need not be open, we need to adapt. 
@@ -22,7 +22,7 @@ Let $E$ be a normed commutative group under addition and a normed space over $\b
 Let $s \subseteq E$ a set, $\minsub{t}, \maxsub{t} \in \bR$, $f \colon [\minsub{t}, \maxsub{t}] \times s \to E$ a function, $x_0 \in E$ and $a, r, L, K \in \bR_{\ge 0}$. 
 Then we say that $f$ is \emph{Picard-Lindelöf} with respect to $x_0, a, r, L, K$ if the following conditions hold: 
 \begin{enumerate}
-    \item \label{PicLindI} \emph{Lipschitz condition}: for all $t \in [\minsub{t}, \maxsub{t}]$, the function $f_t \colon s \to E, x \mapsto f ((t, x))$ is Lipschitz on $s \cap \closedBall{a}{x_0}$ with Lipschitz constant $L$. 
+    \item \label{PicLindI} \emph{Lipschitz condition}: for all $t \in [\minsub{t}, \maxsub{t}]$, the function $f_t \colon s \to E, x \mapsto f ((t, x))$ is Lipschitz on $s \cap \closedBall{a}{x_0}$ with Lipschitz constant $K$. 
     \item \label{PicLindII} \emph{Continuity}: for all $x \in s \cap \closedBall{a}{x_0}$, the function $f^x \colon [\minsub{t}, \maxsub{t}] \to E, t \mapsto f ((t, x))$ is continuous. 
     \item \label{PicLindIII} \emph{Norm condition}: for all $t \in [\minsub{t}, \maxsub{t}]$ and $x \in s \cap \closedBall{a}{x_0}$, $\norm{f ((t, x))} \le L$.
     \item \label{PicLindIV} \emph{Time condition}: We have $L (\maxsub{t} - \minsub{t}) \le a - r$. 
@@ -57,7 +57,7 @@ We define $\fM$ to be the space of functions $g \colon [\minsub{t}, \maxsub{t}] 
 Since we later want to apply the fact that every contraction in a complete space has a fixed point, we first need to show that this space is complete. 
 
 \begin{lem}
-If $s$ is closed, then $\fM$ is a complete space. 
+If $s$ is closed, then $\fM$ is a complete space with respect to the supremum norm $\norm{\cdot}_\infty$.  
 \end{lem}
 \begin{proof}
 Since $\fM$ is a subspace of the complete space $\contMaps{[\minsub{t}, \maxsub{t}]}{E}$ it suffices to show that it is closed. 
@@ -80,7 +80,7 @@ Thus, as the intersection of these three sets, $\fM$ is also closed.
 
 Let us now define the relevant contraction: 
 
-\begin{defi}
+\begin{defi}\label{defi:contraction}
 We define the function $C \colon \fM \to ([\minsub{t}, \maxsub{t}] \to E)$ as 
 \begin{equation*}
     \begin{split}
@@ -96,19 +96,21 @@ So let us prove this.
 We first need some helper lemmas: 
 
 \begin{lem}\label{lem:funInBall}
-Let $f \in \fM$ and $L (\maxsub{t} - \minsub{t}) \le a - r$. Then for all $t \in [\minsub{t}, \maxsub{t}]$, we get $f (t) \in \closedBall{a}{x_0}$. 
+Let $g \colon [\minsub{t}, \maxsub{t}] \to E$ such that $g$ is Lipschitz continuous with constant $L$ and $f (\minsub{t}) \in \closedBall{r}{x_0}$. 
+Assume additionally that $L (\maxsub{t} - \minsub{t}) \le a - r$. Then for all $t \in [\minsub{t}, \maxsub{t}]$, we get $g (t) \in \closedBall{a}{x_0}$. 
+In particular, this lemma holds for all $g \in \fM$.
 \end{lem}
 \begin{proof}
 Take any $t \in [\minsub{t}, \maxsub{t}]$. Then
 \begin{equation*}
     \begin{split}
-        \norm{f(t) - x_0} &\le \norm{f(t) - f(\minsub{t})} + \norm{f(\minsub{t}) - x_0} \\
+        \norm{g(t) - x_0} &\le \norm{g(t) - g(\minsub{t})} + \norm{g(\minsub{t}) - x_0} \\
         &\stackrel{(1)}{\le} \norm{t - \minsub{t}} + r \\ 
         &\le \norm{\maxsub{t} - \minsub{t}} + r \\
         &\le a - r + r = a
     \end{split}
 \end{equation*}
-where in (1) we used that $f \in \fM$. 
+where in (2) we used both of the conditions imposed on $g$. 
 \end{proof}
 
 \begin{lem}\label{lem:contFunInInt}
@@ -120,9 +122,9 @@ Using the above lemma and the fact that $g$ is continuous on $s$, it suffices to
 This then follows from conditions \ref{PicLindI} and \ref{PicLindII} of $f$ being Picard-Lindelöf. 
 \end{proof}
 
-\begin{lem}
+\begin{lem}\label{lem:lipschitzFun}
 Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$ and let $g \in \fM$. 
-Then $C(f)$ is Lipschitz continuous with constant $L$. 
+Then $C(g)$ is Lipschitz continuous with constant $L$. 
 \end{lem}
 
 \begin{proof}
@@ -142,11 +144,82 @@ where in (1) we used that the function $x \mapsto f(x, g(x))$ is continuous by L
 In (2), we used Lemma \ref{lem:contFunInInt} and condition \ref{PicLindI} of $f$ being Picard-Lindelöf.
 \end{proof}
 
+Now we want to show that the range of $C(f)$ lies in $s$. 
+
 \begin{lem}
 Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$ and let $g \in \fM$. 
-Then $C(f)([\minsub{t}, \maxsub{t}]) \subseteq s$. 
+Then $C(g)([\minsub{t}, \maxsub{t}]) \subseteq s$. 
 \end{lem}
 
 \begin{proof}
-\todo[inline]{do this proof next}
+Let $t \in [\minsub{t}, \maxsub{t}]$. 
+For $t = \minsub{t}$ this is clear. 
+So let us assume $t > \minsub{t}$.
+We want to apply condition \ref{PicLindVII} of $f$ being derivable. 
+To do that we need to show that $C(f)(t) - x_0$ is derivable within $s$ at $x_0$ and $\norm{C(f)(t)} \le a$. 
+The second condition holds by Lemma \ref{lem:funInBall} since 
+$C(f)(\minsub{t}) = x_0 \in \closedBall{r}{x_0}$ and $C(f)$ is Lipschitz with constant $L$ by Lemma \ref{lem:lipschitzFun}. 
+
+It is left to show that $C(f)(t) - x_0$ is derivable within $a$ at $x_0$. 
+Since the derivable cone is a cone, this is equivalent to showing that $(t - \minsub{t})^{-1} (C(f)(t) - x_0) = \fint_{\minsub{t}}^t f(x, g(x)) \diff x$ is derivable. 
+
+Since the derivable cone is closed and convex and $g$ is integrable, it suffices to show that for all $x \in [\minsub{t}, t]$, $f(x, g(x))$ is in the derivable cone to $s$ at $x$.
+We show the stronger statement that $f(x, g(x))$ is inward pointing. 
+We want to apply condition \ref{PicLindVI} of $f$ being Picard-Lindelöf. 
+To do that we show that $\norm{f(x, g(x)) - f(x, x_0)} \le Ka$. 
+We get: 
+\begin{equation*}
+    \begin{split}
+        \norm{f(x, g(x)) - f(x, x_0)} &\stackrel{(1)}{\le} K \norm{g(x) - x_0} \\
+        &\stackrel{(2)}{\le} K a 
+    \end{split}
+\end{equation*}
+
+where in (1) we used that $f$ is Lipschitz continuous in the second variable with constant $K$ by property \ref{PicLindI} of $f$ being Picard-Lindelöf. 
+In step (2) we used Lemma \ref{lem:funInBall}. 
+This finishes the proof.
+\end{proof}
+
+\begin{cor}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$ and let $g \in \fM$. 
+Then $C(g) \in \fM$.
+\end{cor}
+
+The above corollary means that we can regard our function $C$ defined in Definition \ref{defi:contraction} as a function $C \colon \fM \to \fM$. 
+
+We show that for some $n$, $C^n$ is a contraction. 
+This will allow us to obtain a fixed point of $C^n$ which is then also a fixed point of $C$. 
+
+We first show the following lemma: 
+
+\begin{lem}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$, $g_1, g_2 \in \fM$ and $n \in \bN$.
+Then 
+\begin{equation*}
+    \norm{C^n(g_1) - C^n(g_2)}_\infty \le \frac{(K(\maxsub{t} - \minsub{t}))^n}{n!}\norm{g_1 - g_2}_\infty.
+\end{equation*}
+\end{lem}
+\begin{proof}
+We show by induction on $n$ that for all $t \in [\minsub{t}, \maxsub{t}]$, 
+\begin{equation*}
+    \norm{C^n(g_1)(t) - C^n(g_2)(t)} \le \frac{(K(t - \minsub{t}))^n}{n!}\norm{g_1 - g_2}_\infty.
+\end{equation*}
+For $n = 0$, the inequality reduces to $\norm{g_1(t) - g_2(t)} \le \norm{g_1 - g_2}_\infty$ which is clearly true.
+
+Let us now assume that we have shown the inequality for $n$.
+We need to show it for $n + 1$. 
+
+\begin{equation*}
+    \begin{split}
+        &\norm{C^{n + 1}(g_1)(t) - C^{n + 1}(g_2)(t)} \\ 
+        &= \norm{(C (C^n(g_1))) (t) - (C (C^n(g_2))) (t)} \\ 
+        &= \norm{\int_{\minsub{t}}^t f(x, (C^n(g_1))(x)) - f(x, (C^n(g_2))(x)) \diff x} \\ 
+        &\le \int_{\minsub{t}}^t \norm{f(x, (C^n(g_1))(x)) - f(x, (C^n(g_2))(x))} \diff x \\
+        &\stackrel{(1)}{\le} \int_{\minsub{t}}^t K\norm{(C^n(g_1))(x) - (C^n(g_2))(x)} \diff x \\
+        &\stackrel{(2)}{\le} \int_{\minsub{t}}^t K\frac{(K(x - \minsub{t}))^n}{n!}\norm{g_1 - g_2}_\infty \diff x \\
+        &= \frac{(K(t - \minsub{t}))^{n + 1}}{(n + 1)!}\norm{g_1 - g_2}_\infty
+    \end{split}
+\end{equation*}
+In step (1) we used that $f$ is Lipschitz continuous with constant $K$ in the second variable by property \ref{PicLindI} of $f$ being Picard-Lindelöf. 
+In step (2) we applied the induction hypothesis. 
 \end{proof}

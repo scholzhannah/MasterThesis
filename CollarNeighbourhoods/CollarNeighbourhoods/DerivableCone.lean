@@ -379,7 +379,9 @@ def derivableCone {s : Set E} (p : E) (hs : Convex ℝ s) : ConvexCone ℝ E :=
         rw [le_inv_smul_iff_of_pos hc] at hy2
         simpa [mul_nonneg_iff_of_pos_left hc, hy1, le_inv_smul_iff_of_pos hc])
 
--- I should provide the definition of a derivable cone
+lemma mem_derivableCone_iff {s : Set E} (p : E) (hs : Convex ℝ s) (v : E) :
+    v ∈ derivableCone p hs ↔ derivableWithinAt s p v := by
+  rfl
 
 -- proof adapted from `https://arxiv.org/pdf/1810.05999`
 lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
