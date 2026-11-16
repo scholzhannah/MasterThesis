@@ -628,6 +628,23 @@ lemma smul_ici_zero_of_lt {α : Type*} {β : Type*} [GroupWithZero α] [PartialO
   ext x
   simp [mem_smul_set_iff_inv_smul_mem₀ hc.ne', smul_nonneg_iff_nonneg_of_pos_left (inv_pos.mpr hc)]
 
+theorem Metric.continuousWithinAt_iff_le {α : Type u} {β : Type v} [PseudoMetricSpace α]
+  [PseudoMetricSpace β] {f : α → β} {a : α} {s : Set α} :
+    ContinuousWithinAt f s a ↔
+      ∀ ε > 0, ∃ δ > 0, ∀ ⦃x : α⦄, x ∈ s → dist x a ≤ δ → dist (f x) (f a) ≤ ε := by
+  rw [Metric.continuousWithinAt_iff]
+  constructor
+  · intro h ε hε
+    obtain ⟨δ, hδ, h⟩ := h ε hε
+    use δ / 2, half_pos hδ
+    intro x hx hxδ
+    exact le_of_lt (h hx (lt_of_le_of_lt hxδ (half_lt_self hδ)))
+  · intro h ε  hε
+    obtain ⟨δ, hδ, h⟩ := h (ε / 2) (half_pos hε)
+    use δ, hδ
+    intro x hx hxδ
+    exact lt_of_le_of_lt (h hx hxδ.le) (half_lt_self hε)
+
 open MeasureTheory
 
 /-
