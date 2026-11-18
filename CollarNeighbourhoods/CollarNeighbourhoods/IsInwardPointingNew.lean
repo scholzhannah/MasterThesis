@@ -253,8 +253,6 @@ lemma isRealizable_iff_euclideanHalfSpace {m : ℕ} [NeZero m] {M : Type*} [Topo
     ← modelWithCornersEuclideanHalfSpace_isBoundaryPoint_iff,
     Manifold.isBoundaryPoint_chartAt_iff (n := n)]
 
--- **Question**: How do i say corner point in mathlib?
-
 -- I think I need this because `PartialDiffeomorph` is private
 -- Maybe try to isolate this an post on Zulip
 set_option backward.isDefEq.respectTransparency false in

@@ -85,10 +85,9 @@ structure IsPicardLindelofWithin {E : Type*} [NormedAddCommGroup E] [NormedSpace
   norm_le : ∀ t ∈ Icc tmin tmax, ∀ x ∈ closedBall x₀ a ∩ s, ‖f t x‖ ≤ L
   /-- The time interval of validity -/
   mul_max_le : L * (tmax - tmin) ≤ a - r
-  /-- The set `s` is  convex. -/
-  convex : Convex ℝ s
+  /-- The set `s` is closed. -/
   isClosed : IsClosed s
-  convex' : ∀ x ∈ closedBall x₀ r ∩ s, Convex ℝ (s' x)
+  convex : ∀ x ∈ closedBall x₀ r ∩ s, Convex ℝ (s' x)
   mem_set : ∀ x ∈ closedBall x₀ r ∩ s, x ∈ s' x
   /-- The vector field is inward pointing within a closed ball. -/
   isInwardPointing: ∀ v, ∀ x ∈ closedBall x₀ r ∩ s, (∃ t ∈ Icc tmin tmax, ‖f t x₀ - v‖ ≤ K * a) →
@@ -345,7 +344,7 @@ lemma mem_derivableCone_compProj (hf : IsPicardLindelofWithin f s s' tmin tmax x
     (hx : x ∈ closedBall x₀ r ∩ s)
     (α : FunSpaceWithin s tmin tmax x₀ hx₀ h r L) (t : Icc tmin tmax) (t' : ℝ)
     (ht' : t' ∈ Icc tmin t) :
-    f t' (compProj h α t') ∈ derivableCone x (hf.convex' x hx) := by
+    f t' (compProj h α t') ∈ derivableCone x (hf.convex x hx) := by
   apply inwardPointing.derivableWithinAt
   apply hf.isInwardPointing _ _ hx
   use t', ⟨ht'.1, ht'.2.trans t.2.2⟩
@@ -373,10 +372,10 @@ lemma range_picard_subset (hf : IsPicardLindelofWithin f s s' tmin tmax x₀ a r
   apply hf.mem_of_derivableWithinAt x hx
   · rw [← one_smul ℝ (∫ (τ : ℝ) in tmin..t, f τ (compProj h α τ) : E),
       ← GroupWithZero.mul_inv_cancel (t - tmin) (sub_ne_zero.mpr ht), mul_smul,
-      ← interval_average_eq, ← mem_derivableCone_iff _ (hf.convex' x hx)]
-    apply (derivableCone x (hf.convex' x hx)).smul_mem (by simp [lt_of_le_of_ne t.2.1 (Ne.symm ht)])
-    apply (derivableCone x (hf.convex' x hx)).convex.set_average_mem
-      (isClosed_derivableCone (hf.convex' x hx) (hf.mem_set x hx))
+      ← interval_average_eq, ← mem_derivableCone_iff _ (hf.convex x hx)]
+    apply (derivableCone x (hf.convex x hx)).smul_mem (by simp [lt_of_le_of_ne t.2.1 (Ne.symm ht)])
+    apply (derivableCone x (hf.convex x hx)).convex.set_average_mem
+      (isClosed_derivableCone (hf.convex x hx) (hf.mem_set x hx))
     · simp [sub_ne_zero.mpr ht]
     · simp
     · apply MeasureTheory.ae_restrict_of_forall_mem measurableSet_uIoc
@@ -756,7 +755,7 @@ structure IsPicardLindelofWithin {E : Type*} [NormedAddCommGroup E] [NormedSpace
     ∀ v, derivableWithinAt (s' x) x v → ‖v‖ ≤ a → (x + v) ∈ s
 -/
 
-lemma of_closedBall_subset (f : ℝ → E → E) (hs₁ : Convex ℝ s) (hs₂ : IsClosed s)
+lemma of_closedBall_subset (f : ℝ → E → E) (hs₂ : IsClosed s)
     {tmin tmax : ℝ} {x₀ : E} {a r L K : ℝ≥0} (hr : r > 0)
     (hb : ∀ t ∈ Icc tmin tmax, ∀ x ∈ closedBall x₀ a ∩ s, ‖f t x‖ ≤ L)
     (hc : ∀ x ∈ closedBall x₀ a ∩ s, ContinuousOn (f · x) (Icc tmin tmax))
@@ -768,9 +767,8 @@ lemma of_closedBall_subset (f : ℝ → E → E) (hs₁ : Convex ℝ s) (hs₂ :
   continuousOn := hc
   norm_le := hb
   mul_max_le := hm
-  convex := hs₁
   isClosed := hs₂
-  convex' x _ := convex_closedBall x r
+  convex x _ := convex_closedBall x r
   mem_set _ _ := by simp
   isInwardPointing v x _ _ := by
     refine inwardPointing_of_mem_interior (convex_closedBall x r) ?_ v
@@ -784,7 +782,7 @@ lemma of_closedBall_subset (f : ℝ → E → E) (hs₁ : Convex ℝ s) (hs₂ :
 
 
 /-- The special case where the vector field is independent of time -/
-lemma of_time_independent (hs₁ : Convex ℝ s) (hs₂ : IsClosed s)
+lemma of_time_independent (hs₂ : IsClosed s)
     {f : E → E} {tmin tmax : ℝ} {x₀ : E} {a r L K : ℝ≥0}
     (hs'₁ : ∀ x ∈ closedBall x₀ r ∩ s, Convex ℝ (s' x))
     (hs'₂ : ∀ x ∈ closedBall x₀ r ∩ s, x ∈ s' x)
@@ -799,9 +797,8 @@ lemma of_time_independent (hs₁ : Convex ℝ s) (hs₂ : IsClosed s)
   continuousOn _ _ := continuousOn_const
   norm_le _ _ := hb
   mul_max_le := hm
-  convex := hs₁
   isClosed := hs₂
-  convex' := hs'₁
+  convex := hs'₁
   mem_set := hs'₂
   isInwardPointing := fun _ _ hx ⟨_, _, hvt⟩ ↦ hva _ _ hx hvt
   mem_of_derivableWithinAt := hsv
@@ -916,11 +913,10 @@ lemma of_contDiffWithinAt_one_of_mem_interior (hs₁ : Convex ℝ s) (hs₂ : Is
   have hε : 0 < ε := by positivity
   use ε, hε, .mk (a / 2) (half_pos ha).le, .mk r hr.le / 2, .mk L hL0.le, K, half_pos hr
   intro t₀
-  apply of_closedBall_subset _ hs₁ hs₂ (half_pos hr)
+  apply of_closedBall_subset _ hs₂ (half_pos hr)
   · intro t ht x hx
     exact hb _ hx
-  · intro x hx
-    exact continuousOn_const
+  · fun_prop
   · intro t ht
     apply hl.mono
     apply subset_trans ?_ has₁
@@ -938,7 +934,6 @@ lemma of_contDiffWithinAt_one_of_mem_interior (hs₁ : Convex ℝ s) (hs₂ : Is
     have har₁ : a ≤ r₁ / 2 := inf_le_right
     have hrr₁ : r ≤ r₁ := inf_le_left
     grw [har₁, hrr₁, half_lt_self (half_pos hr₁), add_halves]
-
 
 /-- A time-independent, continuously differentiable ODE satisfies the hypotheses of the
 Picard-Lindelöf theorem. -/
@@ -993,7 +988,7 @@ lemma of_contDiffWithinAt_one_not_mem_interior (hs₁ : Convex ℝ s) (hs₂ : I
   refine ⟨ε, hε0,
     .mk (a / 2) (half_pos ha).le, (.mk r hr.le) / 2,
     .mk L hL0.le, K, half_pos hr, fun t₀ ↦ ?_⟩
-  refine of_time_independent hs₁ hs₂ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  refine of_time_independent hs₂ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · intro x hx
     exact convex_coneNhdClose f hs₁ hs₃ hx₀.left hfx₀
   · intro x hx

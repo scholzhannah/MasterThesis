@@ -204,7 +204,7 @@ theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
   let f := ((extChartAt I.tangent (⟨x₀, v x₀⟩ : Bundle.TotalSpace E (TangentSpace I))) ∘
     (fun x ↦ ⟨x, v x⟩) ∘ ↑(extChartAt I x₀).symm)
   -- factor out?
-  have hf : inwardPointing ℝ (range I) ((extChartAt I x₀) x₀) (f ((extChartAt I x₀) x₀)).2 := by
+  have hf : inwardPointing (range I) ((extChartAt I x₀) x₀) (f ((extChartAt I x₀) x₀)).2 := by
     rw [isInwardPointing_iff_inwardPointing_extChartAt (n := 1)] at hx
     convert hx
     unfold f
@@ -214,12 +214,14 @@ theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
     simp [TangentBundle.trivializationAt_apply x₀ ⟨x₀, v x₀⟩,
       (mdifferentiableAt_extChartAt (mem_chart_source H x₀)).mvfderiv (f := I ∘ (chartAt H x₀))]
     rfl
-  obtain ⟨ε, hε, α, hαt₀, hαI⟩ := ContDiffAt.exists_eq_forall_mem_Icc_hasDerivAt₀ I.convex_range
+  obtain ⟨α, hαt₀, ε, hε, hαI⟩ :=
+    ContDiffWithinAt.exists_forall_mem_closedBall_exists_eq_forall_mem_Ico_hasDerivAt₀
+    I.convex_range I.isClosed_range
     I.nonempty_interior (x₀ := extChartAt I x₀ x₀)
     (extChartAt_target_subset_range _ <| mem_extChartAt_target x₀) hf hv.snd t₀
   have hcont : ContinuousWithinAt α (Ici t₀) t₀ := by
     apply HasDerivWithinAt.continuousWithinAt
-    apply (hαI t₀ ⟨le_refl t₀, (le_add_iff_nonneg_right t₀).2 hε.le⟩).1.congr_set
+    apply (hαI t₀ ⟨le_refl t₀, (lt_add_iff_pos_right t₀).2 hε⟩).1.congr_set
     rw [← nhdsWithin_eq_iff_eventuallyEqSet,
       nhdsWithin_Icc_eq_nhdsGE ((lt_add_iff_pos_right t₀).2 hε)]
   --have hev : ∀ᶠ x in 𝓝[≥] t₀, α x ∈ range I := by sorry
@@ -228,8 +230,8 @@ theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
     rw [mem_nhdsWithin_iff_exists_mem_nhds_inter] at hA
     obtain ⟨u, hu, huα⟩ := hA
     suffices α ⁻¹' u ∈ 𝓝[≥] t₀ by
-      apply Filter.mem_of_superset (x := Icc t₀ (t₀ + ε) ∩ α ⁻¹' u)
-        (Filter.inter_mem (Icc_mem_nhdsGE ((lt_add_iff_pos_right t₀).mpr hε)) this)
+      apply Filter.mem_of_superset (x := Ico t₀ (t₀ + ε) ∩ α ⁻¹' u)
+        (Filter.inter_mem (Ico_mem_nhdsGE ((lt_add_iff_pos_right t₀).mpr hε)) this)
       intro i ⟨hi, hiα⟩
       exact huα ⟨hiα, (hαI i hi).2⟩
     exact hcont hu
@@ -241,7 +243,7 @@ theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
       (fun x ↦ ⟨x, v x⟩ : M → Bundle.TotalSpace E (TangentSpace I)) ∘
       (extChartAt I x₀).symm) (α t)).2 (Icc t₀ (t₀ + ε)) t := by
     rw [Filter.eventually_iff_exists_mem]
-    use Icc t₀ (t₀ + ε), Icc_mem_nhdsGE ((lt_add_iff_pos_right t₀).mpr hε)
+    use Ico t₀ (t₀ + ε), Ico_mem_nhdsGE ((lt_add_iff_pos_right t₀).mpr hε)
     intro i hi
     exact (hαI i hi).1
   rw [← eventually_mem_nhdsWithin_iff] at hnhds
@@ -283,7 +285,7 @@ theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
       hasFDerivWithinAt_tangentCoordChange ⟨hft1, hft2⟩).comp_hasDerivWithinAt _
       (h.mono (inter_subset_right.trans Ico_subset_Icc_self))
     intro x hx
-    exact (hαI x (Ico_subset_Icc_self hx.2)).2
+    exact (hαI x  hx.2).2
 
 /-
 theorem exists_isLeftMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]

@@ -21,24 +21,33 @@ variable {M H : Type*} [TopologicalSpace H]
 
 -- this is how we say that `M` is a smooth manifold
 variable {E : Type*} [NormedAddCommGroup E]
-  [NormedSpace ℝ E]
+  [NormedSpace ℝ E] (t₀ : ℝ)
   {I : ModelWithCorners ℝ E H} {n : ℕ∞} [NeZero n] [IsManifold I n M]
 
-def IsFlowDomain (D : Set (ℝ × M)) :=
-  ∀ p, Convex ℝ {t | (t, p) ∈ D} ∧ (0, p) ∈ D
+def IsLocalFlowDomain (D : Set (M × ℝ)) :=
+  ∀ p, IsConnected {t | (p, t) ∈ D} ∧ ({t | (p, t) ∈ D}.Nonempty → (p, t₀) ∈ D)
 
-structure FlowOn (D : Set (ℝ × M)) (v : (x : M) → TangentSpace I x) where
-  toFun : ℝ × M → M
-  isMIntegralCurveOn p : IsMIntegralCurveOn (fun x ↦ toFun (x, p)) v {t | (t, p) ∈ D}
-  toFun_zero p : toFun (0, p) = p
-  tuFun_add t s p : toFun (t, toFun (s, p)) = toFun (t + s, p)
+def IsFlowDomain (D : Set (M × ℝ)) :=
+  ∀ p, IsConnected {t | (p, t) ∈ D} ∧ (p, t₀) ∈ D
+
+structure IsFlowOn (γ : M → ℝ → M) (D : Set (M × ℝ)) (v : (x : M) → TangentSpace I x) where
+  isMIntegralCurveOn p : IsMIntegralCurveOn (fun x ↦ γ p x) v {t | (p, t) ∈ D}
+  toFun_zero : ∀ p, {t | (p, t) ∈ D}.Nonempty → γ p t₀ = p
 
 omit [TopologicalSpace M] in
-lemma isFlowDomain_univ : IsFlowDomain (univ : Set (ℝ × M)) := by
+lemma isFlowDomain_univ : IsFlowDomain t₀ (univ : Set (M × ℝ)) := by
   intro
-  simp [convex_univ]
+  simp [isConnected_univ]
 
-def Flow (v : (x : M) → TangentSpace I x) := FlowOn univ v
+/-
+-- wrong
+lemma isFlowDomain_ico_prod_nhd (t₀ : ℝ) {ε : ℝ} (hε : ε > 0) {x₀ : M} {u : Set M} (hu : u ∈ 𝓝 x₀) :
+    IsLocalFlowDomain t₀ ((Ico t₀ (t₀ + ε)) ×ˢ u) := by
+  intro p
+  constructor
+  · sorry
+  · sorry
+
 
 
 
@@ -106,7 +115,7 @@ theorem isMIntegralCurveOn_Ico_eqOn_of_contMDiff [IsManifold I 1 M] {γ γ' : �
     · exact this hx
     · exact hx ▸ h
   -- this doesn't work like this
-  sorry
+  sorry-/
 
 
 
