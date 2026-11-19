@@ -192,6 +192,7 @@ variable
 -- right integral curves are preserved under partial diffeomorphisms
 -- and then conclude
 
+-- this needs to be replaced by the proof showing existence of local flows
 set_option backward.isDefEq.respectTransparency false in
 theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
     (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)

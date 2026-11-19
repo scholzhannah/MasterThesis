@@ -8,6 +8,8 @@ public import CollarNeighbourhoods.ExistsUniqueBoundary
 public import CollarNeighbourhoods.Flows
 import Mathlib.Geometry.Manifold.Notation
 
+/-! haibsi-/
+
 public section
 
 open scoped Topology
@@ -21,6 +23,7 @@ variable
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
   {γ γ' : ℝ → M} {v : (x : M) → TangentSpace I x} {s s' : Set ℝ} (t₀ : ℝ) {x₀ : M}
 
+/-
 set_option backward.isDefEq.respectTransparency false in
 theorem exists_mem_nhds_flowOn {v : (x : H) → TangentSpace I x} {x₀ : H} [CompleteSpace E]
     (hv1 : ContMDiffAt I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I H)) x₀)
@@ -84,24 +87,7 @@ theorem exists_mem_nhds_flowOn {v : (x : H) → TangentSpace I x} {x₀ : H} [Co
     simp only [comp_apply, mem_prod, mem_preimage, hp, mem_Ico, false_and, ofPred_false]
     exact fun p hp ↦  hp.elim
   · intro p hp
-    simp [hα (I p) ⟨hp.left.choose_spec, mem_range_self p⟩]
-
--- from PR 26394 by Winston Yin
-theorem Filter.eventually_prod_iff_exists_mem {p : α × β → Prop} :
-    (∀ᶠ x in f ×ˢ g, p x) ↔ ∃ s ∈ f, ∃ t ∈ g, ∀ x ∈ s, ∀ y ∈ t, p ⟨x, y⟩ := by
-  rw [Filter.eventually_iff_exists_mem]
-  refine ⟨fun ⟨st, hst, h⟩ ↦ ?_, fun ⟨s, hs, t, ht, h⟩ ↦ ?_⟩
-  · have ⟨s, hs, t, ht, hp⟩ := Filter.mem_prod_iff.mp hst
-    exact ⟨s, hs, t, ht, fun x hx y hy ↦ h _ <| hp ⟨hx, hy⟩⟩
-  · exact ⟨s ×ˢ t, Filter.prod_mem_prod hs ht, fun ⟨x, y⟩ ⟨hx, hy⟩ ↦ h x hx y hy⟩
-
-theorem ContinuousWithinAt.comp₂ {α β γ δ : Type*} [TopologicalSpace α] [TopologicalSpace β]
-    [TopologicalSpace γ] [TopologicalSpace δ] {f : β × γ → δ} {g : α → β} {h : α → γ} {x : α}
-    {t : Set (β × γ)} {s : Set α} (hst : MapsTo (fun x ↦ (g x, h x)) s t)
-    (hf : ContinuousWithinAt f t (g x, h x)) (hg : ContinuousWithinAt g s x)
-    (hh : ContinuousWithinAt h s x) :
-    ContinuousWithinAt (fun x ↦ f (g x, h x)) s x :=
-  ContinuousWithinAt.comp hf (hg.prodMk_nhds hh) hst
+    simp [hα (I p) ⟨hp.left.choose_spec, mem_range_self p⟩]-/
 
 set_option backward.isDefEq.respectTransparency false in
 lemma hasDerivAt_extChartAt_comp_extChartAt_comp_of_hasDerivAt_tangentCoordChange

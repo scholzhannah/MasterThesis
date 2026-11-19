@@ -645,9 +645,26 @@ theorem Metric.continuousWithinAt_iff_le {α : Type u} {β : Type v} [PseudoMetr
     intro x hx hxδ
     exact lt_of_le_of_lt (h hx hxδ.le) (half_lt_self hε)
 
-open MeasureTheory
+-- from PR 26394 by Winston Yin
+theorem Filter.eventually_prod_iff_exists_mem {p : α × β → Prop} :
+    (∀ᶠ x in f ×ˢ g, p x) ↔ ∃ s ∈ f, ∃ t ∈ g, ∀ x ∈ s, ∀ y ∈ t, p ⟨x, y⟩ := by
+  rw [Filter.eventually_iff_exists_mem]
+  refine ⟨fun ⟨st, hst, h⟩ ↦ ?_, fun ⟨s, hs, t, ht, h⟩ ↦ ?_⟩
+  · have ⟨s, hs, t, ht, hp⟩ := Filter.mem_prod_iff.mp hst
+    exact ⟨s, hs, t, ht, fun x hx y hy ↦ h _ <| hp ⟨hx, hy⟩⟩
+  · exact ⟨s ×ˢ t, Filter.prod_mem_prod hs ht, fun ⟨x, y⟩ ⟨hx, hy⟩ ↦ h x hx y hy⟩
+
+theorem ContinuousWithinAt.comp₂ {α β γ δ : Type*} [TopologicalSpace α] [TopologicalSpace β]
+    [TopologicalSpace γ] [TopologicalSpace δ] {f : β × γ → δ} {g : α → β} {h : α → γ} {x : α}
+    {t : Set (β × γ)} {s : Set α} (hst : MapsTo (fun x ↦ (g x, h x)) s t)
+    (hf : ContinuousWithinAt f t (g x, h x)) (hg : ContinuousWithinAt g s x)
+    (hh : ContinuousWithinAt h s x) :
+    ContinuousWithinAt (fun x ↦ f (g x, h x)) s x :=
+  ContinuousWithinAt.comp hf (hg.prodMk_nhds hh) hst
 
 /-
+open MeasureTheory
+
 -- this might be true but I think I don't need it
 lemma ConvexCone.integral_mem_of_IsClosed {α E : Type*} [MeasureSpace α]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
