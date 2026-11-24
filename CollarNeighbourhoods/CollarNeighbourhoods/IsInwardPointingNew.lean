@@ -47,8 +47,9 @@ def IsRealizable'' {p : M} (v : TangentSpace I p) : Prop :=
     γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 
 -- should this be `HasMFDerivAt[Ici 0]`
+
 def IsRealizable {p : M} (v : TangentSpace I p) : Prop :=
-  ∃ (γ : ℝ → M) (_ : MDiffAt[Ici 0] γ 0), γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
+  ∃ (γ : ℝ → M), MDiffAt[Ici 0] γ 0 ∧ γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
 
 -- should this be `HasMFDerivAt[Ici 0]` or `HasMFDerivAt[Ico 0 ε]`
 def IsRealizable' {p : M} (v : TangentSpace I p) : Prop :=
@@ -70,8 +71,9 @@ def IsOutwardPointing {p : M} (v : TangentSpace I p) : Prop :=
   ¬ IsRealizable'' v
 
 omit [IsManifold I n M] in
-lemma PartialDiffeomorph.isRealizable_apply {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' n)
+lemma PartialDiffeomorph.isRealizable_apply {H' M' : Type*} [TopologicalSpace H']
+    [TopologicalSpace M'] [ChartedSpace H' M'] {I' : ModelWithCorners ℝ E H'}
+    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) (hv : IsRealizable v) : IsRealizable (mfderiv% f p v) := by
   obtain ⟨γ, hγ, hγp, hγv⟩ := hv
   have hf := f.mdifferentiableAt (NeZero.ne n) (hγp ▸ hp)
@@ -88,13 +90,14 @@ lemma TangentSpace.tangentSpaceCast_isRealizable_iff {M' : Type*} [TopologicalSp
   rfl
 
 omit [IsManifold I n M] in
-lemma PartialDiffeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    {p : M} (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' n)
+lemma PartialDiffeomorph.isRealizable_iff {H' M' : Type*} [TopologicalSpace H']
+    [TopologicalSpace M'] [ChartedSpace H' M'] {I' : ModelWithCorners ℝ E H'}
+    {p : M} (v : TangentSpace I p) (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) :
     IsRealizable v ↔ IsRealizable (mfderiv% f p v) := by
   refine ⟨fun hv ↦ isRealizable_apply p v f hp hv, ?_⟩
   have : v = (mfderiv% f.symm (f p)) ((mfderiv% f p) v) := by
-    -- use proof def above to proof this
+    -- use proof def above to prove this
     rw [← mfderiv_comp_apply p ?_ (f.mdifferentiableAt (NeZero.ne n) hp) v]
     · rw [← mfderivWithin_of_isOpen f.open_source hp, mfderivWithin_congr_of_mem (f := id) ?_ hp]
       · rw [mfderivWithin_of_isOpen f.open_source hp, comp_apply, mfderiv_id]
@@ -109,9 +112,10 @@ lemma PartialDiffeomorph.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [Ch
   simp [f.map_source' hp]
 
 omit [IsManifold I n M] in
-lemma IsLocalDiffeomorphAt.isRealizable_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
+lemma IsLocalDiffeomorphAt.isRealizable_iff {H' M' : Type*} [TopologicalSpace H']
+    [TopologicalSpace M'] [ChartedSpace H' M'] {I' : ModelWithCorners ℝ E H'}
     {p : M} (v : TangentSpace I p) (f : M → M')
-    (hf : IsLocalDiffeomorphAt I I n f p) :
+    (hf : IsLocalDiffeomorphAt I I' n f p) :
     IsRealizable v ↔ IsRealizable (mfderiv% f p v) := by
   rw [isLocalDiffeomorphAt_iff] at hf
   obtain ⟨φ, hpφ, hφf⟩ := hf

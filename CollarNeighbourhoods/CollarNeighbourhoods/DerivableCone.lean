@@ -334,7 +334,7 @@ lemma derivWithin_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
   (hasDerivWithinAt_limitFun hγv hγ hs hγp hv).derivWithin (uniqueDiffWithinAt_Ici 0)
 
 def derivableWithinAt (s : Set E) (p : E) (v : E) : Prop :=
-   ∃ (γ : ℝ → E) (_ : DifferentiableWithinAt ℝ γ (Ici 0) 0), γ 0 = p ∧
+   ∃ (γ : ℝ → E), DifferentiableWithinAt ℝ γ (Ici 0) 0 ∧ γ 0 = p ∧
       derivWithin γ (Ici 0) (0 : ℝ) = v ∧ ∀ᶠ (x : ℝ) in 𝓝[≥] 0, γ x ∈ s
 
 private lemma convex_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) :
@@ -342,9 +342,8 @@ private lemma convex_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) :
   rw [convex_iff_add_mem]
   intro x ⟨γ, hγ, hγp, hγv, hγs⟩ y ⟨δ, hδ, hδp, hδv, hδs⟩ a b ha hb hab
   use a • γ + b • δ
-  simp only [Pi.add_apply, Pi.smul_apply, hγp, hδp, Convex.combo_self hab p, true_and,
-    exists_and_left, exists_prop]
-  refine ⟨?_, (hγ.const_smul a).add (hδ.const_smul b), ?_⟩
+  simp only [Pi.add_apply, Pi.smul_apply, hγp, hδp, Convex.combo_self hab p, true_and]
+  refine ⟨(hγ.const_smul a).add (hδ.const_smul b), ?_, ?_⟩
   · rw [derivWithin_add (hγ.const_smul a) (hδ.const_smul b),
       derivWithin_const_smul_field, derivWithin_const_smul_field, hγv, hδv]
   · rw [eventually_iff_exists_mem] at hγs hδs ⊢
@@ -389,11 +388,11 @@ lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
   classical
   rw [← isSeqClosed_iff_isClosed]
   intro v w h hv
-  simp only [derivableWithinAt, exists_and_left, exists_prop, mem_ofPred_eq] at h
+  simp only [derivableWithinAt, mem_ofPred_eq] at h
   let γ := fun n ↦ Classical.choose (h n)
-  have hγp n := (Classical.choose_spec (h n)).1
-  have hγ n := (Classical.choose_spec (h n)).2.2.1
-  have hγv n := (Classical.choose_spec (h n)).2.1
+  have hγ n := (Classical.choose_spec (h n)).1
+  have hγv n := (Classical.choose_spec (h n)).2.2.1
+  have hγp n := (Classical.choose_spec (h n)).2.1
   have hs n := (Classical.choose_spec (h n)).2.2.2
   suffices ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) from
     ⟨limitFun hγv hγ hs p, differentiableWithinAt_limitFun hγv hγ hs hγp hv,
