@@ -9,6 +9,7 @@ public import CollarNeighbourhoods.IsInwardPointingVectorField
 public import Mathlib.Geometry.Manifold.IntegralCurve.Basic
 public import Mathlib.Geometry.Manifold.IntegralCurve.ExistUnique
 public import CollarNeighbourhoods.ExistsUniqueBoundary
+public import CollarNeighbourhoods.PR26394.ExistUnique
 
 /-! Header-/
 
@@ -53,6 +54,15 @@ lemma isLocalFlowDomain_sprod_ico {u : Set M} {ε : ℝ} (hε : ε > 0) :
   refine ⟨?_, ⟨hp, left_mem_Ico.mpr ((lt_add_iff_pos_right t₀).mpr hε)⟩⟩
   simp only [mem_prod, hp, true_and, ofPred_mem_eq]
   exact isConnected_Ico ((lt_add_iff_pos_right t₀).mpr hε)
+
+omit [TopologicalSpace M] in
+lemma isLocalFlowDomain_sprod_ioo {u : Set M} {ε : ℝ} (hε : ε > 0) :
+    IsLocalFlowDomain t₀ (u ×ˢ (Ioo (t₀ - ε) (t₀ + ε))) := by
+  intro p ⟨_, hp, _⟩
+  refine ⟨?_, ⟨hp, by simp [hε]⟩⟩
+  simp only [mem_prod, hp, true_and, ofPred_mem_eq]
+  refine isConnected_Ioo ?_
+  exact lt_trans (sub_lt_self t₀ hε) ((lt_add_iff_pos_right t₀).mpr hε)
 
 variable (E H I v) in
 structure LocalFlow (t₀ : ℝ) where
@@ -102,7 +112,7 @@ lemma hasMFDerivAt_extChartAt_comp_of_hasDerivAt {ε : ℝ} {v : (x : M) → Tan
 
 theorem exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' [CompleteSpace E]
     (hv1 : ContMDiffAt I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
-    (hx2 : IsInwardPointingMinimal (v x₀)) :
+    (hx2 : IsInwardPointing (v x₀)) :
     ∃ u ∈ 𝓝 x₀, ∃ ε > (0 : ℝ), ∃ γ : M → ℝ → M, IsFlowOn t₀ γ (u ×ˢ (Ico t₀ (t₀ + ε))) v := by
   have hv := (contMDiffAt_iff.mp hv1).2
   let f := ((extChartAt I.tangent (⟨x₀, v x₀⟩ : Bundle.TotalSpace E (TangentSpace I))) ∘
@@ -188,9 +198,9 @@ theorem exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' [CompleteSpace E]
         PartialEquiv.left_inv (extChartAt I x₀) hp.2]
 
 @[expose]
-noncomputable def LocalFlowAt [CompleteSpace E]
+noncomputable def LocalRightFlowAt [CompleteSpace E]
     (hv1 : ContMDiffAt I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
-    (hv2 : IsInwardPointingMinimal (v x₀)) : LocalFlow E H I v t₀ :=
+    (hv2 : IsInwardPointing (v x₀)) : LocalFlow E H I v t₀ :=
   letI u := (exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' t₀ hv1 hv2).choose
   letI ε := (exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' t₀ hv1 hv2).choose_spec.2.choose
   haveI hε := (exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' t₀ hv1 hv2).choose_spec.2.choose_spec.1
@@ -203,12 +213,36 @@ noncomputable def LocalFlowAt [CompleteSpace E]
     map := γ
     flowOn := hγ }
 
+@[expose]
+noncomputable def LocalTwoSidedFlowAt [CompleteSpace E]
+    (hv1 : ContMDiffAt I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
+    (hx : I.IsInteriorPoint x₀) : LocalFlow E H I v t₀ :=
+  letI u := (PR26394.exists_mem_nhds_isMIntegralCurveOn_Ioo_of_contMDiffAt t₀ hv1 hx).choose
+  letI ε :=
+    (PR26394.exists_mem_nhds_isMIntegralCurveOn_Ioo_of_contMDiffAt t₀ hv1 hx).choose_spec.2.choose
+  haveI hε := (PR26394.exists_mem_nhds_isMIntegralCurveOn_Ioo_of_contMDiffAt
+    t₀ hv1 hx).choose_spec.2.choose_spec.1
+  letI γ := (PR26394.exists_mem_nhds_isMIntegralCurveOn_Ioo_of_contMDiffAt
+    t₀ hv1 hx).choose_spec.2.choose_spec.2.choose
+  haveI hγ := (PR26394.exists_mem_nhds_isMIntegralCurveOn_Ioo_of_contMDiffAt
+    t₀ hv1 hx).choose_spec.2.choose_spec.2.choose_spec
+  { domain := u ×ˢ (Ioo (t₀ - ε) (t₀ + ε))
+    isLocalFlowDomain := isLocalFlowDomain_sprod_ioo t₀ hε
+    map := curry γ
+    flowOn := by
+      constructor
+      · intro p t ⟨hp, ht⟩
+        simp only [curry_apply, mem_prod, hp, true_and]
+        exact (hγ p hp).2.1 _ ht
+      · intro p ⟨t, ⟨hp, ht⟩⟩
+        exact (hγ p hp).1 }
+
 lemma mem_localFlowAt_domain [CompleteSpace E]
     (hv1 : ContMDiffAt I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
-    (hv2 : IsInwardPointingMinimal (v x₀)) : (x₀, t₀) ∈ (LocalFlowAt t₀ hv1 hv2).domain := by
+    (hv2 : IsInwardPointing (v x₀)) : (x₀, t₀) ∈ (LocalRightFlowAt t₀ hv1 hv2).domain := by
   have hu := (exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' t₀ hv1 hv2).choose_spec.1
   have hε := (exists_mem_nhds_isFlowOn_Ioo_of_contMDiffAt' t₀ hv1 hv2).choose_spec.2.choose_spec.1
-  simp [LocalFlowAt, hε, mem_of_mem_nhds hu]
+  simp [LocalRightFlowAt, hε, mem_of_mem_nhds hu]
 
 variable (v) in
 def MaximalFlowDomain (t₀ : ℝ) :=
@@ -217,12 +251,12 @@ def MaximalFlowDomain (t₀ : ℝ) :=
 @[instance_reducible]
 noncomputable def inhabited_LocalFlow [CompleteSpace E] [Inhabited M]
   (hv1 : ContMDiff I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-  (hv2 : ∀ x, IsInwardPointingMinimal (v x)) : Inhabited (LocalFlow E H I v t₀) :=
-  ⟨LocalFlowAt t₀ (hv1 default) (hv2 default)⟩
+  (hv2 : ∀ x, IsInwardPointing (v x)) : Inhabited (LocalFlow E H I v t₀) :=
+  ⟨LocalRightFlowAt t₀ (hv1 default) (hv2 default)⟩
 
 lemma isFlowDomain_maximalFlowDomain [CompleteSpace E] [Inhabited M]
     (hv1 : ContMDiff I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    (hv2 : ∀ x, IsInwardPointingMinimal (v x)) (t₀ : ℝ) :
+    (hv2 : ∀ x, IsInwardPointing (v x)) (t₀ : ℝ) :
     IsFlowDomain t₀ (MaximalFlowDomain v t₀) := by
   intro p
   constructor
@@ -234,7 +268,7 @@ lemma isFlowDomain_maximalFlowDomain [CompleteSpace E] [Inhabited M]
         {x | (p, x) ∈ y.domain}) by
       simpa
     apply IsConnected.biUnion_of_reflTransGen
-    · refine ⟨LocalFlowAt t₀ (hv1 p) (hv2 p), ?_⟩
+    · refine ⟨LocalRightFlowAt t₀ (hv1 p) (hv2 p), ?_⟩
       exact ⟨t₀, mem_ofPred_eq ▸ mem_localFlowAt_domain t₀ (hv1 p) (hv2 p)⟩
     · intro γ ⟨t, ht⟩
       exact (γ.isLocalFlowDomain p ⟨t, ht⟩).1
@@ -245,7 +279,7 @@ lemma isFlowDomain_maximalFlowDomain [CompleteSpace E] [Inhabited M]
       refine ⟨⟨t₀, ?_⟩, ⟨t₁, ht₁⟩⟩
       simp [(γ₁.isLocalFlowDomain p ⟨t₁, ht₁⟩).2, (γ₂.isLocalFlowDomain p ⟨t₂, ht₂⟩).2]
   · simp only [MaximalFlowDomain, mem_sUnion, mem_ofPred_eq, exists_exists_eq_and]
-    exact ⟨LocalFlowAt t₀ (hv1 p) (hv2 p), mem_localFlowAt_domain t₀ (hv1 p) (hv2 p)⟩
+    exact ⟨LocalRightFlowAt t₀ (hv1 p) (hv2 p), mem_localFlowAt_domain t₀ (hv1 p) (hv2 p)⟩
 
 open Classical in
 variable (v) in
@@ -253,18 +287,42 @@ noncomputable def MaximalFlowMap [Inhabited M] (t₀ : ℝ) : M → ℝ → M :=
   fun x t ↦ if h : ∃ (γ : LocalFlow E H I v t₀), (x, t) ∈ γ.domain then
       h.choose.map x t else default
 
-lemma isMIntegralCurveOn_maximalFlowMap [Inhabited M] (t₀ : ℝ) (p : M) :
+example (γ₁ γ₂ : LocalFlow E H I v t₀) : EqOn (uncurry γ₁.map) (uncurry γ₂.map)
+    (γ₁.domain ∩ γ₂.domain) := by
+  intro ⟨x, t⟩ ⟨h1, h2⟩
+
+  sorry
+
+/-noncomputable def MaximalFlowMap [CompleteSpace E]
+  (hv1 : ContMDiff I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+  (hv2 : ∀ x, IsInwardPointing (v x)) (t₀ : ℝ) :
+  M → ℝ → M :=
+  fun x ↦ if h : I.IsInteriorPoint x then (LocalTwoSidedFlowAt t₀ (hv1 x) h).map x else
+    (LocalRightFlowAt t₀ (hv1 x) (hv2 x)).map x-/
+
+lemma isMIntegralCurveOn_maximalFlowMap [CompleteSpace E] [Inhabited M]
+    (hv1 : ContMDiff I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
+    (hv2 : ∀ x, IsInwardPointing (v x)) (t₀ : ℝ) (p : M) :
     IsMIntegralCurveOn (MaximalFlowMap v t₀ p) v {t | (p, t) ∈ MaximalFlowDomain v t₀} := by
   -- I think I might have to differentiate between interior points and boundary points
-  intro t ⟨_, ⟨⟨γ, rfl⟩, hpγ⟩⟩
-  have := γ.flowOn.isMIntegralCurveOn p t hpγ
+  by_cases hp : I.IsInteriorPoint p
+  · intro t ⟨_, ⟨⟨γ, rfl⟩, hpγ⟩⟩
 
+
+    rw [MaximalFlowMap, dite_eq_left ⟨γ, hpγ⟩]
+
+    have hγ := (LocalTwoSidedFlowAt t₀ (hv1 p) hp).flowOn.isMIntegralCurveOn p t
+
+
+
+    have := γ.flowOn.isMIntegralCurveOn p t hpγ
+    sorry
   sorry
 
 
 lemma isFlowOn_maximalFlowMap_maximalFlowDomain [CompleteSpace E] [Inhabited M]
     (hv1 : ContMDiff I I.tangent 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    (hv2 : ∀ x, IsInwardPointingMinimal (v x))
+    (hv2 : ∀ x, IsInwardPointing (v x))
     (t₀ : ℝ) :
     IsFlowOn t₀ (MaximalFlowMap v t₀) (MaximalFlowDomain v t₀) v where
   isMIntegralCurveOn := by
@@ -274,9 +332,9 @@ lemma isFlowOn_maximalFlowMap_maximalFlowDomain [CompleteSpace E] [Inhabited M]
 
     sorry
   toFun_zero := by
-    rintro p ⟨t, ⟨_, ⟨⟨γ, rfl⟩, hpγ⟩⟩⟩
-    rw [MaximalFlowMap]
-    rw [dite_eq_left ⟨LocalFlowAt t₀ (hv1 p) (hv2 p), mem_localFlowAt_domain t₀ (hv1 p) (hv2 p)⟩]
+    rintro p _
+    rw [MaximalFlowMap, dite_eq_left ⟨LocalRightFlowAt t₀ (hv1 p) (hv2 p),
+      mem_localFlowAt_domain t₀ (hv1 p) (hv2 p)⟩]
     apply (LocalFlow.flowOn _).toFun_zero
     use t₀
     exact Exists.choose_spec (_ : ∃ (γ : LocalFlow E H I v t₀), (p, t₀) ∈ γ.domain)

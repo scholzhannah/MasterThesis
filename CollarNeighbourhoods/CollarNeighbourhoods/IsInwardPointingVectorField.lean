@@ -63,7 +63,7 @@ lemma mvfderiv_modelWithCorners_inwardPointingVec (x : H) :
 
 include n in
 lemma IsInwardPointing_inwardPointingVec (x : H) :
-    IsInwardPointingMinimal (I := I) (InwardPointingVec E I x) := by
+    IsInwardPointing (I := I) (InwardPointingVec E I x) := by
   let y := (I.nonempty_interior.preimage' interior_subset).choose
   let hy : y ∈ I ⁻¹' interior (range I) :=
     (I.nonempty_interior.preimage' interior_subset).choose_spec
@@ -110,12 +110,12 @@ noncomputable def InwardPointingVecWithinAt (p : M) : (q : M) → TangentSpace I
 
 include n in
 lemma IsInwardPointing_inwardPointingVecWithinAt (p : M) (q : M) (hq : q ∈ (chartAt H p).source) :
-    IsInwardPointingMinimal (InwardPointingVecWithinAt M I p q) := by
+    IsInwardPointing (InwardPointingVecWithinAt M I p q) := by
   unfold InwardPointingVecWithinAt VectorField.mpullbackWithin
   rw [mfderiv_chart_inverse_eq (n := n) p q hq]
   rw [isInwardPointing_iff_chartAt' hq (n := n)]
   rw [← coe_chartAtMFderiv (n := n) p hq]
-  suffices IsInwardPointingMinimal (InwardPointingVec E I ((chartAt H p) q)) by
+  suffices IsInwardPointing (InwardPointingVec E I ((chartAt H p) q)) by
     convert this
     exact (chartAtMFderiv n p hq).apply_symm_apply (c := InwardPointingVec E I ((chartAt H p) q))
   exact IsInwardPointing_inwardPointingVec (n := n) _
@@ -174,7 +174,7 @@ lemma contMDiff_smoothInwardPointingVec : CMDiff ∞ (T% (SmoothInwardPointingVe
 
 include n in
 lemma isInwardPointing_smoothInwardPointingVec (p : M) :
-    IsInwardPointingMinimal (SmoothInwardPointingVec M I p) := by
+    IsInwardPointing (SmoothInwardPointingVec M I p) := by
   let f := (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose
   let hf : f.IsSubordinate fun x ↦ (chartAt H x).source :=
     (SmoothPartitionOfUnity.exists_isSubordinate_chartAt_source I M).choose_spec

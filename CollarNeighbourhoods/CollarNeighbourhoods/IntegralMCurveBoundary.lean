@@ -196,7 +196,7 @@ variable
 set_option backward.isDefEq.respectTransparency false in
 theorem exists_isRightMIntegralCurveAt_of_contMDiffAt [CompleteSpace E]
     (hv : CMDiffAt 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)) x₀)
-    (hx : IsInwardPointingMinimal (v x₀)) :
+    (hx : IsInwardPointing (v x₀)) :
     ∃ γ : ℝ → M, γ t₀ = x₀ ∧ IsRightMIntegralCurveAt γ v t₀ := by
   -- express the differentiability of the vector field `v` in the local chart
   rw [contMDiffAt_iff] at hv
@@ -478,7 +478,7 @@ def maximalMIntegralCurveDomainAt (p : M) : Set ℝ :=
 
 lemma mem_maximalMIntegralCurveDomainAt [CompleteSpace E]
     (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} :
+    (hx : ∀ x, IsInwardPointing (v x)) {p : M} :
     0 ∈ maximalMIntegralCurveDomainAt v p := by
   use {0}
   simp only [mem_ofPred_eq, convex_singleton, mem_singleton_iff, true_and, and_true]
@@ -500,7 +500,7 @@ lemma mem_maximalMIntegralCurveDomainAt [CompleteSpace E]
 
 lemma convex_maximalMIntegralCurveDomain [CompleteSpace E]
     (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} :
+    (hx : ∀ x, IsInwardPointing (v x)) {p : M} :
     Convex ℝ (maximalMIntegralCurveDomainAt v p) := by
   intro x hx y hy a b ha hb hab
 
@@ -519,7 +519,7 @@ noncomputable def minIntegral (p : M) := sInf (minimaSet v p)
 
 --lemma exists_subset_maximalMIntegralCurveDomainAt [CompleteSpace E]
 --    (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
---    (hx : ∀ x, IsInwardPointingMinimal (v x)) {p : M} : sorry :=
+--    (hx : ∀ x, IsInwardPointing (v x)) {p : M} : sorry :=
 --  sorry
 
 
@@ -533,7 +533,7 @@ noncomputable def maximalMIntegralCurveAt (p : M) (x : ℝ) : M :=
 
 lemma isMIntegralCurveOn_maximalMIntegralCurveAt
     (hv : CMDiff 1 (fun x ↦ (⟨x, v x⟩ : TangentBundle I M)))
-    (hx : ∀ x, IsInwardPointingMinimal (v x)) (p : M) :
+    (hx : ∀ x, IsInwardPointing (v x)) (p : M) :
     IsMIntegralCurveOn (maximalMIntegralCurveAt v p) v (maximalMIntegralCurveDomainAt v p) := by
   intro t ht
   by_cases ht' : t ∈ interior (maximalMIntegralCurveDomainAt v p)
