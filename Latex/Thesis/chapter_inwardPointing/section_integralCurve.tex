@@ -56,7 +56,7 @@ We define $\fM$ to be the space of functions $g \colon [\minsub{t}, \maxsub{t}] 
 
 Since we later want to apply the fact that every contraction in a complete space has a fixed point, we first need to show that this space is complete. 
 
-\begin{lem}
+\begin{lem}\label{lem:completeSpace}
 If $s$ is closed, then $\fM$ is a complete space with respect to the supremum norm $\norm{\cdot}_\infty$.  
 \end{lem}
 \begin{proof}
@@ -192,7 +192,7 @@ This will allow us to obtain a fixed point of $C^n$ which is then also a fixed p
 
 We first show the following lemma: 
 
-\begin{lem}
+\begin{lem}\label{lem:contraction}
 Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$, $g_1, g_2 \in \fM$ and $n \in \bN$.
 Then 
 \begin{equation*}
@@ -223,3 +223,66 @@ We need to show it for $n + 1$.
 In step (1) we used that $f$ is Lipschitz continuous with constant $K$ in the second variable by property \ref{PicLindI} of $f$ being Picard-Lindelöf. 
 In step (2) we applied the induction hypothesis. 
 \end{proof}
+
+\begin{cor}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$, $g_1, g_2 \in \fM$ and $n \in \bN$.
+Then there exists a function in $\fM$ that is a fixed point of $C$.
+\end{cor}
+\begin{proof}
+Since the sequence 
+\begin{equation*}
+    \left(\frac{(K(\maxsub{t} - \minsub{t}))^n}{n!}\right)_{n \in \bN}
+\end{equation*}
+
+converges to $0$ as $n$ goes to infinity, there is an $n \in \bN$ such that 
+
+\begin{equation*}
+    \frac{(K(\maxsub{t} - \minsub{t}))^n}{n!} < 1.
+\end{equation*}
+Take such an $n$. 
+Then $C^n$ is a contraction by Lemma \ref{lem:contraction}. 
+Since $\fM$ is a complete space by Lemma \ref{lem:completeSpace}, there is a fixed point $g \in \fM$ of $C^n$. This point is then also a fixed point of $C$: 
+
+\begin{equation*}
+    \begin{split}
+        \norm{C(g) - g}_\infty &\stackrel{(1)}{=} \norm{C (C^n(g)) - C^n(g)}_\infty \\
+        &= \norm{C^n(C(g)) - C^n(g)}_\infty \\
+        &\stackrel{(2)}{\le} \frac{(K(\maxsub{t} - \minsub{t}))^n}{n!}\norm{C(g) - g}_\infty
+    \end{split}
+\end{equation*}
+In (1) we used that $g$ is a fixed point of $C^n$ and in (2) we used Lemma \ref{lem:contraction}. 
+Since we picked the constant 
+\begin{equation*}
+    \frac{(K(\maxsub{t} - \minsub{t}))^n}{n!}
+\end{equation*}
+to be smaller than one, this inequality can only be true of $\norm{C(g) - g}_\infty = 0$. 
+Thus $g$ is also a fixed point of $C$.
+\end{proof}
+
+Now we get a version of the Picard-Lindelöf theorem: 
+
+\begin{lem}
+Let $f$ be Picard-Lindelöf with respect to $x_0, a, r, L, K$. 
+Then there is a differentiable $g \colon [\minsub{t}, \maxsub{t}] \to E$ such that $g (\minsub{t}) = x_0$ and for all $t \in [\minsub{t}, \maxsub{t}]$ we get $g'(t) = f(t, g(t))$ and $g(t) \in s$. 
+\end{lem}
+\begin{proof}
+By the above corollary, there is a fixed point of $C$ in $\fM$. 
+Let $g$ be that fixed point. 
+We want to show that $g$ is the function we are looking for. 
+We know $g ([\minsub{t}, \maxsub{t}]) \subseteq s$ by the definition of $\fM$. 
+Additionally, we get 
+\begin{equation*}
+    g(\minsub{t}) = C(g)(\minsub{t}) = x_0 + \int_{\minsub{t}}^{\minsub{t}} f(x, g(x)) \diff x = x_0.
+\end{equation*}
+Lastly,  $g'(t) = C(g)'(t) = f(t, g(t))$ by the fundamental theorem of calculus. 
+\end{proof}
+
+In particular we obtain: 
+
+\begin{cor}
+Let $f \colon s \to E$ be a continuously differentiable time-independent vector field. 
+Assume that $s$ is convex and closed and that $f(x_0)$ is inward pointing with respect to $s$ at $x_0$. 
+Lastly, assume that there is an $\varepsilon > 0$ such that for all $v \in E$ which fulfil $\norm{v} \le \varepsilon$ and are is derivable at $x_0$ within $s$, we get $x_0 + v \in s$. 
+
+Then there is a differentiable $g \colon [\minsub{t}, \maxsub{t}] \to E$ such that $g (\minsub{t}) = x_0$ and for all $t \in [\minsub{t}, \maxsub{t}]$ we get $g'(t) = f(t, g(t))$ and $g(t) \in s$. 
+\end{cor}

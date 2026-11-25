@@ -667,6 +667,8 @@ lemma closure_feasibleCone_eq_closure_feasibleInteriorCone {s : Set E} (hs : Con
     grw [interior_subset]
     simp
 
+
+
 lemma Convex.interior_posTangentCone_eq_feasibleInteriorCone {s : Set E} (hs : Convex ℝ s)
     (hs' : (interior s).Nonempty) {p : E} (hp : p ∈ s) :
     interior (posTangentConeAt s p) =

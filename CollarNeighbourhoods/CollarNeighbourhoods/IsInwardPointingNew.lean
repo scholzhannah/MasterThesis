@@ -171,6 +171,7 @@ lemma derivableWithinAt.IsRealizable {p : H} {v : TangentSpace I p}
     rw [← mdifferentiableWithinAt_iff_differentiableWithinAt] at hγ
     rw [mfderivWithin_comp_of_preimage_mem_nhdsWithin _ hI hγ (I.target_eq ▸ hγI) h,
       ContinuousLinearMap.comp_apply]
+    -- extract this as a lemma, this way one can avoid def-eq abuse
     have : Injective (mvfderiv I I p) := by
       rw [I.mvfderiv_I]
       exact injective_id
@@ -259,8 +260,9 @@ lemma isRealizable_iff_euclideanHalfSpace {m : ℕ} [NeZero m] {M : Type*} [Topo
 -- I think I need this because `PartialDiffeomorph` is private
 -- Maybe try to isolate this an post on Zulip
 set_option backward.isDefEq.respectTransparency false in
-lemma PartialDiffeomorph.interior_isRealizable_eq {M' : Type*} [TopologicalSpace M']
-    [ChartedSpace H M'] (p : M) (f : PartialDiffeomorph I I M M' n) (hp : p ∈ f.source) :
+lemma PartialDiffeomorph.interior_isRealizable_eq {H' M' : Type*} [TopologicalSpace H']
+    [TopologicalSpace M'] [ChartedSpace H' M'] {I' : ModelWithCorners ℝ E H'} (p : M)
+    (f : PartialDiffeomorph I I' M M' n) (hp : p ∈ f.source) :
     interior {v | IsRealizable v} =
       (mfderiv% f p) '' interior {v | IsRealizable v} := by
   rw [(isHomeomorph_mfderiv p f hp).image_interior]
@@ -276,16 +278,18 @@ lemma PartialDiffeomorph.interior_isRealizable_eq {M' : Type*} [TopologicalSpace
   change _ ↔ IsRealizable ((tangentSpaceCast I (f.toPartialEquiv.symm _) p) _)
   rw [← TangentSpace.tangentSpaceCast_isRealizable_iff _ (f.leftInvOn hp) (M' := M)]
 
-lemma PartialDiffeomorph.isInwardPointing_iff {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I M M' n)
+lemma PartialDiffeomorph.isInwardPointing_iff {H' M' : Type*} [TopologicalSpace H']
+    [TopologicalSpace M'] [ChartedSpace H' M'] {I' : ModelWithCorners ℝ E H'}
+    (p : M) (v : TangentSpace I p) (f : PartialDiffeomorph I I' M M' n)
     (hp : p ∈ f.source) :
     IsInwardPointing v ↔ IsInwardPointing (mfderiv% f p v) := by
   unfold IsInwardPointing
   rw [interior_isRealizable_eq p f hp, (bijective_mfderiv p f hp).injective.mem_set_image]
 
-lemma IsLocalDiffeomorphAt.isInwardPointing_iff {M' : Type*} [TopologicalSpace M']
-    [ChartedSpace H M'] (p : M) (v : TangentSpace I p) (f : M → M')
-    (hf : IsLocalDiffeomorphAt I I n f p) :
+lemma IsLocalDiffeomorphAt.isInwardPointing_iff {H' M' : Type*} [TopologicalSpace H']
+    [TopologicalSpace M'] [ChartedSpace H' M'] {I' : ModelWithCorners ℝ E H'}
+    (p : M) (v : TangentSpace I p) (f : M → M')
+    (hf : IsLocalDiffeomorphAt I I' n f p) :
     IsInwardPointing v ↔ IsInwardPointing (mfderiv% f p v) := by
   rw [isLocalDiffeomorphAt_iff] at hf
   obtain ⟨φ, hpφ, hφf⟩ := hf

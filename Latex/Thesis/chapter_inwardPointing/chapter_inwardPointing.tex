@@ -47,7 +47,7 @@ Unfortunately, this definition doesn't exclude vectors tangent to the boundary:
 \label{fig:InwLee2}
 \end{figure}
 
-Then we found this definition by \citeauthor{Melrose1996} which he however formulates for vector fields instead of individual vectors. Here is the version for vectors:  
+Then we found a definition by \citeauthor{Melrose1996} of inward pointing vector fields. Here is an adapted version for individual vectors:  
 
 \begin{defi}[adapted from \cite{Melrose1996} Definition 1.13.10]\label{defi:InwMelrose}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if $\direcderiv{v}f (p) \ge 0$ for every non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$. 
@@ -62,12 +62,14 @@ For some manifolds this definition includes vectors tangent to the boundary:
     Thus $(0, 1)$ is inward pointing by this definition even though it is clearly tangent to the boundary. 
 \end{example}
 
-It is possible however, that he calls ``inward pointing'' what we call ``realisable''.
+Thus this definition is clearly intended to define what we call ``realisable''. 
 To remedy this we came up with this definition: 
 
 \begin{defi}[Our idea inspired by Definition \ref{defi:InwMelrose}]\label{defi:InwMelrose2}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if there is a non-negative $f \in \smoothfunc{M}$ that is zero on $\boundary{M}$ such that $\direcderiv{v}f (p) > 0$. 
 \end{defi}
+
+Note that this definition, in contrast to Definition \ref{defi:InwMelrose}, asks for the existence of such a function $f$.
 
 Unfortunately, both of the above definitions do not work for manifolds with corners: 
 
@@ -91,12 +93,12 @@ Lastly, here is another popular definition that falls into this category:
 \end{defi}
 
 This definition is of course correct, however it depends on a choice of chart. 
-In \mathlib definitions are generally preferred to not depend on choices. \todo{Why exactly? Reference?} Additionally, it only work for models with corners of the form $\bR^n_k$. For \mathlib we would need a more general version. 
+In \mathlib definitions are generally preferred to not depend on choices. \todo{Why exactly? Reference?} Additionally, it only work for models with corners of the form $\bR^n_k$. For \mathlib we would need to characterise inward pointing vector in general model spaces. We will come back to this later. 
 
 \section{Definitions through realisability}
 
-After failing to find a usable definition intrinsically excluding vectors, we moved on to defining realisable vectors.
-Where as mentioned above, we want a realisable vector to be one that is either inward pointing or tangent to the boundary. 
+After failing to find a usable definition intrinsically excluding vectors tangent to the boundary, we moved on to defining realisable vectors.
+Where, as mentioned above, we want a realisable vector to be one that is either inward pointing or tangent to the boundary. 
 
 Firstly, we could only find the following way to define inward pointing vectors from realisable ones: 
 
@@ -104,9 +106,16 @@ Firstly, we could only find the following way to define inward pointing vectors 
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is inward pointing if and only if it is in the interior of the set of realisable vectors. 
 \end{defi}
 
-Now we can move on to finding a definition of realisability. 
+Assuming one has already defined realisability as \lstinline|IsRealizable|, we can define an inward pointing vector in Lean as follows. 
 
-We first note conditions for such a definition: 
+\begin{lstlisting}
+def IsInwardPointing {M H E : Type*} [TopologicalSpace H] [TopologicalSpace M]
+    [ChartedSpace H M] [NormedAddCommGroup E] [NormedSpace ℝ E] 
+    {I : ModelWithCorners ℝ E H} {p : M} (v : TangentSpace I p) : Prop :=
+  v ∈ interior {v | IsRealizable v}
+\end{lstlisting}
+
+Now we can move on to finding a definition of realisability. We first note conditions for such a definition: 
 
 \begin{rem}\label{rem:realcond}
     A sensible definition of realisability needs to fulfil these two conditions: 
@@ -117,6 +126,7 @@ We first note conditions for such a definition:
 \end{rem}
 
 Let us first discuss what this ``sensible notion'' in Remark \ref{rem:realcond2} should be. 
+Motivated by discussions of cones in convex sets in \cite{Rockafellar1998}, we decided to explore cones as an option. 
 
 We first need the following definition:
 
@@ -132,7 +142,7 @@ We first need the following definition:
 \end{defi}
 
 In \mathlib this is referred to as \lstinline|posTangentConeAt|.
-In the following we will only consider contingent tangent cones to convex sets for which the contingent tangent cone agrees with other notions of tangent cones such as the Clarke tangent cone (\cite{Aubin1990} Proposition 4.2.1).
+In the following we will only consider contingent tangent cones to convex sets for which the contingent tangent cone agrees with other notions of tangent cones such as the Clarke tangent cone (\cite{Aubin1990} Proposition 4.2.1). \todo{Is convexity enough?}
 Thus we will refer to it simply as the tangent cone. 
 
 This captures exactly our notion of realisable: intuitively, the tangent cone $\tancone{K}{x}$ is composed of all vectors at $x$ that are either inward pointing or tangent to $K$. 
@@ -175,30 +185,236 @@ The first was already provided to us in Definition \ref{defi:InwLee1}:
 
 It is easy to show that this definition fulfils Remark \ref{rem:realcond1}. 
 It also fulfils Remark \ref{rem:realcond2} but this is surprisingly hard to show for general model spaces $H$. 
-Taking a vector tangent to the boundary, it is hard to describe a method for picking a smooth curve $\gamma \colon [0, \varepsilon) \to H$ such that $\gamma (0) = p$ and $\gamma' (0) = v$. 
 
-This is considerably easier to prove for continuous curves (\cite{Rios2018}) or even for curves $\gamma \colon [0, \varepsilon) \to H$ that are just differentiable at $0$ (\cite{Rockafellar1998}). 
+In a model space without curvature, any vector that is inward pointing, describes a ray that lies in the set for a positive amount of time. 
+Thus we can pick the curve $\gamma$ to run along that vector. 
+See Figure \ref{fig:curveWithoutCurvature} for an example of this. 
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[scale = 1.5]
+    \fill[gray!10] (0, -1) rectangle (2.5, 1.5);
+    \node at (2, 1) {$K$};
+    \node[circle, fill, inner sep=1.5pt] at (0, -1) {};
+    \node at (-0.3, -1) {$x$};
+    \node[circle, fill, inner sep=1.5pt] at (0, 0.5) {};
+    \node at (-0.5, 0.5) {$x + v$};
+    \draw (0, -1) -- (0, 1.5);
+    \draw (0, -1) -- (2.5, -1);
+    \draw[thick] (0, -1) -- (0, 1); 
+    \node at (0.2, 0.9) {$\gamma$};
+\end{tikzpicture}
+\caption{In a model space without curvature, we can pick a curve $\gamma$ running along $v$.}
+\label{fig:curveWithoutCurvature}
+\end{figure}
+
+However, in a model with corners with curvature, considering a vector tangent to the boundary, it is hard to describe a method for picking a smooth curve $\gamma \colon [0, \varepsilon) \to H$ such that $\gamma (0) = p$ and $\gamma' (0) = v$. 
+Intuitively, this is because one needs to know how narrow the set is in a neighbourhood of the point in order to pick a narrow enough curve. 
+See Figure \ref{fig:narrowCurves} for a visualisation of this.
+
+\begin{figure}
+\centering
+\begin{minipage}[b]{0.4\linewidth}
+\begin{tikzpicture}[scale = 3]
+\draw (0, 0) parabola (-1, 1);
+\fill[gray!10] (0, 0) parabola (-1, 1) -- (0, 1);
+\draw (0, 0) parabola (1, 1);
+\fill[gray!10] (0, 0) parabola (1, 1) -- (0, 1);
+\node at (-0.3, 0.7) {$K$};
+\draw[->] (0, 0) -- (0.7, 0);
+\node[circle, fill, inner sep=1.5pt] at (0, 0) {};
+\node at (0, 0.1) {$x$};
+\node at (0.7, 0.1) {$v$};
+\draw[thick] (0, 0) parabola (0.5, 0.7);
+\node at (0.35, 0.7) {$\gamma$};
+\end{tikzpicture}
+\end{minipage}
+\hspace{1cm}
+\begin{minipage}[b]{0.4\linewidth}
+\begin{tikzpicture}[scale = 3]
+\draw (0, 0) parabola (-0.5, 1);
+\fill[gray!10] (0, 0) parabola (-0.5, 1) -- (0, 1);
+\draw (0, 0) parabola (0.5, 1);
+\fill[gray!10] (0, 0) parabola (0.5, 1) -- (0, 1);
+\node at (-0.3, 0.7) {$K$};
+\draw[->] (0, 0) -- (0.7, 0);
+\node[circle, fill, inner sep=1.5pt] at (0, 0) {};
+\node at (0, 0.1) {$x$};
+\node at (0.7, 0.1) {$v$};
+\draw[thick] (0, 0) parabola (0.2, 0.7);
+\node at (0.05, 0.7) {$\gamma$};
+\end{tikzpicture}
+\end{minipage}
+\caption{The curves $\gamma$ need to be narrower than the set.}
+\label{fig:narrowCurves}
+\end{figure}
+
+Finding such a curve easier for continuous curves (\cite{Rios2018}) or even for curves $\gamma \colon [0, \varepsilon) \to H$ that are just differentiable at $0$ (\cite{Rockafellar1998}). 
 Requiring only minimal conditions for $\gamma$ eases defining such functions in Lean. 
+In particular, if we were to require the curve $\gamma$ to be $C^k$ whenever $M$ is a $k$-manifold, then we would be providing a family of definitions instead of providing one uniform definition. 
 So we arrive at the following definition of realisability based on \cite{Rockafellar1998}:
 
-\begin{defi}[Realisability]
+\begin{defi}[Realisability]\label{defi:realisability}
     Let $M$ be a smooth manifold with corners. Let $p \in M$. Then $v \in \tanspace{p}{M}$ is \emph{realisable} if and only if there is a function $\gamma \colon [0, \infty) \to M$ that is differentiable at $0$ and fulfils $\gamma (0) = p$ and $\gamma'(0) = v$.
 \end{defi}
 
-In a normed space this definition reduces to the following which we will call by the name derivability instead of realisability in accordance with \cite{Rockafellar1998}.
+Another benefit of this definition is that by only imposing behaviour of the function at $p$, we don't need ask for the existence of a positive $\varepsilon$ such that $\gamma$ is defined on $[0, \varepsilon)$. 
+Instead, we can ask for $\gamma$ to be defined on $[0, \infty)$ which simplifies the definition. 
 
-\begin{defi}[Derivability]
+In Lean this takes the following shape. 
+
+\begin{lstlisting}
+def IsRealizable {M H E : Type*} [TopologicalSpace H] [TopologicalSpace M] 
+    [ChartedSpace H M] [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {I : ModelWithCorners ℝ E H} {p : M} (v : TangentSpace I p) : Prop :=
+  ∃ (γ : ℝ → M), MDiffAt[Ici 0] γ 0 ∧ γ 0 = p ∧ mfderiv[Ici 0] γ (0 : ℝ) 1 = v
+\end{lstlisting}
+
+Note that \mathlib generally avoids using subtypes and instead prefers to use predicates on subsets. 
+Thus this definition asks for a total $\gamma \colon \bR \to M$ but only imposes conditions on its behaviour at $p$ from the right side. 
+
+\todo[inline]{Describe the Lean concepts that the definition uses. Either here or in a Prerequisites chapter.}
+
+In a normed space Definition \ref{defi:realisability} reduces to the following definition which we will call by the name derivability instead of realisability in accordance with \cite{Rockafellar1998}.
+
+\todo{cite precise definition number}
+\begin{defi}[Derivability, \cite{Rockafellar1998}]\label{defi:derivability}
 Let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
-We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\varepsilon (0) = p$ and $\varepsilon' (0) = v$. 
-
-The set of all derivable vectors in $C$ at $p$ is called the \emph{derivable cone} to $C$ at $p$.
+We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\varepsilon (0) = p$ and $\gamma' (0) = v$. 
+The set of all derivable vectors in $C$ at $p$ is called the \emph{derivable cone} to $C$ at $p$. 
 \end{defi}
+
+In Lean this definition takes the following form: 
+
+\begin{lstlisting}
+def derivableWithinAt {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] 
+    (s : Set E) (p : E) (v : E) : Prop :=
+    ∃ (γ : ℝ → E), DifferentiableWithinAt ℝ γ (Ici 0) 0 ∧ γ 0 = p ∧
+      derivWithin γ (Ici 0) (0 : ℝ) = v ∧ ∀ᶠ (x : ℝ) in 𝓝[≥] 0, γ x ∈ s
+\end{lstlisting}
+
+Again, the function $\gamma$ is taken to be total and instead we use predicates on the set $[0, \infty)$. 
+Additionally, we use the weaker condition that $\gamma (x)$ eventually lies in $s$ as $x$ approaches $0$ from the right. 
+This allows us to drop the $\varepsilon$ from Definition \ref{defi:derivability}.
+\todo[inline]{Explain the filter part either here or in the prerequisites}. 
+
+We also define inward pointing vectors for normed spaces specifically in the same way as for manifolds: 
+
+\begin{lstlisting}
+def inwardPointing {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] 
+    (s : Set E) (p v : E) : Prop :=
+  v ∈ interior {w | derivableWithinAt s p w}
+\end{lstlisting}
 
 \section{Preservation under charts}
 
-Here I should write down the proof that realisability and inward pointing are properties preserved by charts.
+First, we want to show that realisability is preserved under charts. 
+We show this more generally for partial diffeomorphisms. 
+\todo[inline]{Define partial diffeomorphisms in prerequisites section.}
 
+\begin{lem}\label{lem:invariantRealisable}
+Let $M$ and $M'$ be two $n$-manifolds for $n > 0$, potentially over different model spaces. 
+Take $p \in M$ and $v \in \tanspace{p}{M}$. 
+Let $f \colon M \to M'$ be a partial $n$-diffeomorphism such that $p$ lies in its source.
+Then $v$ is realisable at $p$ if and only if $\derivat{f}{p}(v)$ is realisable at $f (p)$.
+\end{lem}
 
+\begin{proof}
+We first prove the forward direction. 
+By assumption there is $\gamma \colon [0, \infty) \to M$ that is differentiable at $0$ with $\gamma (0) = p$ and $\gamma'(0) = v$. 
+We show that $f \circ \gamma$ realises $\derivat{f}{p}(v)$. 
+It is clear that $f \circ \gamma$ is differentiable at $0$ and $f (\gamma (0)) = f (p)$. 
+Additionally,
+\begin{equation*}
+(f \circ \gamma)' (0) = (\derivat{f}{\gamma (0)} \circ \gamma') (0) = \derivat{f}{p}(v).
+\end{equation*}
+
+For the backward direction, we can use
+\begin{equation*}
+v = \derivat{\inv{f}}{f(p)}(\derivat{f}{p}(v))
+\end{equation*}
+and then apply the forward direction. 
+\end{proof}
+
+\begin{cor}
+Let $M$ be an $n$-manifold with $n > 0$ over the model space $H$. Let $p \in M$, $v \in \tanspace{p}{M}$ and $(U, \varphi)$ a chart at $p$. 
+Then $v$ is realisable at $p$ on $M$ if and only if $\derivat{\varphi}{p}(v)$ is realisable at $\varphi(p)$ on $H$. 
+\end{cor}
+
+\begin{proof}
+The chart $(U, \varphi)$ is a local diffeomorphism at $p$. This means that we can pick a partial diffeomorphism $f \colon M \to H$ such that $p$ lies in its source and $\varphi$ and $f$ agree on the source. Then we can apply the above lemma to obtain that $v$ is realisable at $p$ if and only if $\derivat{f}{p}(v) = \derivat{\varphi}{p}(v)$ is realisable at $f(p) = \varphi(p)$.
+\end{proof}
+
+Now we want to connect realisability on manifold with derivability in normed spaces. 
+
+\begin{lem}
+Let $M$ be an $n$-manifold with $n > 0$ with the model with corners $I \colon H \to E$.  
+Let $p \in M$, $v \in \tanspace{p}{M}$ and $(U, \varphi)$ a chart at $p$. 
+Then $v$ is realisable at $p$ if and only if $\derivat{(I \colon \varphi)}{p}(v)$ is derivable within $I(H)$ at $I(\varphi(p))$.
+\end{lem}
+
+\begin{proof}
+By the above corollary, it suffices to show the following: if we take $p \in H$ and $v \in \tanspace{p}{H}$ then $v$ is realisable at $p$ if and only if $\derivat{I}{p}(v)$ is derivable within $I(H)$ at $I(p)$. 
+
+Let us first prove the forward direction. By assumption, there is a $\gamma \colon [0, \infty) \to H$ such that $\gamma$ is differentiable with $\gamma'(0) = v$ and $\gamma (0) = p$. We want to show that
+\begin{equation*}
+I \circ \restrict{\gamma}{[0, 1)} \colon [0, 1) \to E
+\end{equation*}
+
+witnesses that $\derivat{I}{p}(v)$ is derivable at $I(p)$ within $I(H)$. 
+Clearly, $I \circ \restrict{\gamma}{[0, 1)}$ is differentiable at $0$, $I (\restrict{\gamma}{[0, 1)}(0)) = I(p)$ and $I(\restrict{\gamma}{[0, 1)}([0, 1))) \subseteq I(H)$. 
+Lastly, 
+\begin{equation*}
+\derivat{\left(I \circ \restrict{\gamma}{[0, 1)}\right)}{p}(0) = (\derivat{I}{\gamma (0)} \circ \gamma') (0) = \derivat{I}{p}(v)
+\end{equation*}
+
+For the backward direction, take $\varepsilon > 0$ and $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ and fulfils $\gamma (0) = I(p)$, $\gamma' (0) = \derivat{I}{p}(v)$ and $\gamma([0, \infty)) \subseteq I(H)$. 
+We now want to show that
+\begin{equation*}
+\mu \colon [0, \varepsilon) \to H, x \mapsto \begin{cases}
+    \inv{I}(\gamma (x)) & x < \varepsilon \\
+    \inv{I}(\gamma (0)) & x \ge \varepsilon \\
+\end{cases} 
+\end{equation*}
+realises $v$. 
+It is easy to see that $\mu$ is differentiable at $0$ and that $\mu (0) = \inv{I}(\gamma (0)) = \inv{I}(I(p)) = p$. 
+It is left to show that $\mu'(0) = v$. Since $\derivat{I}{p} \colon \tanspace{p}{H} \to E$ is injective, we can instead show that $\derivat{I}{p}(\mu' (0)) = \derivat{I}{p}$. 
+We get
+\begin{equation*}
+\begin{split}
+\derivat{I}{p}(\mu' (0)) &= \derivat{I}{p}((\inv{I} \circ \gamma)' (0)) \\
+&= (\derivat{I}{p} \circ \derivat{\inv{I}}{I(p)} \circ \gamma') (0) \\
+& = (\derivat{(I \circ \inv{I})}{I(p)} \circ \gamma') (0) \\
+& = \gamma' (0) \\
+& = \derivat{I}{p}(v).
+\end{split}
+\end{equation*}
+\end{proof}
+
+Now let us prove these same things about inward pointing vectors: 
+
+\begin{lem}
+Let $M$ and $M'$ be two $n$-manifolds for $n > 0$, potentially over different model spaces. 
+Take $p \in M$ and $v \in \tanspace{p}{M}$. 
+Let $f \colon M \to M'$ be a partial $n$-diffeomorphism such that $p$ lies in its source.
+Then $v$ is inward pointing at $p$ if and only if $\derivat{f}{p}(v)$ is inward pointing at $f (p)$.
+\end{lem}
+
+\begin{proof}
+Since $\derivat{f}{p}$ is bijective, it suffices to show that 
+\begin{equation*}
+\interior{\{v \in \tanspace{f(p)}{M'} \mid v \text{ is realisable}\}} = 
+\derivat{f}{p}(\interior{\{v \in \tanspace{p}{M} \mid v \text{ is realisable} \}}). 
+\end{equation*}
+Again, because $\derivat{f}{p}$ is a homeomorphism, it suffices to show that 
+\begin{equation*}
+\{v \in \tanspace{f(p)}{M'} \mid v \text{ is realisable}\} = 
+\derivat{f}{p}(\{v \in \tanspace{p}{M} \mid v \text{ is realisable} \}). 
+\end{equation*}
+
+By Lemma \ref{lem:invariantRealisable}, $v \in \tanspace{f(p)}{M'}$ is realisable if and only if 
+\todo[inline]{Continue here!}
+\end{proof}
 
 \section{Equivalence with tangent cone on model space}
 
