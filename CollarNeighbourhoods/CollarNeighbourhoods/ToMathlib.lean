@@ -494,10 +494,8 @@ noncomputable def ConvexCone.interior {𝕜 : Type*} [Field 𝕜] [PartialOrder 
   add_mem' _ hv _ hw :=
     map_mem_interior₂ (isOpenMap_add (𝕜 := 𝕜)) hv hw fun _ ha _ hb ↦ K.add_mem ha hb
 
-noncomputable def ConvexCone.ofConvexSmul (R M : Type*) [Field R] [PartialOrder R]
-    [IsStrictOrderedRing R] [PosMulReflectLT R]
-    [NeZero (1 : R)]
-    [AddCommMonoid M] [DistribMulAction R M] [DenselyOrdered R] (s : Set M) (hs : Convex R s)
+noncomputable def ConvexCone.ofConvexSmul (R M : Type*) [Field R] [LinearOrder R]
+    [IsStrictOrderedRing R] [AddCommMonoid M] [DistribMulAction R M] (s : Set M) (hs : Convex R s)
     (h : ∀ (c : R) (_ : c > 0), ∀ ⦃x : M⦄, x ∈ s → c • x ∈ s) : ConvexCone R M where
   carrier := s
   smul_mem' := h
