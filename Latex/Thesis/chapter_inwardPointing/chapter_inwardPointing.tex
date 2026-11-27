@@ -483,12 +483,12 @@ Let us first define what a convex cone actually is:
 Let $R$ be an ordered ring and $M$ a module over $R$. 
 A set $s \subseteq M$ is a \emph{convex cone} if 
 \begin{enumerate}
-    \item for all $c \in R$ with $c > 0$ and $x \in s$, we have $c \cdot x \in s$, and 
+    \item for all $c \in R$ with $c > 0$ and $x \in s$, we have $c \cdot x \in s$, and \label{point:convexConeSmul}
     \item for all $x, y \in s$ we get $x + y \in s$.  \label{point:convecConeAdd}
 \end{enumerate}
 \end{defi}
 
-Under stricter conditions there is an alternative way to show that a set in a convex cone:
+Under stricter conditions there is an alternative way to show that a set is a convex cone:
 
 \begin{lem}
 Let $R$ be a field with a linear order. 
@@ -625,8 +625,8 @@ All of these follow directly from the definitions.
 We can now use this to define the required curve: 
 
 \begin{equation*}
-\gamma \colon [0, \iota_0) \to E, x \mapsto \begin{cases} \gamma_n (x) & x \in (\iota_{n + 1}, \iota_n].\\ 
-p & x = 0\\
+\gamma \colon [0, \iota_0) \to E, x \mapsto \begin{cases} \gamma_n (x) & x \in (\iota_{n + 1}, \iota_n],\\ 
+p & x = 0.\\
 \end{cases}
 \end{equation*}
 
@@ -685,12 +685,52 @@ Again we get the following lemma:
 \begin{lem}
 Let $C$ be convex. Then the feasible cone to $C$ at $p$ is a convex cone. 
 \end{lem}
+\begin{proof}
+We show both parts of the definition. 
+For Property \ref{point:convexConeOfConvexSmul}, let $c > 0$ and $x$ in the feasible cone to $C$ at $p$.
+Take $r > 0$ such that $r \cdot v + p \in C$. 
+Then we get $\tfrac{r}{c} \cdot (c \cdot v) + p = r \cdot v + p \in C$ and thus $c \cdot v$ lies in the feasible cone. 
+
+For Property \ref{point:convecConeAdd}, let $x$ and $y$ be in the feasible cone to $C$ at $p$. 
+We obtain $r, s > 0$ such that $r \cdot x + p, s \cdot y + p \in C$. 
+Then 
+\begin{equation*}
+\begin{split}
+\frac{r * s}{r + s} \cdot (x + y) + p &= \Bigl(\frac{s}{r + s} \cdot (r \cdot x)\Bigr) + \Bigl(\frac{r}{r + s} \cdot (s \cdot y)\Bigr) + p \\
+&= \frac{s}{r + s} \cdot (r \cdot x + p) + \frac{r}{r + s} \cdot (s \cdot y + p) \in C \\
+\end{split}
+\end{equation*}
+where we used that 
+\begin{equation*}
+\frac{s}{r + s} + \frac{r}{r + s} = 1
+\end{equation*}
+and the convexity of $C$.
+\end{proof}
 
 Now we can show our first equality of cones: 
 
 \begin{lem}
 Let $C$ be convex and $p \in C$. Then the tangent cone to $C$ at $p$ agrees with the closure of the feasible cone to $C$ at $p$. 
 \end{lem}
+
+\begin{proof}
+We show both inclusions.
+First let $v$ be a vector in the tangent cone to $C$ at $p$.
+Let $c \colon \bN \to \bR_\ge$ and $d \colon \bN \to E$ be such that $\lim_{n \to \infty} d_n = 0$, $x + d_n \in C$ for all $n \in \bN$ and $\lim_{n \to \infty} c_n \cdot d_n = v$. 
+We want to show that $v$ lies in the sequential closure of the feasible cone. 
+Since $\lim_{n \to \infty} c_n \cdot d_n = v$, it suffices to show that $c_n \cdot d_n$ is an element of the feasible cone for all $n \in \bN$.
+Take any $n \in \bN$. If $c_n = 0$, then $1 \cdot (c_n \cdot d_n) + p = p \in C$. 
+Otherwise we get 
+\begin{equation*}
+\frac{1}{c_n} \cdot (c_n \cdot d_n) + p = d_n + p \in C.
+\end{equation*}
+
+For the other direction, let $v$ be in the sequential closure of the feasible cone to $C$ at $p$. 
+
+\todo[inline]{Continue here}
+
+\end{proof}
+
 
 Now we just need to show the following: 
 
