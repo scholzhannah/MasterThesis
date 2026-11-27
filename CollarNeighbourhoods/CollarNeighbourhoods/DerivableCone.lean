@@ -289,7 +289,7 @@ lemma hasDerivWithinAt_limitFun {γ : ℕ → ℝ → E} {v : ℕ → E}
     HasDerivWithinAt (limitFun hγv hγ hs p ) w (Ici 0) 0 := by
   have hγn n := exists_slope_and_mem hγv hγ (hs n)
   have hj : ∀ (n : ℕ), ∀ j ∈ Ioc 0 (decIndexSeq hγn n),
-    slope (γ n) 0 j ∈ ball (v n) (1 / (↑n + 1)) :=  fun n j hj ↦ slope_mem_decIndexSeq hγv hγ hs hj
+    slope (γ n) 0 j ∈ ball (v n) (1 / (↑n + 1)) := fun n j hj ↦ slope_mem_decIndexSeq hγv hγ hs hj
   rw [hasDerivWithinAt_iff_tendsto_slope, Ici_sdiff_left]
   simp only [tendsto_nhdsWithin_nhds, gt_iff_lt, mem_Ioi, dist_zero_right, Real.norm_eq_abs, slope,
     sub_zero, limitFun_zero, vsub_eq_sub]

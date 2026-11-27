@@ -569,7 +569,8 @@ We need to show that $w$ is also derivable within $C$ at $p$.
 For every $n \in \bN$ pick $\gamma_n \colon [0, \varepsilon_n) \to E$ such that for all $n \in \bN$ we have that $\gamma_n$ is differentiable at $0$, $\gamma_n ([0, \varepsilon_n)) \subseteq C$, $\gamma_n(0) = p$ and $\gamma_n'(0) = v_n$.    
 
 We now need to define a map $\mu$ that witnesses that $w$ is derivable within $C$ at $p$. 
-For every $n \in \bN$ we want to pick a point on the curve $\gamma_n$ which we will then assemble into a new (discrete) curve with the desired property. 
+We want to construct this curve by combining parts of the curves $\gamma_n$.
+We now need to describe which parts of the curve we want to pick.  
 
 We first show the following: 
 
@@ -594,14 +595,82 @@ and thus such a $j$ must exist.
 
 For every $n$, we pick an $i_n$ such that it fulfils the properties described in Claim \ref{claim:existConvergence} and additionally is smaller that $\varepsilon_n$.
 
-Now we make that into a decreasing sequence.
-So we define a sequence recursively: 
+Now we use these to define a decreasing sequence recursively:
 
 \begin{equation*}
-\iota \colon \bN \to 
+\iota \colon \bN \to \bR, n \mapsto \begin{cases}
+    i_0 & n = 0 \\ 
+    \min (\frac{i_{n-1}}{2}, i_n) & \text{otherwise} \\ 
+\end{cases}
 \end{equation*}
 
-\todo[inline]{Continue here!}
+We collect some properties of this sequence: 
+
+\begin{claim} The following hold for the sequence $\iota$. \label{claim:sequenceProps}
+\begin{enumerate}
+    \item For all $n \in \bN$, we have $\iota_n \in \bigl(0, \frac{1}{n + 1}\bigr]$. 
+    \item For all $n \in \bN$, we know $\iota_n < \varepsilon_n$
+    \item \label{point:normLT} For all $n \in \bN$ and $j \in (0, \iota_n]$, we have that 
+        \begin{equation*}
+            \norm{\frac{\gamma_n(j) - p}{j} - v_n} < \frac{1}{n + 1}.
+        \end{equation*} 
+    \item The sequence $\iota$ is antitone. 
+    \item $\iota$ converges to $0$. 
+\end{enumerate}
+\begin{proof}
+All of these follow directly from the definitions.
+\end{proof}
+\end{claim}
+
+We can now use this to define the required curve: 
+
+\begin{equation*}
+\gamma \colon [0, \iota_0) \to E, x \mapsto \begin{cases} \gamma_n (x) & x \in (\iota_{n + 1}, \iota_n].\\ 
+p & x = 0\\
+\end{cases}
+\end{equation*}
+
+Now we can prove that this curve meets the required conditions: 
+
+First, we get $\gamma(0) = p$ and for $x \in (\iota_{n + 1}, \iota_n]$, we have $x \le \iota_n < \varepsilon_n$ which means that $\gamma(x) = \gamma_n{x}$ is well-defined and therefore $\gamma(x) \in C$.
+Therefore $\gamma([0, \iota_0)) \subseteq C$. 
+
+Lastly, we need to show that $\gamma$ is differentiable at $0$ with derivative $w$.
+We want to show that the difference quotient converges to $w$.
+Let $\varepsilon > 0$. 
+We pick an $N$ such that for all $n \ge N$
+\begin{equation*}
+    \norm{v_n - w} < \frac{\varepsilon}{2}    
+\end{equation*}
+and 
+\begin{equation*}
+    \frac{1}{N + 1} < \frac{\varepsilon}{2}.
+\end{equation*}
+
+We now want to show that for all $h \in (0, \iota_N)$ we get 
+
+\begin{equation*}
+    \norm{\frac{\gamma (h) - p}{h} - w} < \varepsilon.  
+\end{equation*}
+
+So let $h \in (0, \iota_N)$ and let $n \in \bN$ such that $h \in (\iota_{n + 1}, \iota_n]$. 
+
+Then we have 
+
+\begin{equation*}
+\begin{split}
+\norm{\frac{\gamma (h) - p}{h} - w} &= \norm{\frac{\gamma_n (h) - p}{h} - w} \\
+&\le \norm{\frac{\gamma_n (h) - p}{h} - v_n} + \norm{v_n - w} \\
+&\stackrel{(1)}{<} \norm{\frac{\gamma_n (h) - p}{h} - v_n} + \frac{\varepsilon}{2} \\
+&\stackrel{(2)}{<} \frac{1}{n + 1} + \frac{\varepsilon}{2} \\
+&\stackrel{(3)}{\le} \frac{1}{N + 1} + \frac{\varepsilon}{2} \\
+&< \frac{\varepsilon}{2} + \frac{\varepsilon}{2} \\
+&= \varepsilon \\
+\end{split}
+\end{equation*}
+
+where in (1) and (3) we used that $n \ge N$ since $\iota$ is antitone.
+In (2) we used property \ref{point:normLT} of Claim \ref{claim:sequenceProps}. 
 
 \end{proof}
 
