@@ -288,7 +288,7 @@ In a normed space Definition \ref{defi:realisability} reduces to the following d
 \todo{cite precise definition number}
 \begin{defi}[Derivability, \cite{Rockafellar1998}]\label{defi:derivability}
 Let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
-We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\varepsilon (0) = p$ and $\gamma' (0) = v$. 
+We call a vector $v$ \emph{derivable} in $C$ at $p$ if there is and $\varepsilon > 0$ and a function $\gamma \colon [0, \varepsilon) \to E$ that is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\gamma (0) = p$ and $\gamma' (0) = v$. 
 The set of all derivable vectors in $C$ at $p$ is called the \emph{derivable cone} to $C$ at $p$. 
 \end{defi}
 
@@ -479,12 +479,12 @@ We now need to show that this definition of realisability does indeed equal our 
 
 For this we need to describe different convex cones. 
 Let us first define what a convex cone actually is: 
-\begin{defi}
+\begin{defi}\label{defi:convexCone}
 Let $R$ be an ordered ring and $M$ a module over $R$. 
 A set $s \subseteq M$ is a \emph{convex cone} if 
 \begin{enumerate}
     \item for all $c \in R$ with $c > 0$ and $x \in s$, we have $c \cdot x \in s$, and 
-    \item for all $x, y \in s$ we get $x + y \in s$.  
+    \item for all $x, y \in s$ we get $x + y \in s$.  \label{point:convecConeAdd}
 \end{enumerate}
 \end{defi}
 
@@ -498,15 +498,21 @@ Let $s \subseteq M$ be a set.
 If 
 \begin{enumerate}
     \item $s$ is convex and 
-    \item for all $c \in R$ with $c > 0$ and $x \in s$ we have $c \cdot x \in s$
+    \item for all $c \in R$ with $c > 0$ and $x \in s$ we have $c \cdot x \in s$ \label{point:convexConeOfConvexSmul}
 \end{enumerate}
 then $s$ is a convex cone. 
 \end{lem}
 \begin{proof}
-\todo[inline]{continue here}
+We only need to show Property \ref{point:convecConeAdd} of Definition \ref{defi:convexCone}.
+Let $x, y \in s$. We need to show $x + y \in s$. 
+We have 
+\begin{equation*}
+x + y = 2 \cdot \Bigl(\frac{1}{2} \cdot x + \frac{1}{2} \cdot y\Bigr).   
+\end{equation*}
+By Property (i), $\frac{1}{2} \cdot x + \frac{1}{2} \cdot y \in s$ and then by Property (ii) $x + y \in s$.  
 \end{proof}
 
-For this section let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
+For the rest of this section let $E$ be a normed space over $\bR$, let $C \subseteq E$ be a set and let $p \in E$ be a point. 
 
 First we need to show the following lemma: 
 
@@ -515,12 +521,89 @@ Let $C$ be convex.
 Then the derivable cone to $C$ at $p$ is a convex cone.
 \end{lem}
 
-The next lemma we need is the following for which the proof is inspired by \cite{Rios2018}:
+\begin{proof}
+We want to use the above lemma. 
+We first show that the derivable cone is convex. 
+Thus let $v_1$ and $v_2$ be derivable vectors in $C$ at $p$.
+Then there are $\varepsilon_1, \varepsilon_2 > 0$ and $\gamma_1 \colon [0, \varepsilon_1) \to E$ and $\gamma_2 \colon [0, \varepsilon_2) \to E$ such that $\gamma_1$ and $\gamma_2$ are differentiable at $0$, we get $\gamma_1([0, \varepsilon_1)), \gamma_2([0, \varepsilon_2)) \subseteq C$, $\gamma_1(0) = \gamma_2(0) = p$ and $\gamma_1'(0)=v_1$ and $\gamma_2'(0) = v_2$.
+Let $a, b \in [0, 1]$ such that $a + b = 1$. 
+We need to show that $a \cdot v_1 + b \cdot v_2$ is derivable. 
+We set $\varepsilon \coloneq \min \varepsilon_1 \varepsilon_2$ and define $\gamma \colon [0, \varepsilon) \to E, x \mapsto a \cdot \gamma_1(x) + b \cdot \gamma_2(x)$.  
+Then we know that $\gamma$ is differentiable at $0$ and we get $\gamma (0) = a \cdot p + b \cdot p = p$. Additionally 
+\begin{equation*}
+\gamma'(0) = a \cdot \gamma_1'(0) + b \cdot \gamma_2'(0) = a \cdot v_1 + b \cdot v_2
+\end{equation*}
+and because $C$ is convex, $\gamma([0, \varepsilon)) \subseteq C$. 
+Thus $a \cdot v_1 + b \cdot v_2$ is derivable. 
+
+Now we show Property \ref{point:convexConeOfConvexSmul}.
+Let $c > 0$ in $\bR$ and take a derivable vector $v$ in $C$ at $p$. 
+We need to show that $c \cdot v$ is derivable. 
+Take $\gamma \colon [0, \varepsilon) \to E$ such that it is differentiable at $0$ with $\gamma ([0, \varepsilon)) \subseteq C$, $\gamma (0) = p$ and $\gamma'(0) = v$. 
+We want to show that
+\begin{equation*}
+\mu \colon \Bigl[0, \frac{\varepsilon}{c}\Bigr) \to E, x \mapsto \gamma (c \cdot x)
+\end{equation*}
+witnesses that $c \cdot v$ is derivable. 
+We see that $\mu$ is derivable at $0$ and 
+\begin{equation*}
+\mu\Bigl(\Bigl[0, \frac{\varepsilon}{c}\Bigr)\Bigr) = \gamma ([0, \varepsilon)) \subseteq C.
+\end{equation*}
+Additionally, $\mu (0) = \gamma (c \cdot 0) = p$ and $\mu'(0) = c \cdot \gamma' (0) = c \cdot v$. 
+Thus $c \cdot v$ is derivable. 
+\end{proof}
+
+The next lemma we need is the following for which the proof is inspired by \cite{Rios2018}: 
+
+\todo[inline]{I expect this also holds for elements of the closure. 
+Verify this if I find the time.}
 
 \begin{lem}
 Let $p \in C$. 
-Then the derivable cone is closed in $E$. 
+Then the derivable cone to $C$ at $p$ is closed in $E$. 
 \end{lem}
+\begin{proof}
+We show that the derivable cone is sequentially closed. 
+So let $v \colon \bN \to E$ be a sequence of derivable vectors within $v$ at $p$ that converges to $w \in E$. 
+We need to show that $w$ is also derivable within $C$ at $p$.
+For every $n \in \bN$ pick $\gamma_n \colon [0, \varepsilon_n) \to E$ such that for all $n \in \bN$ we have that $\gamma_n$ is differentiable at $0$, $\gamma_n ([0, \varepsilon_n)) \subseteq C$, $\gamma_n(0) = p$ and $\gamma_n'(0) = v_n$.    
+
+We now need to define a map $\mu$ that witnesses that $w$ is derivable within $C$ at $p$. 
+For every $n \in \bN$ we want to pick a point on the curve $\gamma_n$ which we will then assemble into a new (discrete) curve with the desired property. 
+
+We first show the following: 
+
+\begin{claim}\label{claim:existConvergence}
+For all $n \in \bN$ there is
+\begin{equation*}
+i \in \Bigl(0, \frac{1}{n + 1}\Bigr]
+\end{equation*}
+such that for all $j \in (0, i]$, 
+\begin{equation*}
+\norm{\frac{\gamma_n(j) - p}{j} - v_n} < \frac{1}{n + 1}.
+\end{equation*}
+\begin{proof}
+Because $\gamma_n'(0) = v_n$, we know that 
+\begin{equation*}
+\lim_{j \searrow 0}\norm{\frac{\gamma_n(j) - p}{j} - v_n} = 0
+\end{equation*}
+and thus such a $j$ must exist.
+\end{proof}
+\end{claim}
+
+
+For every $n$, we pick an $i_n$ such that it fulfils the properties described in Claim \ref{claim:existConvergence} and additionally is smaller that $\varepsilon_n$.
+
+Now we make that into a decreasing sequence.
+So we define a sequence recursively: 
+
+\begin{equation*}
+\iota \colon \bN \to 
+\end{equation*}
+
+\todo[inline]{Continue here!}
+
+\end{proof}
 
 Now we need yet another cone: 
 

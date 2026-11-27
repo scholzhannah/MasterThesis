@@ -389,25 +389,10 @@ lemma isClosed_derivable {s : Set E} {p : E} (hp : p ∈ s) :
   rw [← isSeqClosed_iff_isClosed]
   intro v w h hv
   simp only [derivableWithinAt, mem_ofPred_eq] at h
-  let γ := fun n ↦ Classical.choose (h n)
-  have hγ n := (Classical.choose_spec (h n)).1
-  have hγv n := (Classical.choose_spec (h n)).2.2.1
-  have hγp n := (Classical.choose_spec (h n)).2.1
-  have hs n := (Classical.choose_spec (h n)).2.2.2
-  suffices ∀ (n : ℕ), ∃ i ∈ Ioi 0, Ioc 0 i ⊆ slope (γ n) 0 ⁻¹' ball (v n) (1 / (n + 1)) from
-    ⟨limitFun hγv hγ hs p, differentiableWithinAt_limitFun hγv hγ hs hγp hv,
+  choose γ hγ hγp hγv hs using h
+  exact ⟨limitFun hγv hγ hs p, differentiableWithinAt_limitFun hγv hγ hs hγp hv,
       limitFun_zero hγv hγ hs p, derivWithin_limitFun hγv hγ hs hγp hv,
       eventually_nhdsWithin_of_forall fun x a ↦ limitFun_mem hγv hγ hp hs x⟩
-  intro n
-  have hγn : ball (v n) (1 / (n + 1)) ∈ 𝓝 (v n) := by
-    rw [isOpen_ball.mem_nhds_iff]
-    exact mem_ball_self one_div_pos_of_nat
-  have : Tendsto (slope (γ n) 0) (𝓝[>] 0) (𝓝 (v n)) := by
-    rw [← Ici_sdiff_left, ← hasDerivWithinAt_iff_tendsto_slope, ← hγv n]
-    exact (hγ n).hasDerivWithinAt
-  specialize this hγn
-  simp_rw [mem_map, mem_nhdsGT_iff_exists_Ioc_subset] at this
-  exact this
 
 lemma isClosed_derivableCone {s : Set E} {p : E} (hs : Convex ℝ s) (hp : p ∈ s) :
     IsClosed (derivableCone p hs : Set E) :=
